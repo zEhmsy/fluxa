@@ -58,30 +58,36 @@ Built entirely in **Swift + SwiftUI** with zero third-party dependencies — jus
 
 ## Installation
 
-### Build from source
+### Quick Start (Recommended)
 
 ```bash
 git clone https://github.com/zEhmsy/fluxa.git
 cd fluxa
-swift build -c release
+./build.sh
+cp -r Fluxa.app /Applications/
 ```
 
-### Sign and run
+The `build.sh` script:
+1. Builds a release binary
+2. Creates a standard macOS `.app` bundle with the icon
+3. Signs the bundle with entitlements
+4. Prints next steps
 
-Since Fluxa uses IOKit and shell commands, it requires ad-hoc signing with its entitlements file:
+Then launch from Applications or use `open Fluxa.app`.
+
+### Manual Build
+
+If you prefer to build step-by-step:
 
 ```bash
+swift build -c release
 codesign --force --sign - --entitlements Fluxa.entitlements .build/release/Fluxa
 open .build/release/Fluxa
 ```
 
-### Optional: copy to Applications
+### Sandbox & App Store
 
-```bash
-cp .build/release/Fluxa /Applications/
-```
-
-> **Note:** Fluxa is not sandboxed and cannot be distributed via the Mac App Store. It is designed as a personal power-user utility.
+Fluxa is **not sandboxed** and cannot be distributed via the Mac App Store. It requires direct access to IOKit, CoreAudio, and shell commands. This is by design — it's built for power users who need privileged system access.
 
 ---
 
