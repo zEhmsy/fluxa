@@ -18,6 +18,9 @@ enum FluxaError: LocalizedError {
     /// A CoreAudio operation failed.
     case audioDeviceError(String)
 
+    /// A CoreAudio microphone/input operation failed.
+    case microphoneError(String)
+
     /// An action is not available due to platform limitations.
     case featureUnavailable(String)
 
@@ -36,6 +39,9 @@ enum FluxaError: LocalizedError {
 
         case .audioDeviceError(let detail):
             return "Audio device error: \(detail)"
+
+        case .microphoneError(let detail):
+            return "Microphone error: \(detail)"
 
         case .featureUnavailable(let reason):
             return reason

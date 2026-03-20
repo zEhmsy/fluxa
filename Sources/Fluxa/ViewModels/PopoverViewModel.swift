@@ -19,6 +19,9 @@ final class PopoverViewModel {
     let keyboardShield = KeyboardShieldService()
     private let focusMode = FocusModeService()
     let audioOutput = AudioOutputService()
+    private let micMute = MicrophoneMuteService()
+    let launchAtLogin = LaunchAtLoginService()
+    let lidAngleMonitor = LidAngleMonitor()
 
     // MARK: - Observable State
 
@@ -34,8 +37,15 @@ final class PopoverViewModel {
     /// Controls presentation of the Focus Mode onboarding sheet.
     var isShowingFocusOnboarding = false
 
+    /// Signals PopoverRootView to open the Lid Angle monitor window.
+    var isShowingLidAngle = false
+
     /// Whether an async action is in progress (disables controls during transitions).
     var isBusy = false
+
+    /// Weak reference to the MenuBarExtra window, set by PopoverRootView on first appear.
+    /// Used by the global hotkey to toggle the popover.
+    weak var menuBarWindow: NSWindow?
 
     // MARK: - Computed
 
@@ -50,6 +60,8 @@ final class PopoverViewModel {
         switch id {
         case .audioOutput:
             return currentOutputDeviceName
+        case .micMute:
+            return micMute.isAvailable ? micMute.currentInputDeviceName : "Volume control not available"
         default:
             return nil
         }
@@ -66,6 +78,7 @@ final class PopoverViewModel {
         refreshStates()
         audioOutput.refresh()
         audioOutput.startMonitoring()
+        // micMute starts monitoring in its own init
     }
 
     // MARK: - Toggle Actions
@@ -92,6 +105,14 @@ final class PopoverViewModel {
             case .lockKeyboard:
                 if desiredActive { keyboardShield.activate() } else { keyboardShield.deactivate() }
                 toggleStates[id.rawValue] = keyboardShield.isActive
+
+            case .micMute:
+                guard micMute.isAvailable else {
+                    errorMessage = "Volume control is not available for the current input device."
+                    return
+                }
+                try micMute.toggle()
+                toggleStates[id.rawValue] = micMute.isMuted
 
             case .focusMode:
                 // Show onboarding if the user hasn't completed setup yet
@@ -147,6 +168,9 @@ final class PopoverViewModel {
                 try await Task.sleep(for: .milliseconds(200))
                 screenClean.activate()
 
+            case .lidAngle:
+                isShowingLidAngle = true
+
             default:
                 break
             }
@@ -174,6 +198,8 @@ final class PopoverViewModel {
         toggleStates[ActionID.desktopIcons.rawValue] = desktopIcons.isActive
         toggleStates[ActionID.lockKeyboard.rawValue] = keyboardShield.isActive
         toggleStates[ActionID.focusMode.rawValue] = settings.focusModeEnabled
+        micMute.refresh()
+        toggleStates[ActionID.micMute.rawValue] = micMute.isMuted
         audioOutput.refresh()
     }
 
@@ -183,6 +209,19 @@ final class PopoverViewModel {
         isShowingFocusOnboarding = false
     }
 
+    // MARK: - Global Shortcut
+
+    /// Toggles the MenuBarExtra window visibility. Called by the global hotkey.
+    /// No-op if the window reference has not been captured yet (requires at least one popover open).
+    func toggleMenuBarWindow() {
+        guard let window = menuBarWindow else { return }
+        if window.isVisible {
+            window.orderOut(nil)
+        } else {
+            window.makeKeyAndOrderFront(nil)
+        }
+    }
+
     // MARK: - Cleanup (called from AppDelegate.applicationWillTerminate)
 
     func cleanup() {
@@ -190,6 +229,8 @@ final class PopoverViewModel {
         screenClean.deactivate()
         keyboardShield.deactivate()
         audioOutput.stopMonitoring()
+        micMute.cleanup()
+        micMute.stopMonitoring()
     }
 
     // MARK: - Private

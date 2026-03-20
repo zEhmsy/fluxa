@@ -28,6 +28,7 @@ let package = Package(
                 .linkedFramework("AppKit"),
                 .linkedFramework("ApplicationServices"),
                 .linkedFramework("CoreAudio"),
+                .linkedFramework("ServiceManagement"),
                 // Embed Info.plist into the binary so LSUIElement / NSPrincipalClass etc. are found
                 .unsafeFlags([
                     "-Xlinker", "-sectcreate",

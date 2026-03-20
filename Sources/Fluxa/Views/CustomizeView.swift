@@ -7,6 +7,7 @@ import SwiftUI
 struct CustomizeView: View {
 
     @Environment(AppSettings.self) private var settings
+    @Environment(PopoverViewModel.self) private var viewModel
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -52,6 +53,21 @@ struct CustomizeView: View {
                     .font(.system(size: 13))
                 } header: {
                     Text("DISPLAY")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                }
+
+                // MARK: System
+                Section {
+                    Toggle("Launch at Login", isOn: Binding(
+                        get: { viewModel.launchAtLogin.isEnabled },
+                        set: { enabled in
+                            try? viewModel.launchAtLogin.setEnabled(enabled)
+                        }
+                    ))
+                    .font(.system(size: 13))
+                } header: {
+                    Text("SYSTEM")
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundStyle(.secondary)
                 }

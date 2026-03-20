@@ -39,8 +39,18 @@ struct ActionRowView: View {
 
     // MARK: - Icon
 
+    /// Resolves the correct SF Symbol name based on the action's current state.
+    /// For toggles: returns activeIcon when on, icon when off.
+    /// For other control styles: always returns the base icon.
+    private var resolvedIcon: String {
+        if case .toggle = action.controlStyle, isToggleOn, let active = action.activeIcon {
+            return active
+        }
+        return action.icon
+    }
+
     private var iconView: some View {
-        Image(systemName: action.icon)
+        Image(systemName: resolvedIcon)
             .font(.system(size: 14, weight: .medium))
             .foregroundStyle(iconColor)
             .frame(width: 28, height: 28)

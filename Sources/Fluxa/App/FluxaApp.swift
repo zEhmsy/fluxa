@@ -47,6 +47,14 @@ struct FluxaApp: App {
         }
         .windowResizability(.contentSize)
         .defaultPosition(.center)
+
+        // Dedicated window for the Lid Angle monitor.
+        Window("Lid Angle", id: "lid-angle") {
+            LidAngleWindowView()
+                .environment(viewModel)
+        }
+        .windowResizability(.contentSize)
+        .defaultPosition(.center)
     }
 
     // MARK: - Menu Bar Icon

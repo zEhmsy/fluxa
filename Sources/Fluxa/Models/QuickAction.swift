@@ -12,6 +12,8 @@ enum ActionID: String, CaseIterable, Codable, Identifiable {
     case lockKeyboard
     case focusMode    // Opens System Settings → Focus (no public toggle API on macOS 13+)
     case audioOutput  // CoreAudio output device switcher
+    case micMute      // CoreAudio input volume control (mute/unmute default input device)
+    case lidAngle     // IORegistry lid angle monitor (MacBook only)
 
     var id: String { rawValue }
 }
@@ -24,8 +26,10 @@ struct QuickAction: Identifiable {
     let title: String
     /// Static subtitle shown when no dynamic override is available.
     let subtitle: String?
-    /// SF Symbol name for the leading icon.
+    /// SF Symbol name for the leading icon (inactive / default state).
     let icon: String
+    /// SF Symbol name shown when the action is active (toggle ON). Nil = always use `icon`.
+    let activeIcon: String?
     /// Determines which trailing control is rendered in the row.
     let controlStyle: ControlStyle
 
@@ -51,28 +55,32 @@ enum ActionCatalog {
             id: .keepAwake,
             title: "Keep Awake",
             subtitle: "Prevent display sleep indefinitely",
-            icon: "bolt.fill",
+            icon: "bolt",
+            activeIcon: "bolt.fill",
             controlStyle: .toggle
         ),
         QuickAction(
             id: .desktopIcons,
             title: "Hide Desktop Icons",
             subtitle: "Toggles Finder desktop visibility",
-            icon: "rectangle.on.rectangle.slash",
+            icon: "desktopcomputer",
+            activeIcon: "desktopcomputer.slash",
             controlStyle: .toggle
         ),
         QuickAction(
             id: .screenSaver,
             title: "Screen Saver",
             subtitle: "Launch system screensaver now",
-            icon: "moon.stars.fill",
+            icon: "moon.stars",
+            activeIcon: nil,
             controlStyle: .momentaryButton(label: "Launch")
         ),
         QuickAction(
             id: .screenClean,
             title: "Screen Clean",
             subtitle: "Black overlay for screen cleaning",
-            icon: "hand.raised.fill",
+            icon: "sparkles",
+            activeIcon: nil,
             controlStyle: .momentaryButton(label: "Activate")
         ),
         QuickAction(
@@ -80,6 +88,7 @@ enum ActionCatalog {
             title: "Lock Keyboard",
             subtitle: "Overlay shield — ESC or click to exit",
             icon: "keyboard",
+            activeIcon: nil,
             controlStyle: .toggle
         ),
         QuickAction(
@@ -89,7 +98,8 @@ enum ActionCatalog {
             // State is tracked optimistically in AppSettings — no public API to read true system state.
             // Onboarding guides the user to create the two shortcuts once.
             subtitle: "Via Shortcuts — setup required",
-            icon: "moon.fill",
+            icon: "moon",
+            activeIcon: "moon.fill",
             controlStyle: .toggle
         ),
         QuickAction(
@@ -98,8 +108,28 @@ enum ActionCatalog {
             // The subtitle is overridden at runtime by PopoverViewModel.dynamicSubtitle(for:)
             // to show the current output device name (e.g. "MacBook Pro Speakers", "AirPods").
             subtitle: "Select output device",
-            icon: "speaker.wave.2.fill",
+            icon: "speaker.wave.2",
+            activeIcon: nil,
             controlStyle: .menu
+        ),
+        QuickAction(
+            id: .micMute,
+            title: "Microphone Mute",
+            // The subtitle is overridden at runtime by PopoverViewModel.dynamicSubtitle(for:)
+            // to show the current input device name.
+            subtitle: "Mute/unmute the default input device",
+            // toggle OFF = mic active → mic.fill; toggle ON = muted → mic.slash.fill
+            icon: "mic.fill",
+            activeIcon: "mic.slash.fill",
+            controlStyle: .toggle
+        ),
+        QuickAction(
+            id: .lidAngle,
+            title: "Lid Angle",
+            subtitle: "MacBook display angle monitor",
+            icon: "gyroscope",
+            activeIcon: nil,
+            controlStyle: .momentaryButton(label: "Open")
         ),
     ]
 

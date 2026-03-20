@@ -41,11 +41,21 @@ struct PopoverRootView: View {
         .background(Color(nsColor: .windowBackgroundColor))
         .onAppear {
             viewModel.refreshStates()
+            // Capture the MenuBarExtra window so the global hotkey can toggle it.
+            if viewModel.menuBarWindow == nil {
+                viewModel.menuBarWindow = NSApp.keyWindow
+            }
         }
         // Open the onboarding as a standalone Window (not a sheet) so it stays
         // visible when the user switches to the Shortcuts app to confirm import.
         .onChange(of: viewModel.isShowingFocusOnboarding) { _, showing in
             if showing { openWindow(id: "focus-onboarding") }
+        }
+        .onChange(of: viewModel.isShowingLidAngle) { _, showing in
+            if showing {
+                openWindow(id: "lid-angle")
+                viewModel.isShowingLidAngle = false
+            }
         }
         .sheet(isPresented: Binding(
             get: { viewModel.isShowingCustomize },
