@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+        App Sandbox is disabled because Fluxa uses:
+        - Process (shell commands) for Finder/defaults manipulation
+        - IOKit for power management assertions
+        These require an unsandboxed environment.
+        NOTE: This disqualifies the app from Mac App Store distribution.
+        For MAS: replace shell commands with AppleScript/Automator equivalents.
+    -->
+    <key>com.apple.security.app-sandbox</key>
+    <false/>
+</dict>
+</plist>

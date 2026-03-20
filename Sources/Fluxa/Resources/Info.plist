@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Hide the Dock icon — menu bar only app -->
+    <key>LSUIElement</key>
+    <string>1</string>
+
+    <key>CFBundleName</key>
+    <string>Fluxa</string>
+
+    <key>CFBundleDisplayName</key>
+    <string>Fluxa</string>
+
+    <key>CFBundleIdentifier</key>
+    <string>com.giuseppe.fluxa</string>
+
+    <key>CFBundleVersion</key>
+    <string>1</string>
+
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+
+    <!-- Custom app icon -->
+    <key>CFBundleIconFile</key>
+    <string>fluxa</string>
+
+    <!-- Required for NSApplication-based SwiftUI App lifecycle -->
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright © 2024 Giuseppe. All rights reserved.</string>
+</dict>
+</plist>
