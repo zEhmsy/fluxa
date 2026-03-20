@@ -6,7 +6,7 @@ Built entirely in **Swift + SwiftUI** with zero third-party dependencies — jus
 
 ![macOS](https://img.shields.io/badge/macOS-14%2B-blue?logo=apple&logoColor=white)
 ![Swift](https://img.shields.io/badge/Swift-5.9-orange?logo=swift&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green)
+![License](https://img.shields.io/badge/License-Apache%202.0-blue)
 ![SPM](https://img.shields.io/badge/SPM-compatible-brightgreen)
 
 ---
@@ -203,7 +203,12 @@ Contributions are welcome! Please:
 
 ## License
 
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **Apache License 2.0** — see the [LICENSE](LICENSE) file for details.
+
+Apache 2.0 provides:
+- Explicit patent grant protection
+- Clear trademark guidelines
+- Comprehensive liability disclaimers
 
 ---
 
