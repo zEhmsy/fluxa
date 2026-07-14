@@ -29,6 +29,14 @@
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
 
+    <!-- Automation permission prompt text (Dark Mode toggle via System Events) -->
+    <key>NSAppleEventsUsageDescription</key>
+    <string>Fluxa controls System Events to toggle Dark Mode.</string>
+
+    <!-- Bluetooth permission prompt text (AirPods/headphones quick-connect) -->
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>Fluxa connects your paired Bluetooth headphones on request.</string>
+
     <key>NSHumanReadableCopyright</key>
     <string>Copyright © 2024 Giuseppe. All rights reserved.</string>
 </dict>

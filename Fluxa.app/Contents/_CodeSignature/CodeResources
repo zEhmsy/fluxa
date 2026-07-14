@@ -4,6 +4,10 @@
 <dict>
 	<key>files</key>
 	<dict>
+		<key>Resources/Fluxa_Fluxa.bundle/fluxa.icns</key>
+		<data>
+		x4o6miUnsAY4mt8jGE3ILGtVjD0=
+		</data>
 		<key>Resources/fluxa.icns</key>
 		<data>
 		x4o6miUnsAY4mt8jGE3ILGtVjD0=
@@ -11,6 +15,13 @@
 	</dict>
 	<key>files2</key>
 	<dict>
+		<key>Resources/Fluxa_Fluxa.bundle/fluxa.icns</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			R7rWVrkHKM9XD1q029iNca+NM5ZehV9Q/kUgO/odvmU=
+			</data>
+		</dict>
 		<key>Resources/fluxa.icns</key>
 		<dict>
 			<key>hash2</key>
