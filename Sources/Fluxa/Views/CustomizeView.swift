@@ -8,19 +8,29 @@ struct CustomizeView: View {
 
     @Environment(AppSettings.self) private var settings
     @Environment(PopoverViewModel.self) private var viewModel
-    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         VStack(spacing: 0) {
             // MARK: Header
             HStack {
-                Text("Customize Fluxa")
-                    .font(.headline)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Customize")
+                        .font(.system(size: 13, weight: .semibold))
+                    Text("Drag to reorder, switch to show or hide")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                }
+
                 Spacer()
-                Button("Done") { dismiss() }
-                    .buttonStyle(.plain)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.blue)
+
+                // Close via the sheet's own binding — NOT @Environment(\.dismiss):
+                // inside a MenuBarExtra window that DismissAction dismisses the
+                // whole popover window instead of just the sheet.
+                Button("Done") { viewModel.isShowingCustomize = false }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+                    .tint(.blue)
+                    .keyboardShortcut(.defaultAction)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
@@ -39,9 +49,7 @@ struct CustomizeView: View {
                         settings.actionOrder.move(fromOffsets: from, toOffset: to)
                     }
                 } header: {
-                    Text("ACTIONS")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.secondary)
+                    sectionHeader("ACTIONS")
                 }
 
                 // MARK: Display Options
@@ -51,10 +59,11 @@ struct CustomizeView: View {
                         set: { settings.showSubtitles = $0 }
                     ))
                     .font(.system(size: 13))
+                    .toggleStyle(.switch)
+                    .controlSize(.mini)
+                    .tint(.blue)
                 } header: {
-                    Text("DISPLAY")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.secondary)
+                    sectionHeader("DISPLAY")
                 }
 
                 // MARK: System
@@ -66,24 +75,32 @@ struct CustomizeView: View {
                         }
                     ))
                     .font(.system(size: 13))
+                    .toggleStyle(.switch)
+                    .controlSize(.mini)
+                    .tint(.blue)
                 } header: {
-                    Text("SYSTEM")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.secondary)
+                    sectionHeader("SYSTEM")
                 }
             }
             .listStyle(.inset)
+            .scrollContentBackground(.hidden)
             // Note: editMode is iOS/tvOS only. On macOS, List with .onMove shows
             // drag handles automatically — no editMode needed.
         }
-        .frame(width: 300, height: 400)
+        .frame(width: 320, height: 480)
         .background(Color(nsColor: .windowBackgroundColor))
+    }
+
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(.system(size: 10, weight: .semibold))
+            .foregroundStyle(.secondary)
     }
 }
 
 // MARK: - CustomizeRowView
 
-/// A single row in the Customize list with drag handle, icon, name, and visibility toggle.
+/// A single row in the Customize list with tinted icon tile, name, and visibility switch.
 private struct CustomizeRowView: View {
 
     let action: QuickAction
@@ -96,9 +113,13 @@ private struct CustomizeRowView: View {
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: action.icon)
-                .font(.system(size: 13))
-                .foregroundStyle(isHidden ? .tertiary : .secondary)
-                .frame(width: 20)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(isHidden ? .secondary : action.tint)
+                .frame(width: 24, height: 24)
+                .background(
+                    (isHidden ? Color.secondary.opacity(0.08) : action.tint.opacity(0.13)),
+                    in: RoundedRectangle(cornerRadius: 6, style: .continuous)
+                )
 
             Text(action.title)
                 .font(.system(size: 13))
@@ -117,8 +138,10 @@ private struct CustomizeRowView: View {
                 }
             ))
             .labelsHidden()
-            .tint(.blue)
-            .scaleEffect(0.8)
+            .toggleStyle(.switch)
+            .controlSize(.mini)
+            .tint(action.tint)
         }
+        .padding(.vertical, 1)
     }
 }
