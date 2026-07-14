@@ -8,6 +8,7 @@ struct CustomizeView: View {
 
     @Environment(AppSettings.self) private var settings
     @Environment(PopoverViewModel.self) private var viewModel
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         VStack(spacing: 0) {
@@ -23,10 +24,9 @@ struct CustomizeView: View {
 
                 Spacer()
 
-                // Close via the sheet's own binding — NOT @Environment(\.dismiss):
-                // inside a MenuBarExtra window that DismissAction dismisses the
-                // whole popover window instead of just the sheet.
-                Button("Done") { viewModel.isShowingCustomize = false }
+                // CustomizeView lives in its own Window scene, so dismiss
+                // closes just that window.
+                Button("Done") { dismiss() }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.small)
                     .tint(.blue)

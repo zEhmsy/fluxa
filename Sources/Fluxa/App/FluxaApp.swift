@@ -71,6 +71,17 @@ struct FluxaApp: App {
         }
         .windowResizability(.contentSize)
         .defaultPosition(.center)
+
+        // Customize as a standalone window, NOT a sheet: the MenuBarExtra
+        // window auto-dismisses whenever it loses key status, so a sheet
+        // attached to it dies on any interaction that moves focus.
+        Window("Customize Fluxa", id: "customize") {
+            CustomizeView()
+                .environment(viewModel)
+                .environment(settings)
+        }
+        .windowResizability(.contentSize)
+        .defaultPosition(.center)
     }
 
     // MARK: - Menu Bar Icon

@@ -57,13 +57,13 @@ struct PopoverRootView: View {
                 viewModel.isShowingLidAngle = false
             }
         }
-        .sheet(isPresented: Binding(
-            get: { viewModel.isShowingCustomize },
-            set: { viewModel.isShowingCustomize = $0 }
-        )) {
-            CustomizeView()
-                .environment(viewModel)
-                .environment(settings)
+        .onChange(of: viewModel.isShowingCustomize) { _, showing in
+            if showing {
+                openWindow(id: "customize")
+                // Bring the window to front — the app is a menu bar accessory.
+                NSApp.activate(ignoringOtherApps: true)
+                viewModel.isShowingCustomize = false
+            }
         }
     }
 
