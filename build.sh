@@ -20,6 +20,8 @@ echo "📋 Copying files..."
 cp "${BUILD_DIR}/${BINARY_NAME}" "${BUNDLE_NAME}/Contents/MacOS/${BINARY_NAME}"
 cp "${RESOURCES_DIR}/fluxa.icns" "${BUNDLE_NAME}/Contents/Resources/"
 cp "${RESOURCES_DIR}/Info.plist" "${BUNDLE_NAME}/Contents/"
+# SwiftPM resource bundle — resolved at runtime via Bundle.fluxaResources
+cp -R "${BUILD_DIR}/${BINARY_NAME}_${BINARY_NAME}.bundle" "${BUNDLE_NAME}/Contents/Resources/"
 
 echo "🔐 Signing app bundle..."
 codesign --force --sign - --entitlements Fluxa.entitlements "${BUNDLE_NAME}"

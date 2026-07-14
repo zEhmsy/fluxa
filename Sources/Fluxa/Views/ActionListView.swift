@@ -12,19 +12,14 @@ struct ActionListView: View {
     var closePopover: (() -> Void)?
 
     var body: some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            LazyVStack(spacing: 0) {
-                ForEach(Array(settings.visibleActions.enumerated()), id: \.element.id) { index, action in
-                    ActionRowView(action: action, closePopover: closePopover)
-
-                    // Divider between rows (not after the last one)
-                    if index < settings.visibleActions.count - 1 {
-                        Divider()
-                            .padding(.leading, 52) // align to content edge past icon
-                    }
-                }
+        // No ScrollView: inside the MenuBarExtra window it reports zero ideal
+        // height and the window (which sizes to the ideal size) collapses the
+        // whole list. The popover holds at most 9 rows, so scrolling is not needed.
+        VStack(spacing: 1) {
+            ForEach(settings.visibleActions) { action in
+                ActionRowView(action: action, closePopover: closePopover)
             }
         }
-        .frame(maxHeight: 380)
+        .padding(.vertical, 6)
     }
 }

@@ -37,7 +37,7 @@ struct PopoverRootView: View {
             BottomBarView()
                 .environment(viewModel)
         }
-        .frame(width: 280)
+        .frame(width: 304)
         .background(Color(nsColor: .windowBackgroundColor))
         .onAppear {
             viewModel.refreshStates()
@@ -83,8 +83,13 @@ struct PopoverRootView: View {
                     .foregroundStyle(.blue)
             }
 
-            Text("Fluxa")
-                .font(.system(size: 14, weight: .semibold))
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Fluxa")
+                    .font(.system(size: 13, weight: .semibold))
+                Text("Quick actions")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+            }
 
             Spacer()
 
@@ -95,13 +100,13 @@ struct PopoverRootView: View {
                     .progressViewStyle(.circular)
             }
         }
-        .padding(.horizontal, 14)
-        .frame(height: 46)
+        .padding(.horizontal, 16)
+        .frame(height: 48)
     }
 
     private func loadHeaderIcon() -> NSImage? {
-        // Load the same switch icon from Bundle.module
-        guard let url = Bundle.module.url(forResource: "fluxa", withExtension: "icns"),
+        // Same switch icon used in the menu bar
+        guard let url = Bundle.fluxaResources.url(forResource: "fluxa", withExtension: "icns"),
               let image = NSImage(contentsOf: url) else {
             return nil
         }

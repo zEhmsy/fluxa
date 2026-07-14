@@ -1,5 +1,21 @@
 import SwiftUI
 
+// MARK: - Resource Bundle
+
+extension Bundle {
+    /// SPM resources live in Fluxa_Fluxa.bundle. In the packaged .app, build.sh
+    /// copies it into Contents/Resources (Bundle.module only checks the .app root,
+    /// where codesign forbids unsealed content, and the machine-specific .build path).
+    /// From `swift run`, resourceURL is the build dir and the bundle sits there too.
+    static let fluxaResources: Bundle = {
+        if let url = Bundle.main.resourceURL?.appendingPathComponent("Fluxa_Fluxa.bundle"),
+           let bundle = Bundle(url: url) {
+            return bundle
+        }
+        return .module
+    }()
+}
+
 // MARK: - FluxaApp
 
 @main
@@ -70,8 +86,7 @@ struct FluxaApp: App {
 
     /// Loads fluxa.icns from the SPM resource bundle and resizes it for the menu bar (18pt).
     private func loadMenuBarIcon() -> NSImage? {
-        // SPM puts resources in Fluxa_Fluxa.bundle — accessed via Bundle.module
-        guard let url = Bundle.module.url(forResource: "fluxa", withExtension: "icns"),
+        guard let url = Bundle.fluxaResources.url(forResource: "fluxa", withExtension: "icns"),
               let image = NSImage(contentsOf: url) else {
             return nil
         }
