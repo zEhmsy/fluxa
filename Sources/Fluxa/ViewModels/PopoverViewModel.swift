@@ -13,12 +13,16 @@ final class PopoverViewModel {
     // MARK: - Services
 
     private let keepAwake = KeepAwakeService()
+    private let darkMode = DarkModeService()
     private let desktopIcons = DesktopIconService()
+    private let hiddenFiles = FinderHiddenFilesService()
+    private let dockAutohide = DockAutohideService()
     private let screenSaver = ScreenSaverService()
     let screenClean = ScreenCleanService()
     let keyboardShield = KeyboardShieldService()
     private let focusMode = FocusModeService()
     let audioOutput = AudioOutputService()
+    let bluetoothAudio = BluetoothAudioService()
     private let micMute = MicrophoneMuteService()
     let launchAtLogin = LaunchAtLoginService()
     let lidAngleMonitor = LidAngleMonitor()
@@ -58,8 +62,15 @@ final class PopoverViewModel {
     /// Returns nil for actions with static subtitles (use the catalog subtitle instead).
     func dynamicSubtitle(for id: ActionID) -> String? {
         switch id {
+        case .keepAwake:
+            guard keepAwake.isActive, let expiry = keepAwake.expiresAt else { return nil }
+            return "On until \(expiry.formatted(date: .omitted, time: .shortened))"
         case .audioOutput:
             return currentOutputDeviceName
+        case .bluetoothAudio:
+            let connected = bluetoothAudio.devices.filter(\.isConnected)
+            if connected.isEmpty { return "Not connected" }
+            return connected.map(\.name).joined(separator: ", ")
         case .micMute:
             return micMute.isAvailable ? micMute.currentInputDeviceName : "Volume control not available"
         default:
@@ -79,6 +90,12 @@ final class PopoverViewModel {
         audioOutput.refresh()
         audioOutput.startMonitoring()
         // micMute starts monitoring in its own init
+
+        // Keep the toggle in sync when a timed Keep Awake expires on its own.
+        keepAwake.onAutoDeactivate = { [weak self] in
+            guard let self else { return }
+            self.toggleStates[ActionID.keepAwake.rawValue] = self.keepAwake.isActive
+        }
     }
 
     // MARK: - Toggle Actions
@@ -98,9 +115,21 @@ final class PopoverViewModel {
                 if desiredActive { try keepAwake.activate() } else { keepAwake.deactivate() }
                 toggleStates[id.rawValue] = keepAwake.isActive
 
+            case .darkMode:
+                try await darkMode.setDark(desiredActive)
+                toggleStates[id.rawValue] = desiredActive
+
             case .desktopIcons:
                 if desiredActive { try await desktopIcons.activate() } else { try await desktopIcons.deactivate() }
                 toggleStates[id.rawValue] = desktopIcons.isActive
+
+            case .hiddenFiles:
+                if desiredActive { try await hiddenFiles.activate() } else { try await hiddenFiles.deactivate() }
+                toggleStates[id.rawValue] = hiddenFiles.isActive
+
+            case .dockAutohide:
+                if desiredActive { try await dockAutohide.activate() } else { try await dockAutohide.deactivate() }
+                toggleStates[id.rawValue] = dockAutohide.isActive
 
             case .lockKeyboard:
                 if desiredActive { keyboardShield.activate() } else { keyboardShield.deactivate() }
@@ -148,6 +177,18 @@ final class PopoverViewModel {
         }
     }
 
+    /// Activates Keep Awake with an automatic shut-off timer (nil = indefinitely).
+    /// Called from the timer menu on the Keep Awake row.
+    func activateKeepAwake(for duration: TimeInterval?) {
+        clearError()
+        do {
+            try keepAwake.activate(for: duration)
+            toggleStates[ActionID.keepAwake.rawValue] = keepAwake.isActive
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
     // MARK: - Momentary Actions
 
     /// Triggers one-shot actions (Screen Saver, Screen Clean, Focus Mode).
@@ -190,17 +231,34 @@ final class PopoverViewModel {
         }
     }
 
+    /// Connects or disconnects a paired Bluetooth audio device.
+    func toggleBluetoothDevice(_ id: String) async {
+        clearError()
+        isBusy = true
+        defer { isBusy = false }
+        do {
+            try await bluetoothAudio.toggleConnection(for: id)
+        } catch {
+            errorMessage = error.localizedDescription
+            bluetoothAudio.refresh()
+        }
+    }
+
     // MARK: - State Refresh
 
     /// Re-reads system state for all toggleable actions. Called on popover appear.
     func refreshStates() {
         toggleStates[ActionID.keepAwake.rawValue] = keepAwake.isActive
+        toggleStates[ActionID.darkMode.rawValue] = darkMode.isActive
         toggleStates[ActionID.desktopIcons.rawValue] = desktopIcons.isActive
+        toggleStates[ActionID.hiddenFiles.rawValue] = hiddenFiles.isActive
+        toggleStates[ActionID.dockAutohide.rawValue] = dockAutohide.isActive
         toggleStates[ActionID.lockKeyboard.rawValue] = keyboardShield.isActive
         toggleStates[ActionID.focusMode.rawValue] = settings.focusModeEnabled
         micMute.refresh()
         toggleStates[ActionID.micMute.rawValue] = micMute.isMuted
         audioOutput.refresh()
+        bluetoothAudio.refresh()
     }
 
     /// Called from FocusOnboardingView when the user taps "Done".

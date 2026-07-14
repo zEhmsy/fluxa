@@ -23,6 +23,15 @@ final class KeepAwakeService {
     /// Whether the Keep Awake assertion is currently active.
     var isActive: Bool { assertionID != 0 }
 
+    /// When the assertion auto-expires (nil = active indefinitely or inactive).
+    private(set) var expiresAt: Date?
+
+    /// Pending auto-deactivation task for timed activations.
+    private var expiryTask: Task<Void, Never>?
+
+    /// Called after a timed activation expires, so the UI can refresh its toggle state.
+    var onAutoDeactivate: (() -> Void)?
+
     // MARK: - Lifecycle
 
     deinit {
@@ -36,24 +45,43 @@ final class KeepAwakeService {
     // MARK: - Public API
 
     /// Creates an IOKit power management assertion to prevent display sleep.
-    func activate() throws {
-        guard assertionID == 0 else { return } // Already active
+    /// - Parameter duration: seconds until automatic deactivation; nil = indefinitely.
+    ///   A new call replaces any previous timer (e.g. indefinite → 15 min).
+    func activate(for duration: TimeInterval? = nil) throws {
+        if assertionID == 0 {
+            let result = IOPMAssertionCreateWithName(
+                kIOPMAssertionTypeNoDisplaySleep as CFString,
+                IOPMAssertionLevel(kIOPMAssertionLevelOn),
+                "Fluxa Keep Awake — user requested" as CFString,
+                &assertionID
+            )
 
-        let result = IOPMAssertionCreateWithName(
-            kIOPMAssertionTypeNoDisplaySleep as CFString,
-            IOPMAssertionLevel(kIOPMAssertionLevelOn),
-            "Fluxa Keep Awake — user requested" as CFString,
-            &assertionID
-        )
+            guard result == kIOReturnSuccess else {
+                assertionID = 0
+                throw FluxaError.ioKitFailure(result)
+            }
+        }
 
-        guard result == kIOReturnSuccess else {
-            assertionID = 0
-            throw FluxaError.ioKitFailure(result)
+        expiryTask?.cancel()
+        expiryTask = nil
+        expiresAt = nil
+
+        if let duration {
+            expiresAt = Date(timeIntervalSinceNow: duration)
+            expiryTask = Task { [weak self] in
+                try? await Task.sleep(for: .seconds(duration))
+                guard !Task.isCancelled else { return }
+                self?.deactivate()
+                self?.onAutoDeactivate?()
+            }
         }
     }
 
     /// Releases the IOKit assertion, allowing normal sleep behavior to resume.
     func deactivate() {
+        expiryTask?.cancel()
+        expiryTask = nil
+        expiresAt = nil
         guard assertionID != 0 else { return }
         IOPMAssertionRelease(assertionID)
         assertionID = 0

@@ -22,16 +22,20 @@ struct ActionRowView: View {
     // MARK: - Body
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 11) {
             iconView
             labelsView
-            Spacer()
+            Spacer(minLength: 8)
             trailingControl
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 9)
-        .background(isHovering ? Color.primary.opacity(0.05) : Color.clear)
-        .contentShape(Rectangle())
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color.primary.opacity(isHovering ? 0.07 : 0))
+        )
+        .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .padding(.horizontal, 6)
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.12)) { isHovering = hovering }
         }
@@ -43,18 +47,24 @@ struct ActionRowView: View {
     /// For toggles: returns activeIcon when on, icon when off.
     /// For other control styles: always returns the base icon.
     private var resolvedIcon: String {
-        if case .toggle = action.controlStyle, isToggleOn, let active = action.activeIcon {
+        if isTogglable, isToggleOn, let active = action.activeIcon {
             return active
         }
         return action.icon
     }
 
+    /// True for both plain and timed toggles.
+    private var isTogglable: Bool {
+        action.controlStyle == .toggle || action.controlStyle == .timedToggle
+    }
+
     private var iconView: some View {
         Image(systemName: resolvedIcon)
-            .font(.system(size: 14, weight: .medium))
-            .foregroundStyle(iconColor)
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(isToggleOn ? AnyShapeStyle(.white) : AnyShapeStyle(iconColor))
             .frame(width: 28, height: 28)
             .background(iconBackground, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+            .animation(.easeOut(duration: 0.15), value: isToggleOn)
     }
 
     // MARK: - Labels
@@ -86,6 +96,12 @@ struct ActionRowView: View {
         case .toggle:
             toggleControl
 
+        case .timedToggle:
+            HStack(spacing: 8) {
+                timerMenu
+                toggleControl
+            }
+
         case .momentaryButton(let label):
             Button(label) {
                 Task { await viewModel.triggerAction(action.id, closePopover: closePopover) }
@@ -94,7 +110,11 @@ struct ActionRowView: View {
             .disabled(viewModel.isBusy)
 
         case .menu:
-            audioDeviceMenu
+            if action.id == .bluetoothAudio {
+                bluetoothDeviceMenu
+            } else {
+                audioDeviceMenu
+            }
 
         case .unavailable(let reason):
             Image(systemName: "minus.circle")
@@ -111,9 +131,59 @@ struct ActionRowView: View {
         )
         return Toggle("", isOn: binding)
             .labelsHidden()
-            .tint(.blue)
+            .toggleStyle(.switch)
+            .controlSize(.mini)
+            .tint(action.tint)
             .disabled(viewModel.isBusy)
-            .scaleEffect(0.85)
+    }
+
+    /// Timer menu for timed activation (Keep Awake: 15 min / 1 h / 4 h).
+    private var timerMenu: some View {
+        Menu {
+            Button("15 minutes") { viewModel.activateKeepAwake(for: 15 * 60) }
+            Button("1 hour") { viewModel.activateKeepAwake(for: 60 * 60) }
+            Button("4 hours") { viewModel.activateKeepAwake(for: 4 * 60 * 60) }
+            Divider()
+            Button("Indefinitely") { viewModel.activateKeepAwake(for: nil) }
+        } label: {
+            Image(systemName: "timer")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(.secondary)
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .disabled(viewModel.isBusy)
+        .help("Keep awake for a limited time")
+    }
+
+    /// Inline Menu listing paired Bluetooth audio devices; selecting one
+    /// connects it (or disconnects it when already connected).
+    private var bluetoothDeviceMenu: some View {
+        Menu {
+            ForEach(viewModel.bluetoothAudio.devices) { device in
+                Button {
+                    Task { await viewModel.toggleBluetoothDevice(device.id) }
+                } label: {
+                    HStack {
+                        Text(device.name)
+                        if device.isConnected {
+                            Spacer()
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .menuStyle(.borderlessButton)
+        .fixedSize()
+        .disabled(viewModel.bluetoothAudio.devices.isEmpty || viewModel.isBusy)
     }
 
     /// Inline Menu for audio output device selection.
@@ -151,24 +221,20 @@ struct ActionRowView: View {
     }
 
     private var iconColor: Color {
-        switch action.controlStyle {
-        case .unavailable:
-            return .secondary
-        case .toggle:
-            return isToggleOn ? .blue : .secondary
-        case .momentaryButton, .menu:
-            return .primary
-        }
+        if case .unavailable = action.controlStyle { return .secondary }
+        return action.tint
     }
 
-    private var iconBackground: Color {
+    private var iconBackground: AnyShapeStyle {
         switch action.controlStyle {
         case .unavailable:
-            return Color.secondary.opacity(0.08)
-        case .toggle:
-            return isToggleOn ? Color.blue.opacity(0.12) : Color.secondary.opacity(0.08)
+            return AnyShapeStyle(Color.secondary.opacity(0.08))
+        case .toggle, .timedToggle:
+            return isToggleOn
+                ? AnyShapeStyle(action.tint.gradient)
+                : AnyShapeStyle(action.tint.opacity(0.13))
         case .momentaryButton, .menu:
-            return Color.secondary.opacity(0.08)
+            return AnyShapeStyle(action.tint.opacity(0.13))
         }
     }
 }
