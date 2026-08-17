@@ -23,8 +23,12 @@ cp "${RESOURCES_DIR}/Info.plist" "${BUNDLE_NAME}/Contents/"
 # SwiftPM resource bundle — resolved at runtime via Bundle.fluxaResources
 cp -R "${BUILD_DIR}/${BINARY_NAME}_${BINARY_NAME}.bundle" "${BUNDLE_NAME}/Contents/Resources/"
 
-echo "🔐 Signing app bundle..."
-codesign --force --sign - --entitlements Fluxa.entitlements "${BUNDLE_NAME}"
+# Ad-hoc by default. Set CODESIGN_IDENTITY to a stable identity (e.g. an Apple Development
+# certificate) so macOS keeps keychain and permission grants across rebuilds — it ties them to the
+# signature, and an ad-hoc one changes on every build.
+SIGN_IDENTITY="${CODESIGN_IDENTITY:--}"
+echo "🔐 Signing app bundle (identity: ${SIGN_IDENTITY})..."
+codesign --force --sign "${SIGN_IDENTITY}" --entitlements Fluxa.entitlements "${BUNDLE_NAME}"
 
 echo "✅ Done! Bundle created: ${BUNDLE_NAME}"
 echo ""

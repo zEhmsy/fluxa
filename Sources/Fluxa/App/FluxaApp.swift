@@ -72,6 +72,24 @@ struct FluxaApp: App {
         .windowResizability(.contentSize)
         .defaultPosition(.center)
 
+        // Dedicated window for the Trackpad Scale.
+        Window("Trackpad Scale", id: "trackpad-scale") {
+            TrackpadScaleWindowView()
+                .environment(viewModel)
+                .environment(settings)
+        }
+        .windowResizability(.contentSize)
+        .defaultPosition(.center)
+
+        // Agent quota charts, opened by clicking the popover's usage strip.
+        Window("Agent Usage", id: "agent-usage") {
+            AgentUsageWindowView()
+                .environment(viewModel)
+                .environment(settings)
+        }
+        .windowResizability(.contentSize)
+        .defaultPosition(.center)
+
         // Customize as a standalone window, NOT a sheet: the MenuBarExtra
         // window auto-dismisses whenever it loses key status, so a sheet
         // attached to it dies on any interaction that moves focus.
@@ -86,28 +104,21 @@ struct FluxaApp: App {
 
     // MARK: - Menu Bar Icon
 
+    /// The switch mark, followed by a reading for each agent pinned in Customize. Reading the
+    /// observable usage service here is what makes the strip refresh itself: a new percentage
+    /// re-renders the label, which re-renders the status item.
     @ViewBuilder
     private var menuBarIcon: some View {
-        if let image = loadMenuBarIcon() {
+        if let image = MenuBarStripRenderer.image(segments: menuBarSegments) {
             Image(nsImage: image)
         } else {
             Image(systemName: "bolt.circle.fill")
         }
     }
 
-    /// Loads fluxa.icns from the SPM resource bundle and resizes it for the menu bar (18pt).
-    private func loadMenuBarIcon() -> NSImage? {
-        guard let url = Bundle.fluxaResources.url(forResource: "fluxa", withExtension: "icns"),
-              let image = NSImage(contentsOf: url) else {
-            return nil
-        }
-        let size = NSSize(width: 18, height: 18)
-        let resized = NSImage(size: size)
-        resized.lockFocus()
-        image.draw(in: NSRect(origin: .zero, size: size))
-        resized.unlockFocus()
-        // Template mode: macOS tints the icon to match the menu bar (light/dark)
-        resized.isTemplate = true
-        return resized
+    private var menuBarSegments: [MenuBarStripRenderer.Segment] {
+        MenuBarStripRenderer.segments(
+            for: viewModel.agentUsage.selectedMetrics(ids: settings.usageMetricIDs)
+        )
     }
 }

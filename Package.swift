@@ -13,8 +13,13 @@ let package = Package(
             path: "Sources/Fluxa",
             exclude: ["Resources/Info.plist"],
             resources: [
-                // fluxa.icns is loaded at runtime for the menu bar icon
-                .copy("Resources/fluxa.icns")
+                // fluxa.icns is the app/popover icon
+                .copy("Resources/fluxa.icns"),
+                // Vector switch mark for the menu bar, generated from new-icon.svg with
+                // `rsvg-convert -f pdf -o Sources/Fluxa/Resources/menu-icon.pdf new-icon.svg`
+                .copy("Resources/menu-icon.pdf"),
+                // Agent marks (vendor logos) as vector PDFs, generated from the SVGs beside them
+                .copy("Resources/AgentIcons")
             ],
             // Note: SPM forbids Info.plist as a top-level resource.
             // Instead it is embedded directly into the binary's __TEXT,__info_plist section

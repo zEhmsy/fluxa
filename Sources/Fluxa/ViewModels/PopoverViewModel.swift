@@ -26,6 +26,8 @@ final class PopoverViewModel {
     private let micMute = MicrophoneMuteService()
     let launchAtLogin = LaunchAtLoginService()
     let lidAngleMonitor = LidAngleMonitor()
+    let trackpadWeight = TrackpadWeightService()
+    let agentUsage = AgentUsageService()
 
     // MARK: - Observable State
 
@@ -43,6 +45,12 @@ final class PopoverViewModel {
 
     /// Signals PopoverRootView to open the Lid Angle monitor window.
     var isShowingLidAngle = false
+
+    /// Signals PopoverRootView to open the Trackpad Scale window.
+    var isShowingTrackpadScale = false
+
+    /// Signals PopoverRootView to open the Agent Usage charts window.
+    var isShowingAgentUsage = false
 
     /// Whether an async action is in progress (disables controls during transitions).
     var isBusy = false
@@ -90,6 +98,13 @@ final class PopoverViewModel {
         audioOutput.refresh()
         audioOutput.startMonitoring()
         // micMute starts monitoring in its own init
+
+        // Keep the menu bar strip current without the popover ever being opened. Gated on the
+        // user's selection, so an install with no pinned agent makes no request.
+        agentUsage.startAutoRefresh(
+            isEnabled: { [settings] in !settings.usageMetricIDs.isEmpty },
+            interval: { [settings] in settings.usageRefreshInterval }
+        )
 
         // Keep the toggle in sync when a timed Keep Awake expires on its own.
         keepAwake.onAutoDeactivate = { [weak self] in
@@ -212,6 +227,9 @@ final class PopoverViewModel {
             case .lidAngle:
                 isShowingLidAngle = true
 
+            case .trackpadScale:
+                isShowingTrackpadScale = true
+
             default:
                 break
             }
@@ -259,6 +277,8 @@ final class PopoverViewModel {
         toggleStates[ActionID.micMute.rawValue] = micMute.isMuted
         audioOutput.refresh()
         bluetoothAudio.refresh()
+        // Fire-and-forget: throttled internally, and a failure only affects the usage strip.
+        agentUsage.refresh()
     }
 
     /// Called from FocusOnboardingView when the user taps "Done".
@@ -289,6 +309,8 @@ final class PopoverViewModel {
         audioOutput.stopMonitoring()
         micMute.cleanup()
         micMute.stopMonitoring()
+        trackpadWeight.stop()
+        agentUsage.stopAutoRefresh()
     }
 
     // MARK: - Private

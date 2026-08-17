@@ -37,6 +37,26 @@ final class AppSettings {
         didSet { UserDefaults.standard.set(focusModeEnabled, forKey: Keys.focusModeEnabled) }
     }
 
+    /// Agent quota metrics pinned to the usage strip under the popover header, as
+    /// "provider.resource" ids in display order. Empty = the strip is hidden, which is what an
+    /// install without OpenUsage (or without a choice made) gets.
+    var usageMetricIDs: [String] {
+        didSet { save(usageMetricIDs, forKey: Keys.usageMetricIDs) }
+    }
+
+    /// How many chips fit the 304pt popover before the percentages stop being readable.
+    static let maxUsageMetrics = 3
+
+    /// How often agent quotas are re-read in the background.
+    var usageRefreshInterval: UsageRefreshInterval {
+        didSet { UserDefaults.standard.set(usageRefreshInterval.rawValue, forKey: Keys.usageRefreshInterval) }
+    }
+
+    /// Preferred display unit for the trackpad scale readout.
+    var trackpadScaleUnit: WeightUnit {
+        didSet { UserDefaults.standard.set(trackpadScaleUnit.rawValue, forKey: Keys.trackpadScaleUnit) }
+    }
+
     // MARK: - Computed
 
     /// Actions in display order, excluding hidden ones, with resolved QuickAction metadata.
@@ -75,6 +95,17 @@ final class AppSettings {
         // Focus Mode
         focusModeOnboardingComplete = defaults.bool(forKey: Keys.focusModeOnboardingComplete)
         focusModeEnabled = defaults.bool(forKey: Keys.focusModeEnabled)
+
+        // Usage strip: default to Claude's session window on first run. It resolves to nothing —
+        // and the strip stays hidden — on a Mac without OpenUsage or without Claude configured,
+        // so the default can't add height to a popover that has no data to put there.
+        usageMetricIDs = defaults.array(forKey: Keys.usageMetricIDs) as? [String] ?? ["claude.session"]
+        usageRefreshInterval = defaults.string(forKey: Keys.usageRefreshInterval)
+            .flatMap(UsageRefreshInterval.init(rawValue:)) ?? .fallback
+
+        // Trackpad scale: the hardware reports grams directly, so only the unit is stored
+        trackpadScaleUnit = (defaults.string(forKey: Keys.trackpadScaleUnit))
+            .flatMap(WeightUnit.init(rawValue:)) ?? .grams
     }
 
     // MARK: - Private
@@ -85,6 +116,9 @@ final class AppSettings {
         static let showSubtitles = "fluxa.showSubtitles"
         static let focusModeOnboardingComplete = "fluxa.focusModeOnboardingComplete"
         static let focusModeEnabled = "fluxa.focusModeEnabled"
+        static let trackpadScaleUnit = "fluxa.trackpadScaleUnit"
+        static let usageMetricIDs = "fluxa.usageMetricIDs"
+        static let usageRefreshInterval = "fluxa.usageRefreshInterval"
     }
 
     private func save(_ value: [String], forKey key: String) {

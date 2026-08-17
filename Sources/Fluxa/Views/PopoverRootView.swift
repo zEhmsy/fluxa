@@ -20,6 +20,15 @@ struct PopoverRootView: View {
 
             Divider()
 
+            // MARK: Agent Usage Strip (only when the user pinned something in Customize)
+            if AgentUsageStripView.hasContent(viewModel: viewModel, settings: settings) {
+                AgentUsageStripView(closePopover: closePopover)
+                    .environment(viewModel)
+                    .environment(settings)
+
+                Divider()
+            }
+
             // MARK: Error Banner (conditional)
             if let error = viewModel.errorMessage {
                 errorBanner(message: error)
@@ -55,6 +64,21 @@ struct PopoverRootView: View {
             if showing {
                 openWindow(id: "lid-angle")
                 viewModel.isShowingLidAngle = false
+            }
+        }
+        .onChange(of: viewModel.isShowingTrackpadScale) { _, showing in
+            if showing {
+                openWindow(id: "trackpad-scale")
+                // The window must be key to receive trackpad pressure events.
+                NSApp.activate(ignoringOtherApps: true)
+                viewModel.isShowingTrackpadScale = false
+            }
+        }
+        .onChange(of: viewModel.isShowingAgentUsage) { _, showing in
+            if showing {
+                openWindow(id: "agent-usage")
+                NSApp.activate(ignoringOtherApps: true)
+                viewModel.isShowingAgentUsage = false
             }
         }
         .onChange(of: viewModel.isShowingCustomize) { _, showing in

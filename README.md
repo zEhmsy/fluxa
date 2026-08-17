@@ -25,7 +25,7 @@ Built entirely in **Swift + SwiftUI** with zero third-party dependencies — jus
 
 ## ✨ Features
 
-Thirteen quick actions, every one backed by a real system API — no fake toggles.
+Fifteen quick actions, every one backed by a real system API — no fake toggles.
 
 | Action | Type | Description |
 |--------|------|-------------|
@@ -42,6 +42,8 @@ Thirteen quick actions, every one backed by a real system API — no fake toggle
 | 🎧 **Bluetooth Audio** | Menu | Connects/disconnects paired AirPods & headphones — no Bluetooth menu digging |
 | 🎤 **Microphone Mute** | Toggle | Mutes/unmutes the default input device via CoreAudio |
 | 📐 **Lid Angle** | Window | Live MacBook lid angle readout straight from the hinge sensor (Apple Silicon & Intel) |
+| ⚖️ **Trackpad Scale** | Window | Weighs small objects on the Force Touch trackpad's strain gauges |
+| 📊 **Agent Usage** | Strip + Window | Live Claude & Codex quota percentages in the menu bar, with usage charts |
 
 ### Beyond the actions
 
@@ -51,6 +53,60 @@ Thirteen quick actions, every one backed by a real system API — no fake toggle
 - **Menu bar native** — no Dock icon; template icon adapts to light/dark menu bars
 - **Multi-display aware** — Screen Clean and Lock Keyboard cover every connected screen
 - **Global shortcut & launch at login** built in
+
+---
+
+## 📊 Agent usage
+
+Fluxa reads how much of your AI coding agents' quota you've burned and keeps it in the menu bar.
+
+```
+ ⏻  ✳ 74%   19%          ← the switch mark, then one reading per pinned agent
+```
+
+- **Menu bar strip** — each selected agent's mark and percentage, rendered as one template image so it tints itself for light and dark menu bars
+- **Popover strip** — the same readings with severity colors (blue → amber at 75% → red at 90%) and a meter per window
+- **Charts window** — click the strip: live quota meters plus a GitHub-style contribution grid of tokens spent per day
+- **Configurable in Customize** — pick up to three quota windows and the refresh interval
+
+### Where the numbers come from
+
+Two different sources, because they answer different questions.
+
+**Live quotas** come from each agent's own usage endpoint — the same ones its CLI calls:
+
+| Agent | Endpoint | Credentials |
+|-------|----------|-------------|
+| Claude | `GET api.anthropic.com/api/oauth/usage` | `~/.claude/.credentials.json`, else the `Claude Code-credentials` keychain item |
+| Codex | `GET chatgpt.com/backend-api/wham/usage` | `~/.codex/auth.json` |
+
+**Fluxa never refreshes or rewrites those credentials.** Both providers rotate the refresh token when it's used, so renewing one here would invalidate the token Claude Code or Codex is holding — breaking the very login being read. An expired token is reported as expired; running the agent once mints a fresh one.
+
+**Historical charts** come from the agents' own session logs (`~/.claude/projects/**/*.jsonl`, `~/.codex/sessions/**/*.jsonl`), which already hold exact per-turn token counts going back weeks. That's why the grid is populated the first time you open it instead of slowly filling from the day you enable it.
+
+Aggregation details that matter for correctness:
+
+- Days are bucketed by **local** calendar day, not UTC — bucketing by UTC moves an evening's work to the next day for anyone east of Greenwich
+- Claude turns are de-duplicated on `message.id`: resumed sessions and sidechains replay the same turn into the log
+- Codex `token_count` events whose cumulative total hasn't moved are re-emitted stale snapshots, not new work, and are skipped
+
+Scanning is cached per file in `~/Library/Application Support/Fluxa/`. Session logs are append-only, so a file whose size and modification date are unchanged is never re-read — only the sessions being written right now.
+
+### Privacy
+
+Everything stays on your Mac. Fluxa talks to the agents' usage endpoints and to nothing else — no analytics, no telemetry, no server of its own. Token counts, the scan cache, and your preferences live in `~/Library/Application Support/Fluxa/` and `UserDefaults`, never in the repository or a release artifact.
+
+### Refresh interval
+
+The choices are derived from what the data can express, not round numbers. A 5-hour session window spends 100 percentage points over 300 minutes, so at a steady burn **one percentage point takes three minutes** — polling faster cannot return a different integer, it only spends requests.
+
+| Setting | Movement between reads |
+|---------|------------------------|
+| Only when opened | Menu bar can lag behind |
+| Every 3 minutes | The fastest that can show a new number |
+| Every 5 minutes *(default)* | ≈1.7% of a session window |
+| Every 15 / 30 minutes | ≈5% / ≈10% of a session window |
+| Every hour | Fine for weekly limits, coarse for a session |
 
 ---
 
@@ -106,6 +162,15 @@ Fluxa asks only for what a feature actually needs, when you first use it:
 | **Bluetooth** | Bluetooth Audio | First connection |
 | **Accessibility** *(optional)* | Lock Keyboard | Stricter key interception; works without it too |
 | **Shortcuts app** | Focus Mode | One-time guided setup (see below) |
+| **Keychain** | Agent Usage (Claude) | First read of the `Claude Code-credentials` item — choose *Always Allow* |
+| **Network** | Agent Usage | Requests to the agents' usage endpoints only |
+
+> **Keychain prompt returns after every rebuild.** macOS ties the "Always Allow" grant to the app's
+> code signature, and `build.sh` signs ad-hoc, so each build is a new app as far as the keychain is
+> concerned. Signing with a stable Apple Development identity (free with Xcode) makes it stick:
+> ```bash
+> CODESIGN_IDENTITY="Apple Development: you@example.com" ./build.sh
+> ```
 
 ### Focus Mode setup
 
@@ -137,7 +202,9 @@ Sources/Fluxa/
 │   └── AppDelegate.swift            # Cleanup on termination
 ├── Models/
 │   ├── QuickAction.swift            # ActionID, ControlStyle, tints, ActionCatalog
-│   └── AppSettings.swift            # @Observable, UserDefaults persistence
+│   ├── AppSettings.swift            # @Observable, UserDefaults persistence
+│   ├── AgentUsage.swift             # AgentUsageMetric: one agent quota window
+│   └── UsageRefreshInterval.swift   # Poll intervals derived from window size
 ├── ViewModels/
 │   └── PopoverViewModel.swift       # Central coordinator, owns all services
 ├── Views/
@@ -147,7 +214,13 @@ Sources/Fluxa/
 │   ├── CustomizeView.swift          # Reorder & visibility editor (own window)
 │   ├── BottomBarView.swift          # Customize + Quit
 │   ├── FocusOnboardingView.swift    # Focus Mode setup wizard
-│   └── LidAngleWindowView.swift     # Animated lid-angle goniometer
+│   ├── LidAngleWindowView.swift     # Animated lid-angle goniometer
+│   ├── TrackpadScaleWindowView.swift# Force Touch scale readout
+│   ├── AgentUsageStripView.swift    # Quota strip under the popover header
+│   ├── AgentUsageWindowView.swift   # Quota meters + contribution grids
+│   ├── ContributionGridView.swift   # GitHub-style calendar of daily tokens
+│   ├── MenuBarStripRenderer.swift   # Menu bar image: mark + per-agent readings
+│   └── AgentMarks.swift             # Vector agent logos, template-rendered
 ├── Services/
 │   ├── KeepAwakeService.swift       # IOKit power assertion + expiry timer
 │   ├── DarkModeService.swift        # System Events via osascript
@@ -162,12 +235,19 @@ Sources/Fluxa/
 │   ├── MicrophoneMuteService.swift  # CoreAudio input volume control
 │   ├── BluetoothAudioService.swift  # IOBluetooth paired-device connect
 │   ├── LidAngleMonitor.swift        # HID sensor (Apple Silicon) + IORegistry (Intel)
+│   ├── TrackpadWeightService.swift  # MultitouchSupport via dlopen, grams from pressure
+│   ├── AgentCredentials.swift       # Read-only Claude/Codex credential lookup
+│   ├── AgentUsageReaders.swift      # Per-agent usage endpoints & mapping
+│   ├── AgentUsageService.swift      # Orchestration, polling, selection
+│   ├── AgentLogScanner.swift        # Daily tokens from session logs (cached)
 │   ├── GlobalShortcutService.swift  # Carbon hotkey
 │   ├── LaunchAtLoginService.swift   # SMAppService
 │   ├── ShellRunner.swift            # Shared Process helper
 │   └── FluxaError.swift             # Centralized error types
 └── Resources/
     ├── fluxa.icns                   # App icon
+    ├── menu-icon.pdf                # Menu bar switch mark (from new-icon.svg)
+    ├── AgentIcons/                  # Agent marks as vector PDFs + their SVG sources
     └── Info.plist                   # LSUIElement, permissions text, metadata
 ```
 
@@ -188,6 +268,11 @@ Sources/Fluxa/
 | Lid Angle | Sensor API differs by platform | HID feature report on Apple Silicon, IORegistry on Intel |
 | Desktop icons / hidden files | Need a Finder restart | `killall Finder` — brief flicker is expected |
 | App Sandbox | Incompatible with the above | Ad-hoc signing; not App Store eligible |
+| Trackpad Scale | Trackpad reports force only under a capacitive touch | Rest a finger on it, place the object beside it; the strain gauges measure total load |
+| Trackpad Scale | `NSEvent.pressure` only fires during a click | Reads `MultitouchSupport` via `dlopen`; layout is validated at runtime, feature hides itself if it changes |
+| Agent quotas | Refresh tokens rotate on use | Read-only: an expired token is reported, never renewed behind the agent's back |
+| Agent history | No history endpoint exists | Rebuilt from the agents' own session logs |
+| Codex history | Child sessions replay a parent's history | Not filtered — measured at 0.08% on one day out of nine |
 
 ---
 
@@ -205,6 +290,14 @@ Regenerate the app icon from code:
 ```bash
 swift generate_icon.swift
 cp fluxa.icns Sources/Fluxa/Resources/
+```
+
+Regenerate the vector marks after editing an SVG (needs `rsvg-convert`, e.g. `brew install librsvg`):
+
+```bash
+rsvg-convert -f pdf -o Sources/Fluxa/Resources/menu-icon.pdf new-icon.svg
+rsvg-convert -f pdf -o Sources/Fluxa/Resources/AgentIcons/claude.pdf \
+  Sources/Fluxa/Resources/AgentIcons/claude.svg
 ```
 
 ---

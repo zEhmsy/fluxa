@@ -4,9 +4,37 @@
 <dict>
 	<key>files</key>
 	<dict>
+		<key>Resources/Fluxa_Fluxa.bundle/AgentIcons/antigravity.pdf</key>
+		<data>
+		NYDhyUqN0Az/25Mjh+m+hIycCuE=
+		</data>
+		<key>Resources/Fluxa_Fluxa.bundle/AgentIcons/antigravity.svg</key>
+		<data>
+		z1toSlgbvPS+b2f3QWhl0v832uA=
+		</data>
+		<key>Resources/Fluxa_Fluxa.bundle/AgentIcons/claude.pdf</key>
+		<data>
+		zVDvUFaVCkXZUjZHrLA0BxndG6Q=
+		</data>
+		<key>Resources/Fluxa_Fluxa.bundle/AgentIcons/claude.svg</key>
+		<data>
+		H4ybNUjkHRHaBvMoirOeTRncH20=
+		</data>
+		<key>Resources/Fluxa_Fluxa.bundle/AgentIcons/codex.pdf</key>
+		<data>
+		T9QIh6aW6052lcoRVQ2ASxLYHuc=
+		</data>
+		<key>Resources/Fluxa_Fluxa.bundle/AgentIcons/codex.svg</key>
+		<data>
+		xn3gtmO46mTWKh9uo5sFNW4pNcY=
+		</data>
 		<key>Resources/Fluxa_Fluxa.bundle/fluxa.icns</key>
 		<data>
 		x4o6miUnsAY4mt8jGE3ILGtVjD0=
+		</data>
+		<key>Resources/Fluxa_Fluxa.bundle/menu-icon.pdf</key>
+		<data>
+		IYuYxqEO9JA4eBRHZ7xKRDJhVgM=
 		</data>
 		<key>Resources/fluxa.icns</key>
 		<data>
@@ -15,11 +43,60 @@
 	</dict>
 	<key>files2</key>
 	<dict>
+		<key>Resources/Fluxa_Fluxa.bundle/AgentIcons/antigravity.pdf</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			OQRlywLRUFWU9C4793Sfr4Ii/3+R1eGQRR4EXfxYbf8=
+			</data>
+		</dict>
+		<key>Resources/Fluxa_Fluxa.bundle/AgentIcons/antigravity.svg</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			GofOBNDDRfQmkYWs2n6IkzOjWBOsXYcsf4pk+4VO80g=
+			</data>
+		</dict>
+		<key>Resources/Fluxa_Fluxa.bundle/AgentIcons/claude.pdf</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			2+4XyPEwBGDwBtYx1Xt6Y9GaQK2jlawV5BaPA2T/XYY=
+			</data>
+		</dict>
+		<key>Resources/Fluxa_Fluxa.bundle/AgentIcons/claude.svg</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			PJ+sapFYB1C6ZBB4/Qy3IJJp8GlPjg9XRHX23/caOME=
+			</data>
+		</dict>
+		<key>Resources/Fluxa_Fluxa.bundle/AgentIcons/codex.pdf</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			kvAuTaZY/ltF7vztl8xEQvPexQem2D1VBXiWS6t6tEs=
+			</data>
+		</dict>
+		<key>Resources/Fluxa_Fluxa.bundle/AgentIcons/codex.svg</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			9IwZVh3bLOO+YkxCis6pjQfYkk1ekcB6V7hdVVxhoTs=
+			</data>
+		</dict>
 		<key>Resources/Fluxa_Fluxa.bundle/fluxa.icns</key>
 		<dict>
 			<key>hash2</key>
 			<data>
 			R7rWVrkHKM9XD1q029iNca+NM5ZehV9Q/kUgO/odvmU=
+			</data>
+		</dict>
+		<key>Resources/Fluxa_Fluxa.bundle/menu-icon.pdf</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			+Iosag2AjSVO6fXdGBl+VGRFO049LEeMQESDLihxE5M=
 			</data>
 		</dict>
 		<key>Resources/fluxa.icns</key>

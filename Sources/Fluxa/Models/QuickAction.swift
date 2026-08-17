@@ -18,6 +18,7 @@ enum ActionID: String, CaseIterable, Codable, Identifiable {
     case bluetoothAudio // IOBluetooth quick-connect for AirPods/headphones
     case micMute      // CoreAudio input volume control (mute/unmute default input device)
     case lidAngle     // IORegistry lid angle monitor (MacBook only)
+    case trackpadScale // Force Touch trackpad used as a scale for small objects
 
     var id: String { rawValue }
 }
@@ -183,6 +184,15 @@ enum ActionCatalog {
             icon: "gyroscope",
             activeIcon: nil,
             tint: .green,
+            controlStyle: .momentaryButton(label: "Open")
+        ),
+        QuickAction(
+            id: .trackpadScale,
+            title: "Trackpad Scale",
+            subtitle: "Weigh small objects on the trackpad",
+            icon: "scalemass",
+            activeIcon: nil,
+            tint: .yellow,
             controlStyle: .momentaryButton(label: "Open")
         ),
     ]

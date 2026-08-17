@@ -17,5 +17,7 @@ DerivedData/
 .vscode/
 .idea/
 
-# Claude
+# Claude / local agent tooling state — session transcripts and memory, never publish
 .claude/
+.claude-flow/
+CLAUDE.md
