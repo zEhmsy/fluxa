@@ -21,3 +21,9 @@ DerivedData/
 .claude/
 .claude-flow/
 CLAUDE.md
+
+# Planning & internal docs
+ROADMAP.md
+
+# Release artifacts (tarballs are built, not versioned)
+*.tar.gz
