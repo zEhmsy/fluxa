@@ -13,24 +13,56 @@ struct LidAngleWindowView: View {
     private var monitor: LidAngleMonitor { viewModel.lidAngleMonitor }
 
     var body: some View {
-        ZStack {
-            // Dark background
-            Color(red: 0.08, green: 0.08, blue: 0.10)
-                .ignoresSafeArea()
+        VStack(spacing: 14) {
+            FluxaToolHeader(
+                title: "Lid Angle",
+                subtitle: "Live hinge sensor",
+                systemImage: "laptopcomputer",
+                tint: FluxaTheme.blue
+            )
 
             if monitor.isAvailable {
-                VStack(spacing: 20) {
-                    MacBookProfileView(angle: displayAngle)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                FluxaToolCard {
+                    VStack(spacing: 4) {
+                        HStack(alignment: .top) {
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(String(format: "%.1f°", displayAngle))
+                                    .font(.system(size: 32, weight: .semibold, design: .rounded))
+                                    .monospacedDigit()
+                                    .contentTransition(.numericText())
+                                    .foregroundStyle(angleColor)
 
-                    statusLabel
-                        .padding(.bottom, 16)
+                                Text(angleDescription)
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            Spacer()
+
+                            FluxaStatusBadge(
+                                text: displayAngle < 5 ? "CLOSED" : "LIVE",
+                                color: statusColor
+                            )
+                        }
+
+                        MacBookProfileView(angle: displayAngle)
+                            .frame(height: 190)
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel("MacBook lid angle")
+                            .accessibilityValue("\(String(format: "%.1f", displayAngle)) degrees")
+                    }
                 }
             } else {
-                unavailableView
+                FluxaToolCard {
+                    unavailableView
+                        .frame(maxHeight: .infinity)
+                }
+                .frame(maxHeight: .infinity)
             }
         }
-        .frame(width: 340, height: 280)
+        .padding(16)
+        .frame(width: 390, height: 360)
+        .background(FluxaTheme.panelBackground)
         .onAppear {
             monitor.startPolling()
             displayAngle = monitor.angleDegrees
@@ -46,29 +78,40 @@ struct LidAngleWindowView: View {
         }
     }
 
-    // MARK: - Subviews
+    // MARK: - Presentation
 
-    private var statusLabel: some View {
-        Group {
-            if displayAngle < 5 {
-                Label("Closed", systemImage: "laptopcomputer.slash")
-                    .font(.system(size: 12, weight: .medium, design: .rounded))
-                    .foregroundStyle(.secondary)
-            } else {
-                Text("Lid Angle")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.tertiary)
-            }
+    private var angleColor: Color {
+        displayAngle > 180 ? FluxaTheme.orange : FluxaTheme.blue
+    }
+
+    private var statusColor: Color {
+        displayAngle < 5 ? Color.secondary : FluxaTheme.green
+    }
+
+    private var angleDescription: String {
+        switch displayAngle {
+        case ..<5: return "Lid closed"
+        case ..<70: return "Low viewing angle"
+        case ..<125: return "Comfortable viewing angle"
+        case ...180: return "Wide open"
+        default: return "Beyond flat"
         }
     }
+
+    // MARK: - Subviews
 
     private var unavailableView: some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 32, weight: .light))
-                .foregroundStyle(.secondary)
+                .font(.system(size: 30, weight: .light))
+                .foregroundStyle(FluxaTheme.orange)
+                .frame(width: 56, height: 56)
+                .background(
+                    FluxaTheme.orange.opacity(0.10),
+                    in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                )
             Text("Lid Angle Not Available")
-                .font(.system(size: 14, weight: .medium))
+                .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(.primary)
             Text("This sensor is only present on MacBook models.")
                 .font(.system(size: 11))
@@ -76,7 +119,7 @@ struct LidAngleWindowView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
         }
-        .colorScheme(.dark)
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -85,17 +128,17 @@ struct LidAngleWindowView: View {
 /// Custom Canvas that draws a side-profile MacBook silhouette:
 /// - A fixed horizontal base line (top case / keyboard deck).
 /// - A screen line that rotates from the hinge based on `angle`.
-/// - A goniometer arc between the two lines with the degree value.
+/// - A goniometer arc between the two lines.
 struct MacBookProfileView: View {
 
     /// Lid angle in degrees (0 = closed, 90 = upright, 180 = fully flat open).
     let angle: Double
 
     // Design constants
-    private let baseColor   = Color(white: 0.65)
-    private let screenColor = Color(white: 0.85)
-    private let arcColor    = Color.blue
-    private let overColor   = Color.orange   // used when angle > 180°
+    private let baseColor = Color.secondary
+    private let screenColor = Color.primary
+    private let arcColor = FluxaTheme.blue
+    private let overColor = FluxaTheme.orange // used when angle > 180°
 
     var body: some View {
         Canvas { ctx, size in
@@ -103,14 +146,18 @@ struct MacBookProfileView: View {
             let baseLen:   CGFloat = size.width  * 0.54
             let screenLen: CGFloat = size.height * 0.52
             let arcRadius: CGFloat = 52
-            let lineWidth: CGFloat = 2.0
+            let lineWidth: CGFloat = 3
 
             // ── 1. Base line (top case, horizontal, going right) ──────────────
             let baseEnd = CGPoint(x: hinge.x + baseLen, y: hinge.y)
             var basePath = Path()
             basePath.move(to: hinge)
             basePath.addLine(to: baseEnd)
-            ctx.stroke(basePath, with: .color(baseColor), lineWidth: lineWidth)
+            ctx.stroke(
+                basePath,
+                with: .color(baseColor),
+                style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
+            )
 
             // Hinge dot
             let dot = Path(ellipseIn: CGRect(
@@ -128,7 +175,11 @@ struct MacBookProfileView: View {
             var screenPath = Path()
             screenPath.move(to: hinge)
             screenPath.addLine(to: screenEnd)
-            ctx.stroke(screenPath, with: .color(screenColor), lineWidth: lineWidth)
+            ctx.stroke(
+                screenPath,
+                with: .color(screenColor),
+                style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
+            )
 
             // Screen tip cap
             let cap = Path(ellipseIn: CGRect(
@@ -152,33 +203,16 @@ struct MacBookProfileView: View {
                 lineWidth: 1.5, lineCap: .round, dash: [4, 3]
             ))
 
-            // ── 4. Degree label on the arc mid-point ─────────────────────────
-            let midθ = (angle / 2.0) * .pi / 180.0
-            let labelRadius: CGFloat = arcRadius + 22
-            let labelCenter = CGPoint(
-                x: hinge.x + cos(midθ) * labelRadius,
-                y: hinge.y - sin(midθ) * labelRadius
-            )
-
-            let formatted = String(format: "%.1f°", angle)
-            ctx.draw(
-                Text(formatted)
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    .foregroundStyle(color.opacity(0.9)),
-                at: labelCenter
-            )
-
-            // ── 5. "Closed" indicator ─────────────────────────────────────────
+            // ── 4. "Closed" indicator ─────────────────────────────────────────
             if angle < 5 {
                 ctx.draw(
-                    Text("Chiuso")
+                    Text("Closed")
                         .font(.system(size: 10, weight: .medium))
                         .foregroundStyle(Color.secondary.opacity(0.7)),
                     at: CGPoint(x: hinge.x + baseLen * 0.45, y: hinge.y - 18)
                 )
             }
         }
-        .colorScheme(.dark)
     }
 }
 
@@ -186,6 +220,7 @@ struct MacBookProfileView: View {
 
 #Preview {
     MacBookProfileView(angle: 105)
-        .frame(width: 340, height: 240)
-        .background(Color(red: 0.08, green: 0.08, blue: 0.10))
+        .frame(width: 360, height: 220)
+        .padding()
+        .background(FluxaTheme.surface)
 }

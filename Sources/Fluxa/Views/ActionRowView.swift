@@ -22,20 +22,19 @@ struct ActionRowView: View {
     // MARK: - Body
 
     var body: some View {
-        HStack(spacing: 11) {
+        HStack(spacing: 10) {
             iconView
             labelsView
             Spacer(minLength: 8)
             trailingControl
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
+        .padding(.horizontal, 9)
+        .padding(.vertical, 7)
         .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(Color.primary.opacity(isHovering ? 0.07 : 0))
+            RoundedRectangle(cornerRadius: FluxaTheme.rowCornerRadius, style: .continuous)
+                .fill(isHovering ? FluxaTheme.hoverFill : Color.clear)
         )
-        .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .padding(.horizontal, 6)
+        .contentShape(RoundedRectangle(cornerRadius: FluxaTheme.rowCornerRadius, style: .continuous))
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.12)) { isHovering = hovering }
         }
@@ -61,10 +60,15 @@ struct ActionRowView: View {
     private var iconView: some View {
         Image(systemName: resolvedIcon)
             .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(isToggleOn ? AnyShapeStyle(.white) : AnyShapeStyle(iconColor))
-            .frame(width: 28, height: 28)
-            .background(iconBackground, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+            .foregroundStyle(iconColor)
+            .frame(width: 30, height: 30)
+            .background(iconBackground, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(iconColor.opacity(isToggleOn ? 0.38 : 0.18), lineWidth: 1)
+            }
             .animation(.easeOut(duration: 0.15), value: isToggleOn)
+            .accessibilityHidden(true)
     }
 
     // MARK: - Labels
@@ -72,7 +76,7 @@ struct ActionRowView: View {
     private var labelsView: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(action.title)
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.primary)
 
             if settings.showSubtitles {
@@ -106,7 +110,7 @@ struct ActionRowView: View {
             Button(label) {
                 Task { await viewModel.triggerAction(action.id, closePopover: closePopover) }
             }
-            .buttonStyle(FluxaButtonStyle())
+            .buttonStyle(FluxaButtonStyle(tint: action.tint))
             .disabled(viewModel.isBusy)
 
         case .menu:
@@ -148,13 +152,20 @@ struct ActionRowView: View {
         } label: {
             Image(systemName: "timer")
                 .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(FluxaTheme.accent)
+                .frame(width: 24, height: 22)
+                .background(FluxaTheme.elevatedSurface, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .stroke(FluxaTheme.border, lineWidth: 1)
+                }
         }
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
         .fixedSize()
         .disabled(viewModel.isBusy)
         .help("Keep awake for a limited time")
+        .accessibilityLabel("Set Keep Awake duration")
     }
 
     /// Inline Menu listing paired Bluetooth audio devices; selecting one
@@ -178,12 +189,19 @@ struct ActionRowView: View {
             HStack(spacing: 4) {
                 Image(systemName: "chevron.up.chevron.down")
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FluxaTheme.accent)
+            }
+            .frame(width: 24, height: 22)
+            .background(FluxaTheme.elevatedSurface, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .stroke(FluxaTheme.border, lineWidth: 1)
             }
         }
         .menuStyle(.borderlessButton)
         .fixedSize()
         .disabled(viewModel.bluetoothAudio.devices.isEmpty || viewModel.isBusy)
+        .accessibilityLabel("Choose Bluetooth audio device")
     }
 
     /// Inline Menu for audio output device selection.
@@ -206,12 +224,19 @@ struct ActionRowView: View {
             HStack(spacing: 4) {
                 Image(systemName: "chevron.up.chevron.down")
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FluxaTheme.accent)
+            }
+            .frame(width: 24, height: 22)
+            .background(FluxaTheme.elevatedSurface, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .stroke(FluxaTheme.border, lineWidth: 1)
             }
         }
         .menuStyle(.borderlessButton)
         .fixedSize()
         .disabled(viewModel.audioOutput.outputDevices.isEmpty)
+        .accessibilityLabel("Choose audio output")
     }
 
     // MARK: - Styling
@@ -228,13 +253,13 @@ struct ActionRowView: View {
     private var iconBackground: AnyShapeStyle {
         switch action.controlStyle {
         case .unavailable:
-            return AnyShapeStyle(Color.secondary.opacity(0.08))
+            return AnyShapeStyle(FluxaTheme.elevatedSurface)
         case .toggle, .timedToggle:
             return isToggleOn
-                ? AnyShapeStyle(action.tint.gradient)
-                : AnyShapeStyle(action.tint.opacity(0.13))
+                ? AnyShapeStyle(action.tint.opacity(0.22))
+                : AnyShapeStyle(action.tint.opacity(0.10))
         case .momentaryButton, .menu:
-            return AnyShapeStyle(action.tint.opacity(0.13))
+            return AnyShapeStyle(action.tint.opacity(0.10))
         }
     }
 }
@@ -243,16 +268,22 @@ struct ActionRowView: View {
 
 /// Compact pill-shaped button style for momentary action triggers.
 struct FluxaButtonStyle: ButtonStyle {
+    var tint: Color = FluxaTheme.accent
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 12, weight: .medium))
-            .foregroundStyle(.primary)
-            .padding(.horizontal, 10)
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(tint)
+            .padding(.horizontal, 9)
             .padding(.vertical, 5)
             .background(
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .fill(Color.primary.opacity(configuration.isPressed ? 0.12 : 0.07))
+                    .fill(tint.opacity(configuration.isPressed ? 0.22 : 0.12))
             )
+            .overlay {
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .stroke(tint.opacity(0.28), lineWidth: 1)
+            }
             .scaleEffect(configuration.isPressed ? 0.96 : 1)
             .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
     }

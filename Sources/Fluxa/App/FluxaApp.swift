@@ -60,6 +60,7 @@ struct FluxaApp: App {
         Window("Focus Mode Setup", id: "focus-onboarding") {
             FocusOnboardingView()
                 .environment(viewModel)
+                .registersFluxaWindow(id: "focus-onboarding")
         }
         .windowResizability(.contentSize)
         .defaultPosition(.center)
@@ -68,6 +69,7 @@ struct FluxaApp: App {
         Window("Lid Angle", id: "lid-angle") {
             LidAngleWindowView()
                 .environment(viewModel)
+                .registersFluxaWindow(id: "lid-angle")
         }
         .windowResizability(.contentSize)
         .defaultPosition(.center)
@@ -77,6 +79,7 @@ struct FluxaApp: App {
             TrackpadScaleWindowView()
                 .environment(viewModel)
                 .environment(settings)
+                .registersFluxaWindow(id: "trackpad-scale")
         }
         .windowResizability(.contentSize)
         .defaultPosition(.center)
@@ -86,17 +89,7 @@ struct FluxaApp: App {
             AgentUsageWindowView()
                 .environment(viewModel)
                 .environment(settings)
-        }
-        .windowResizability(.contentSize)
-        .defaultPosition(.center)
-
-        // Customize as a standalone window, NOT a sheet: the MenuBarExtra
-        // window auto-dismisses whenever it loses key status, so a sheet
-        // attached to it dies on any interaction that moves focus.
-        Window("Customize Fluxa", id: "customize") {
-            CustomizeView()
-                .environment(viewModel)
-                .environment(settings)
+                .registersFluxaWindow(id: "agent-usage")
         }
         .windowResizability(.contentSize)
         .defaultPosition(.center)

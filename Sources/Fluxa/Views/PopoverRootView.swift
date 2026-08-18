@@ -6,48 +6,44 @@ import SwiftUI
 /// Composes the header, action list, error banner, and bottom bar.
 struct PopoverRootView: View {
 
+    private enum Screen {
+        case dashboard
+        case customize
+    }
+
+    /// Cached once rather than decoded every time SwiftUI recomputes the header.
+    private static let headerIcon: NSImage? = {
+        guard let url = Bundle.fluxaResources.url(forResource: "menu-icon", withExtension: "pdf"),
+              let image = NSImage(contentsOf: url) else {
+            return nil
+        }
+        image.isTemplate = true
+        return image
+    }()
+
     @Environment(PopoverViewModel.self) private var viewModel
     @Environment(AppSettings.self) private var settings
     @Environment(\.openWindow) private var openWindow
+
+    @State private var screen = Screen.dashboard
 
     /// Called to close the popover (injected from MenuBarExtra scene).
     var closePopover: (() -> Void)?
 
     var body: some View {
-        VStack(spacing: 0) {
-            // MARK: Header
-            headerView
-
-            Divider()
-
-            // MARK: Agent Usage Strip (only when the user pinned something in Customize)
-            if AgentUsageStripView.hasContent(viewModel: viewModel, settings: settings) {
-                AgentUsageStripView(closePopover: closePopover)
-                    .environment(viewModel)
-                    .environment(settings)
-
-                Divider()
+        ZStack(alignment: .top) {
+            switch screen {
+            case .dashboard:
+                dashboard
+                    .transition(.move(edge: .leading))
+            case .customize:
+                CustomizeView(onDone: closeCustomize)
+                    .transition(.move(edge: .trailing))
             }
-
-            // MARK: Error Banner (conditional)
-            if let error = viewModel.errorMessage {
-                errorBanner(message: error)
-                Divider()
-            }
-
-            // MARK: Action List
-            ActionListView(closePopover: closePopover)
-                .environment(viewModel)
-                .environment(settings)
-
-            Divider()
-
-            // MARK: Bottom Bar
-            BottomBarView()
-                .environment(viewModel)
         }
-        .frame(width: 304)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .frame(width: FluxaTheme.panelWidth)
+        .background(FluxaTheme.panelBackground)
+        .clipped()
         .onAppear {
             viewModel.refreshStates()
             // Capture the MenuBarExtra window so the global hotkey can toggle it.
@@ -55,63 +51,93 @@ struct PopoverRootView: View {
                 viewModel.menuBarWindow = NSApp.keyWindow
             }
         }
-        // Open the onboarding as a standalone Window (not a sheet) so it stays
-        // visible when the user switches to the Shortcuts app to confirm import.
+        // Standalone windows remain coordinated even while Customize replaces the dashboard.
         .onChange(of: viewModel.isShowingFocusOnboarding) { _, showing in
-            if showing { openWindow(id: "focus-onboarding") }
+            if showing { presentWindow(id: "focus-onboarding") }
         }
         .onChange(of: viewModel.isShowingLidAngle) { _, showing in
             if showing {
-                openWindow(id: "lid-angle")
+                presentWindow(id: "lid-angle")
                 viewModel.isShowingLidAngle = false
             }
         }
         .onChange(of: viewModel.isShowingTrackpadScale) { _, showing in
             if showing {
-                openWindow(id: "trackpad-scale")
-                // The window must be key to receive trackpad pressure events.
-                NSApp.activate(ignoringOtherApps: true)
+                presentWindow(id: "trackpad-scale")
                 viewModel.isShowingTrackpadScale = false
             }
         }
         .onChange(of: viewModel.isShowingAgentUsage) { _, showing in
             if showing {
-                openWindow(id: "agent-usage")
-                NSApp.activate(ignoringOtherApps: true)
+                presentWindow(id: "agent-usage")
                 viewModel.isShowingAgentUsage = false
             }
         }
-        .onChange(of: viewModel.isShowingCustomize) { _, showing in
-            if showing {
-                openWindow(id: "customize")
-                // Bring the window to front — the app is a menu bar accessory.
-                NSApp.activate(ignoringOtherApps: true)
-                viewModel.isShowingCustomize = false
+    }
+
+    /// The regular menu-bar screen. Customize is pushed inside the same
+    /// MenuBarExtra window, so opening it never transfers focus to a new window.
+    private var dashboard: some View {
+        VStack(spacing: 0) {
+            // MARK: Header
+            headerView
+
+            // MARK: Agent Usage Strip (only when the user pinned something in Customize)
+            if AgentUsageStripView.hasContent(viewModel: viewModel, settings: settings) {
+                AgentUsageStripView(closePopover: closePopover)
+                    .environment(viewModel)
+                    .environment(settings)
             }
+
+            // MARK: Error Banner (conditional)
+            if let error = viewModel.errorMessage {
+                errorBanner(message: error)
+            }
+
+            // MARK: Action List
+            ActionListView(closePopover: closePopover)
+                .environment(viewModel)
+                .environment(settings)
+
+            // MARK: Bottom Bar
+            BottomBarView(onCustomize: showCustomize)
+        }
+        .frame(width: FluxaTheme.panelWidth)
+        .background(FluxaTheme.panelBackground)
+    }
+
+    // MARK: - Navigation
+
+    private func presentWindow(id: String) {
+        openWindow(id: id)
+        FluxaWindowPresenter.shared.bringToFront(id: id)
+    }
+
+    private func showCustomize() {
+        guard screen != .customize else { return }
+        withAnimation(.easeInOut(duration: 0.18)) {
+            screen = .customize
+        }
+    }
+
+    private func closeCustomize() {
+        guard screen != .dashboard else { return }
+        withAnimation(.easeInOut(duration: 0.18)) {
+            screen = .dashboard
         }
     }
 
     // MARK: - Subviews
 
     private var headerView: some View {
-        HStack(spacing: 8) {
-            // Load the switch icon from the app bundle
-            if let image = loadHeaderIcon() {
-                Image(nsImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 18, height: 18)
-            } else {
-                Image(systemName: "bolt.circle.fill")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundStyle(.blue)
-            }
+        HStack(spacing: 10) {
+            brandMark
 
             VStack(alignment: .leading, spacing: 1) {
                 Text("Fluxa")
-                    .font(.system(size: 13, weight: .semibold))
-                Text("Quick actions")
-                    .font(.system(size: 10))
+                    .font(.system(size: 14, weight: .semibold))
+                Text("System controls")
+                    .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(.secondary)
             }
 
@@ -122,26 +148,51 @@ struct PopoverRootView: View {
                 ProgressView()
                     .controlSize(.small)
                     .progressViewStyle(.circular)
+                    .tint(FluxaTheme.accent)
+                    .accessibilityLabel("Working")
             }
         }
-        .padding(.horizontal, 16)
-        .frame(height: 48)
+        .padding(.horizontal, 14)
+        .frame(height: 58)
+        .background(FluxaTheme.surface)
+        .overlay(alignment: .bottom) {
+            FluxaPanelDivider(horizontalInset: 0)
+        }
     }
 
-    private func loadHeaderIcon() -> NSImage? {
-        // Same switch icon used in the menu bar
-        guard let url = Bundle.fluxaResources.url(forResource: "fluxa", withExtension: "icns"),
-              let image = NSImage(contentsOf: url) else {
-            return nil
+    @ViewBuilder
+    private var brandMark: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 9, style: .continuous)
+                .fill(FluxaTheme.accentFill)
+
+            if let image = Self.headerIcon {
+                Image(nsImage: image)
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .foregroundStyle(.white)
+                    .frame(width: 18, height: 18)
+            } else {
+                Image(systemName: "togglepower")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
         }
-        return image
+        .frame(width: 32, height: 32)
+        .overlay {
+            RoundedRectangle(cornerRadius: 9, style: .continuous)
+                .stroke(.white.opacity(0.16), lineWidth: 1)
+        }
+        .shadow(color: FluxaTheme.accentFill.opacity(0.24), radius: 5, y: 2)
+        .accessibilityHidden(true)
     }
 
     private func errorBanner(message: String) -> some View {
         HStack(spacing: 8) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 12))
-                .foregroundStyle(.orange)
+                .foregroundStyle(FluxaTheme.orange)
 
             Text(message)
                 .font(.system(size: 11))
@@ -155,12 +206,19 @@ struct PopoverRootView: View {
             } label: {
                 Image(systemName: "xmark")
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Dismiss error")
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(Color.orange.opacity(0.08))
+        .padding(.vertical, 9)
+        .background(FluxaTheme.warningFill, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 9, style: .continuous)
+                .stroke(FluxaTheme.warningBorder, lineWidth: 1)
+        }
+        .padding(.horizontal, 10)
+        .padding(.top, 10)
     }
 }

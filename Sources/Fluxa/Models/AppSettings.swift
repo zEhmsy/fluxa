@@ -44,7 +44,7 @@ final class AppSettings {
         didSet { save(usageMetricIDs, forKey: Keys.usageMetricIDs) }
     }
 
-    /// How many chips fit the 304pt popover before the percentages stop being readable.
+    /// How many chips fit the compact popover before the percentages stop being readable.
     static let maxUsageMetrics = 3
 
     /// How often agent quotas are re-read in the background.

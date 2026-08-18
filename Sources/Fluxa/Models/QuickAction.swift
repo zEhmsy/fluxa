@@ -66,7 +66,7 @@ enum ActionCatalog {
             subtitle: "Prevent display sleep indefinitely",
             icon: "bolt",
             activeIcon: "bolt.fill",
-            tint: .orange,
+            tint: FluxaTheme.orange,
             controlStyle: .timedToggle
         ),
         QuickAction(
@@ -75,7 +75,7 @@ enum ActionCatalog {
             subtitle: "Toggle system appearance",
             icon: "circle.lefthalf.filled",
             activeIcon: nil,
-            tint: .yellow,
+            tint: FluxaTheme.amber,
             controlStyle: .toggle
         ),
         QuickAction(
@@ -84,7 +84,7 @@ enum ActionCatalog {
             subtitle: "Toggles Finder desktop visibility",
             icon: "desktopcomputer",
             activeIcon: "desktopcomputer.slash",
-            tint: .teal,
+            tint: FluxaTheme.teal,
             controlStyle: .toggle
         ),
         QuickAction(
@@ -93,7 +93,7 @@ enum ActionCatalog {
             subtitle: "Reveal dotfiles in Finder",
             icon: "eye.slash",
             activeIcon: "eye",
-            tint: .mint,
+            tint: FluxaTheme.mint,
             controlStyle: .toggle
         ),
         QuickAction(
@@ -102,7 +102,7 @@ enum ActionCatalog {
             subtitle: "Show the Dock only on hover",
             icon: "dock.rectangle",
             activeIcon: "dock.arrow.down.rectangle",
-            tint: .brown,
+            tint: FluxaTheme.brown,
             controlStyle: .toggle
         ),
         QuickAction(
@@ -111,7 +111,7 @@ enum ActionCatalog {
             subtitle: "Launch system screensaver now",
             icon: "moon.stars",
             activeIcon: nil,
-            tint: .purple,
+            tint: FluxaTheme.purple,
             controlStyle: .momentaryButton(label: "Launch")
         ),
         QuickAction(
@@ -120,7 +120,7 @@ enum ActionCatalog {
             subtitle: "Black overlay for screen cleaning",
             icon: "sparkles",
             activeIcon: nil,
-            tint: .cyan,
+            tint: FluxaTheme.cyan,
             controlStyle: .momentaryButton(label: "Activate")
         ),
         QuickAction(
@@ -129,7 +129,7 @@ enum ActionCatalog {
             subtitle: "Overlay shield — ESC or click to exit",
             icon: "keyboard",
             activeIcon: nil,
-            tint: .red,
+            tint: FluxaTheme.red,
             controlStyle: .toggle
         ),
         QuickAction(
@@ -141,7 +141,7 @@ enum ActionCatalog {
             subtitle: "Via Shortcuts — setup required",
             icon: "moon",
             activeIcon: "moon.fill",
-            tint: .indigo,
+            tint: FluxaTheme.indigo,
             controlStyle: .toggle
         ),
         QuickAction(
@@ -152,7 +152,7 @@ enum ActionCatalog {
             subtitle: "Select output device",
             icon: "speaker.wave.2",
             activeIcon: nil,
-            tint: .blue,
+            tint: FluxaTheme.blue,
             controlStyle: .menu
         ),
         QuickAction(
@@ -162,7 +162,7 @@ enum ActionCatalog {
             subtitle: "Connect AirPods & headphones",
             icon: "airpods",
             activeIcon: nil,
-            tint: .cyan,
+            tint: FluxaTheme.cyan,
             controlStyle: .menu
         ),
         QuickAction(
@@ -174,7 +174,7 @@ enum ActionCatalog {
             // toggle OFF = mic active → mic.fill; toggle ON = muted → mic.slash.fill
             icon: "mic.fill",
             activeIcon: "mic.slash.fill",
-            tint: .pink,
+            tint: FluxaTheme.pink,
             controlStyle: .toggle
         ),
         QuickAction(
@@ -183,7 +183,7 @@ enum ActionCatalog {
             subtitle: "MacBook display angle monitor",
             icon: "gyroscope",
             activeIcon: nil,
-            tint: .green,
+            tint: FluxaTheme.green,
             controlStyle: .momentaryButton(label: "Open")
         ),
         QuickAction(
@@ -192,7 +192,7 @@ enum ActionCatalog {
             subtitle: "Weigh small objects on the trackpad",
             icon: "scalemass",
             activeIcon: nil,
-            tint: .yellow,
+            tint: FluxaTheme.amber,
             controlStyle: .momentaryButton(label: "Open")
         ),
     ]

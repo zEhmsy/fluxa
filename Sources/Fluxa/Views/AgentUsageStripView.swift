@@ -25,30 +25,45 @@ struct AgentUsageStripView: View {
     @State private var isHovering = false
 
     var body: some View {
-        // The whole strip opens the detail window — the chips are too small to be individual
-        // targets, and every one of them leads to the same place.
-        Button {
-            viewModel.isShowingAgentUsage = true
-            closePopover?()
-        } label: {
-            HStack(spacing: 8) {
-                ForEach(metrics) { metric in
-                    chip(for: metric)
+        VStack(alignment: .leading, spacing: 7) {
+            FluxaSectionLabel(title: "Agent usage", trailing: "View details")
+
+            // The whole strip opens the detail window — the chips are too small to be individual
+            // targets, and every one of them leads to the same place.
+            Button {
+                viewModel.isShowingAgentUsage = true
+                closePopover?()
+            } label: {
+                HStack(spacing: 10) {
+                    ForEach(metrics) { metric in
+                        chip(for: metric)
+                    }
+                }
+                .padding(.horizontal, 11)
+                .padding(.vertical, 9)
+                .frame(maxWidth: .infinity)
+                .background(
+                    isHovering ? FluxaTheme.hoverFill : FluxaTheme.surface,
+                    in: RoundedRectangle(cornerRadius: FluxaTheme.panelCornerRadius, style: .continuous)
+                )
+                .contentShape(RoundedRectangle(cornerRadius: FluxaTheme.panelCornerRadius, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: FluxaTheme.panelCornerRadius, style: .continuous)
+                        .stroke(isHovering ? FluxaTheme.accent.opacity(0.38) : FluxaTheme.border, lineWidth: 1)
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .frame(maxWidth: .infinity)
-            .background(Color.primary.opacity(isHovering ? 0.05 : 0))
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
+            .onHover { hovering in
+                withAnimation(.easeInOut(duration: 0.12)) { isHovering = hovering }
+            }
+            .help("Open usage charts")
+            .accessibilityLabel("Agent usage")
+            .accessibilityValue(accessibilityValue)
+            .opacity(viewModel.agentUsage.isRefreshing ? 0.62 : 1)
+            .animation(.easeOut(duration: 0.15), value: viewModel.agentUsage.isRefreshing)
         }
-        .buttonStyle(.plain)
-        .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.12)) { isHovering = hovering }
-        }
-        .help("Open usage charts")
-        .opacity(viewModel.agentUsage.isRefreshing ? 0.6 : 1)
-        .animation(.easeOut(duration: 0.15), value: viewModel.agentUsage.isRefreshing)
+        .padding(.horizontal, 10)
+        .padding(.top, 10)
     }
 
     private var metrics: [AgentUsageMetric] {
@@ -62,7 +77,7 @@ struct AgentUsageStripView: View {
         VStack(alignment: .leading, spacing: 3) {
             HStack(spacing: 4) {
                 AgentMarkView(providerID: metric.providerID, size: 11)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(color(for: metric.severity))
 
                 if let initial = windowInitial(for: metric) {
                     Text(initial)
@@ -75,7 +90,7 @@ struct AgentUsageStripView: View {
                 Text("\(metric.percentUsed)%")
                     .font(.system(size: 10, weight: .semibold))
                     .monospacedDigit()
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(color(for: metric.severity))
             }
 
             meter(for: metric)
@@ -95,7 +110,7 @@ struct AgentUsageStripView: View {
                     .animation(.easeOut(duration: 0.2), value: metric.fraction)
             }
         }
-        .frame(height: 3)
+        .frame(height: 4)
     }
 
     /// The agent's mark carries its identity, so the window is only spelled out when the same agent
@@ -112,11 +127,17 @@ struct AgentUsageStripView: View {
         return parts.joined(separator: " · ")
     }
 
+    private var accessibilityValue: String {
+        metrics
+            .map { "\($0.providerName) \($0.label) \($0.percentUsed) percent used" }
+            .joined(separator: ", ")
+    }
+
     private func color(for severity: AgentUsageMetric.Severity) -> Color {
         switch severity {
-        case .normal:   return .blue
-        case .warning:  return .orange
-        case .critical: return .red
+        case .normal:   return FluxaTheme.blue
+        case .warning:  return FluxaTheme.orange
+        case .critical: return FluxaTheme.red
         }
     }
 }

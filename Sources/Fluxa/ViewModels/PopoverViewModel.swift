@@ -37,9 +37,6 @@ final class PopoverViewModel {
     /// Non-nil when an error message should be shown in the UI.
     var errorMessage: String?
 
-    /// Controls presentation of the Customize sheet.
-    var isShowingCustomize = false
-
     /// Controls presentation of the Focus Mode onboarding sheet.
     var isShowingFocusOnboarding = false
 

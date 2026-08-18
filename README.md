@@ -23,6 +23,26 @@ Built entirely in **Swift + SwiftUI** with zero third-party dependencies — jus
 
 ---
 
+## 🖼 Interface
+
+<p align="center">
+  <img src="docs/images/fluxa-menu.png" alt="Fluxa menu-bar panel" width="328">
+  &nbsp;&nbsp;
+  <img src="docs/images/fluxa-customize.png" alt="Fluxa in-panel Customize screen" width="328">
+</p>
+
+<p align="center"><sub>The main panel and Customize share one fluid menu-bar surface — no focus loss and no separate settings window.</sub></p>
+
+<p align="center">
+  <img src="docs/images/fluxa-lid-angle.png" alt="Fluxa Lid Angle window" width="390">
+  &nbsp;&nbsp;
+  <img src="docs/images/fluxa-trackpad-scale.png" alt="Fluxa Trackpad Scale window" width="400">
+</p>
+
+<p align="center"><sub>Hardware tools open as focused, purpose-built windows with the same adaptive visual system.</sub></p>
+
+---
+
 ## ✨ Features
 
 Fifteen quick actions, every one backed by a real system API — no fake toggles.
@@ -47,7 +67,9 @@ Fifteen quick actions, every one backed by a real system API — no fake toggles
 
 ### Beyond the actions
 
-- **Customizable layout** — reorder, show, or hide actions from the Customize window
+- **Customizable layout** — reorder, show, or hide actions without leaving the menu-bar panel
+- **Focus-safe navigation** — Customize transitions in place while hardware tools reliably come to the foreground
+- **Adaptive high-contrast UI** — shared surfaces, borders, semantic accents, and controls tuned for light and dark appearances
 - **Per-action color design** — tinted icon tiles that fill when a toggle is active
 - **Persistent preferences** — order, visibility, and states survive relaunches
 - **Menu bar native** — no Dock icon; template icon adapts to light/dark menu bars
@@ -198,7 +220,8 @@ MVVM with a single `@Observable` ViewModel coordinating focused, concrete servic
 ```
 Sources/Fluxa/
 ├── App/
-│   ├── FluxaApp.swift               # @main, MenuBarExtra + Window scenes
+│   ├── FluxaApp.swift               # @main, MenuBarExtra + focused Window scenes
+│   ├── FluxaWindowPresenter.swift   # Window registration + foreground activation
 │   └── AppDelegate.swift            # Cleanup on termination
 ├── Models/
 │   ├── QuickAction.swift            # ActionID, ControlStyle, tints, ActionCatalog
@@ -209,9 +232,10 @@ Sources/Fluxa/
 │   └── PopoverViewModel.swift       # Central coordinator, owns all services
 ├── Views/
 │   ├── PopoverRootView.swift        # Root container (header, list, bottom bar)
+│   ├── FluxaTheme.swift             # Adaptive palette + shared UI components
 │   ├── ActionListView.swift         # Action list
 │   ├── ActionRowView.swift          # Row: toggle / timed toggle / button / menu
-│   ├── CustomizeView.swift          # Reorder & visibility editor (own window)
+│   ├── CustomizeView.swift          # In-panel reorder & visibility editor
 │   ├── BottomBarView.swift          # Customize + Quit
 │   ├── FocusOnboardingView.swift    # Focus Mode setup wizard
 │   ├── LidAngleWindowView.swift     # Animated lid-angle goniometer
@@ -255,6 +279,8 @@ Sources/Fluxa/
 
 - **MVVM** — views observe one `@Observable` ViewModel; services are implementation details
 - **MainActor isolation** — UI state and services run on the main actor; blocking calls (Bluetooth connect) hop off it
+- **In-panel navigation** — Customize swaps views inside the `MenuBarExtra`; dedicated tools stay separate and activate in front
+- **Adaptive design system** — one semantic palette keeps hierarchy and contrast consistent in Aqua and Dark Aqua
 - **Honest UX** — if an API doesn't exist, the app says so instead of faking a toggle
 - **Zero dependencies** — SwiftUI, AppKit, IOKit, CoreAudio, IOBluetooth, ApplicationServices. Nothing else.
 
