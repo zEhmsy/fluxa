@@ -9,6 +9,7 @@ struct PopoverRootView: View {
     private enum Screen {
         case dashboard
         case customize
+        case info
     }
 
     /// Cached once rather than decoded every time SwiftUI recomputes the header.
@@ -38,6 +39,10 @@ struct PopoverRootView: View {
                     .transition(.move(edge: .leading))
             case .customize:
                 CustomizeView(onDone: closeCustomize)
+                    .transition(.move(edge: .trailing))
+            case .info:
+                InfoView(onDone: closeInfo)
+                    .environment(viewModel)
                     .transition(.move(edge: .trailing))
             }
         }
@@ -113,7 +118,7 @@ struct PopoverRootView: View {
                 .environment(settings)
 
             // MARK: Bottom Bar
-            BottomBarView(onCustomize: showCustomize)
+            BottomBarView(onCustomize: showCustomize, onAbout: showInfo)
         }
         .frame(width: FluxaTheme.panelWidth)
         .background(FluxaTheme.panelBackground)
@@ -137,6 +142,20 @@ struct PopoverRootView: View {
     }
 
     private func closeCustomize() {
+        guard screen != .dashboard else { return }
+        withAnimation(.easeInOut(duration: 0.18)) {
+            screen = .dashboard
+        }
+    }
+
+    private func showInfo() {
+        guard screen != .info else { return }
+        withAnimation(.easeInOut(duration: 0.18)) {
+            screen = .info
+        }
+    }
+
+    private func closeInfo() {
         guard screen != .dashboard else { return }
         withAnimation(.easeInOut(duration: 0.18)) {
             screen = .dashboard

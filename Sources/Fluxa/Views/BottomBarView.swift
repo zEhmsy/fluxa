@@ -2,10 +2,11 @@ import SwiftUI
 
 // MARK: - BottomBarView
 
-/// The bottom section of the Fluxa popover with Customize and Quit buttons.
+/// The bottom section of the Fluxa popover with Customize, About, and Quit buttons.
 struct BottomBarView: View {
 
     let onCustomize: () -> Void
+    let onAbout: () -> Void
 
     var body: some View {
         HStack(spacing: 0) {
@@ -16,6 +17,12 @@ struct BottomBarView: View {
                     .labelStyle(.titleAndIcon)
             }
             .buttonStyle(BottomBarButtonStyle(tint: FluxaTheme.accent, isEmphasized: true))
+
+            Button(action: onAbout) {
+                Label("About", systemImage: "info.circle")
+                    .font(.system(size: 11, weight: .medium))
+            }
+            .buttonStyle(BottomBarButtonStyle(tint: Color.secondary, isEmphasized: false))
 
             Spacer()
 

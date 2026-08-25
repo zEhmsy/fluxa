@@ -1,0 +1,13 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="fluxa" x1="64" y1="64" x2="448" y2="448" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2F80ED"/>
+      <stop offset="1" stop-color="#6C5CE7"/>
+    </linearGradient>
+  </defs>
+  <rect x="16" y="16" width="480" height="480" rx="120" fill="url(#fluxa)"/>
+  <rect x="16.5" y="16.5" width="479" height="479" rx="119.5" stroke="white" stroke-opacity="0.18"/>
+  <g transform="translate(106 151) scale(15)" fill="white">
+    <path d="M7 2a5 5 0 1 0 0 10h6a5 5 0 0 0 0-10H7zm0-2h6a7 7 0 0 1 0 14H7A7 7 0 0 1 7 0zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-2a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>
+  </g>
+</svg>

@@ -1,6 +1,8 @@
 <div align="center">
 
-# ⚡ Fluxa
+<img src="docs/images/fluxa-logo.svg" alt="Fluxa icon" width="96">
+
+# Fluxa
 
 **Essential macOS system controls, one click away in your menu bar.**
 
@@ -13,7 +15,7 @@ Built entirely in **Swift + SwiftUI** with zero third-party dependencies — jus
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue)](LICENSE)
 ![SPM](https://img.shields.io/badge/SPM-compatible-brightgreen)
 
-[**⬇ Download**](https://github.com/zEhmsy/fluxa/releases/latest) · [Features](#-features) · [Install](#-installation) · [Architecture](#-architecture) · [Contributing](#-contributing)
+[**⬇ Download**](https://github.com/zEhmsy/fluxa/releases/latest) · [Features](#-features) · [Install](#-installation) · [Architecture](#-architecture) · [Support](#-support)
 
 <a href="https://www.buymeacoffee.com/gturturro">
   <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="41" width="174">
@@ -26,12 +28,14 @@ Built entirely in **Swift + SwiftUI** with zero third-party dependencies — jus
 ## 🖼 Interface
 
 <p align="center">
-  <img src="docs/images/fluxa-menu.png" alt="Fluxa menu-bar panel" width="328">
+  <img src="docs/images/fluxa-menu.png" alt="Fluxa menu-bar panel" width="300">
   &nbsp;&nbsp;
-  <img src="docs/images/fluxa-customize.png" alt="Fluxa in-panel Customize screen" width="328">
+  <img src="docs/images/fluxa-customize.png" alt="Fluxa in-panel Customize screen" width="300">
+  &nbsp;&nbsp;
+  <img src="docs/images/fluxa-about.png" alt="Fluxa About page with GitHub details and support link" width="300">
 </p>
 
-<p align="center"><sub>The main panel and Customize share one fluid menu-bar surface — no focus loss and no separate settings window.</sub></p>
+<p align="center"><sub>The dashboard, Customize, and About share one fluid menu-bar surface — no focus loss and no separate settings window.</sub></p>
 
 <p align="center">
   <img src="docs/images/fluxa-system-dashboard.png" alt="Fluxa System Dashboard with CPU, GPU, memory, and temperature charts" width="640">
@@ -61,7 +65,7 @@ Fifteen quick actions, every one backed by a real system API — no fake toggles
 | 👁 **Show Hidden Files** | Toggle | Reveals dotfiles in Finder |
 | 📥 **Auto-hide Dock** | Toggle | Shows the Dock only on hover |
 | 🌙 **Screen Saver** | Button | Launches the system screen saver |
-| ✨ **Screen Clean** | Button | Full-screen black overlay on all displays for safe screen wiping |
+| ✨ **Screen Clean** | Button | Full-screen black overlay on every display; exits by click or ESC and follows display changes |
 | ⌨️ **Lock Keyboard** | Toggle | Transparent overlay that intercepts keyboard input (ESC to exit) |
 | 🎯 **Focus Mode** | Toggle | Enables/disables Do Not Disturb via user-created Shortcuts |
 | 🔊 **Audio Output** | Menu | Switches audio output device with one click, hot-plug aware |
@@ -79,8 +83,9 @@ Fifteen quick actions, every one backed by a real system API — no fake toggles
 - **Per-action color design** — tinted icon tiles that fill when a toggle is active
 - **Persistent preferences** — order, visibility, and states survive relaunches
 - **Menu bar native** — no Dock icon; template icon adapts to light/dark menu bars
-- **Multi-display aware** — Screen Clean and Lock Keyboard cover every connected screen
+- **Multi-display safe** — Screen Clean and Lock Keyboard cover every connected display; Screen Clean also rebuilds its overlays after a monitor is connected, disconnected, or rearranged
 - **Global shortcut & launch at login** built in
+- **About & support page** — live public GitHub profile/repository details plus an optional Buy Me a Coffee link
 
 ---
 
@@ -139,7 +144,11 @@ Scanning is cached per file in `~/Library/Application Support/Fluxa/`. Session l
 
 ### Privacy
 
-Everything stays on your Mac. Fluxa talks to the agents' usage endpoints and to nothing else — no analytics, no telemetry, no server of its own. Token counts, the scan cache, and your preferences live in `~/Library/Application Support/Fluxa/` and `UserDefaults`, never in the repository or a release artifact.
+Everything stays on your Mac. Fluxa talks to the agents' usage endpoints for quota reads and, only
+when About is opened, to GitHub's public API for the developer/repository card. The Buy Me a Coffee
+page opens in your browser only after you click it. There is no analytics, telemetry, or Fluxa server
+of any kind. Token counts, the scan cache, and your preferences live in
+`~/Library/Application Support/Fluxa/` and `UserDefaults`, never in the repository or a release artifact.
 
 ### Refresh interval
 
@@ -208,7 +217,7 @@ Fluxa asks only for what a feature actually needs, when you first use it:
 | **Accessibility** *(optional)* | Lock Keyboard | Stricter key interception; works without it too |
 | **Shortcuts app** | Focus Mode | One-time guided setup (see below) |
 | **Keychain** | Agent Usage (Claude) | First read of the `Claude Code-credentials` item — choose *Always Allow* |
-| **Network** | Agent Usage | Requests to the agents' usage endpoints only |
+| **Network** | Agent Usage / About | Agent quota endpoints; public GitHub profile data only while About is opened |
 
 > **Keychain prompt returns after every rebuild.** macOS ties the "Always Allow" grant to the app's
 > code signature, and `build.sh` signs ad-hoc, so each build is a new app as far as the keychain is
@@ -262,7 +271,8 @@ Sources/Fluxa/
 │   ├── ActionListView.swift         # Action list
 │   ├── ActionRowView.swift          # Row: toggle / timed toggle / button / menu
 │   ├── CustomizeView.swift          # In-panel reorder & visibility editor
-│   ├── BottomBarView.swift          # Customize + Quit
+│   ├── InfoView.swift               # About, public GitHub details + support link
+│   ├── BottomBarView.swift          # Customize + About + Quit
 │   ├── FocusOnboardingView.swift    # Focus Mode setup wizard
 │   ├── LidAngleWindowView.swift     # Animated lid-angle goniometer
 │   ├── TrackpadScaleWindowView.swift# Force Touch scale readout
@@ -280,7 +290,7 @@ Sources/Fluxa/
 │   ├── FinderHiddenFilesService.swift
 │   ├── DockAutohideService.swift
 │   ├── ScreenSaverService.swift     # NSWorkspace → ScreenSaverEngine
-│   ├── ScreenCleanService.swift     # NSPanel overlay (all screens)
+│   ├── ScreenCleanService.swift     # Hot-plug-aware NSPanel overlay on every display
 │   ├── KeyboardShieldService.swift  # NSPanel + local event monitor
 │   ├── FocusModeService.swift       # /usr/bin/shortcuts CLI
 │   ├── AudioOutputService.swift     # CoreAudio enumeration & switching
@@ -290,6 +300,7 @@ Sources/Fluxa/
 │   ├── TrackpadWeightService.swift  # MultitouchSupport via dlopen, grams from pressure
 │   ├── SystemStatsService.swift      # Live readings + in-memory chart history
 │   ├── SystemStats/                  # CPU, GPU, memory and thermal samplers
+│   ├── GitHubProfileService.swift    # Public About-page data, no token required
 │   ├── AgentCredentials.swift       # Read-only Claude/Codex credential lookup
 │   ├── AgentUsageReaders.swift      # Per-agent usage endpoints & mapping
 │   ├── AgentUsageService.swift      # Orchestration, polling, selection
@@ -360,19 +371,6 @@ rsvg-convert -f pdf -o Sources/Fluxa/Resources/AgentIcons/claude.pdf \
 
 ---
 
-## 🤝 Contributing
-
-Contributions are welcome!
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/my-feature`)
-3. Commit your changes
-4. Push and open a Pull Request
-
-Found a bug or want an action added? [Open an issue](https://github.com/zEhmsy/fluxa/issues).
-
----
-
 ## ☕ Support
 
 If Fluxa saves you a few clicks every day, you can fuel the next feature:
@@ -380,12 +378,6 @@ If Fluxa saves you a few clicks every day, you can fuel the next feature:
 <a href="https://www.buymeacoffee.com/gturturro">
   <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="41" width="174">
 </a>
-
----
-
-## 📄 License
-
-Licensed under the **Apache License 2.0** — see [LICENSE](LICENSE).
 
 ---
 

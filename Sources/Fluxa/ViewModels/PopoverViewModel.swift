@@ -29,6 +29,7 @@ final class PopoverViewModel {
     let trackpadWeight = TrackpadWeightService()
     let agentUsage = AgentUsageService()
     let systemStats = SystemStatsService()
+    let githubProfile = GitHubProfileService()
 
     // MARK: - Observable State
 
