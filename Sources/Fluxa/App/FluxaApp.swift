@@ -84,6 +84,16 @@ struct FluxaApp: App {
         .windowResizability(.contentSize)
         .defaultPosition(.center)
 
+        // Live system history, opened by clicking the popover's system strip.
+        Window("System Dashboard", id: "system-stats") {
+            SystemStatsWindowView()
+                .environment(viewModel)
+                .environment(settings)
+                .registersFluxaWindow(id: "system-stats")
+        }
+        .windowResizability(.contentSize)
+        .defaultPosition(.center)
+
         // Agent quota charts, opened by clicking the popover's usage strip.
         Window("Agent Usage", id: "agent-usage") {
             AgentUsageWindowView()
@@ -97,9 +107,9 @@ struct FluxaApp: App {
 
     // MARK: - Menu Bar Icon
 
-    /// The switch mark, followed by a reading for each agent pinned in Customize. Reading the
-    /// observable usage service here is what makes the strip refresh itself: a new percentage
-    /// re-renders the label, which re-renders the status item.
+    /// The switch mark, followed by a reading for each metric the user sent to the menu bar in
+    /// Customize. Reading the observable services here is what makes the strip refresh itself: a new
+    /// value re-renders the label, which re-renders the status item.
     @ViewBuilder
     private var menuBarIcon: some View {
         if let image = MenuBarStripRenderer.image(segments: menuBarSegments) {
@@ -110,8 +120,10 @@ struct FluxaApp: App {
     }
 
     private var menuBarSegments: [MenuBarStripRenderer.Segment] {
-        MenuBarStripRenderer.segments(
-            for: viewModel.agentUsage.selectedMetrics(ids: settings.usageMetricIDs)
+        MenuBarStripRenderer.combinedSegments(
+            system: viewModel.systemStats.selectedMetrics(ids: settings.systemMenuBarMetricIDs),
+            agents: viewModel.agentUsage.selectedMetrics(ids: settings.usageMenuBarMetricIDs),
+            limit: AppSettings.maxMenuBarMetrics
         )
     }
 }

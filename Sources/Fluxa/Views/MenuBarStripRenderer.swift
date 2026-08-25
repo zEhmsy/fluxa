@@ -2,8 +2,8 @@ import AppKit
 
 // MARK: - MenuBarStripRenderer
 
-/// Draws the menu bar item: the Fluxa switch mark, followed by one compact segment per agent the
-/// user pinned ("CL 48%").
+/// Draws the menu bar item: the Fluxa switch mark, followed by one compact segment per reading the
+/// user pinned — system stats first ("􀫥 42%"), then agent quotas ("CL 48%").
 ///
 /// Rendered as a single template `NSImage` rather than a SwiftUI `HStack` label: the status item
 /// sizes itself to whatever image it's handed, so composing the strip here gives exact control over
@@ -11,17 +11,25 @@ import AppKit
 /// dark menu bar (and for the highlighted state) without any per-appearance work.
 ///
 /// Because it's a template, the strip is monochrome — the severity colors live in the popover's
-/// usage strip, where color is free.
+/// strips, where color is free.
 enum MenuBarStripRenderer {
 
-    /// One agent's reading in the menu bar.
+    /// One reading in the menu bar: something small that identifies it, followed by the value.
     struct Segment: Equatable {
-        /// Agent whose mark leads the segment.
-        let providerID: String
-        /// Window initial ("S", "W") — only set when one agent contributes more than one window,
-        /// where two identical marks would otherwise be indistinguishable.
-        let windowInitial: String?
-        let percent: Int
+
+        /// What identifies the reading at 11pt. Both cases draw into the same square box, so
+        /// system and agent segments line up on the same baseline.
+        enum Leading: Equatable {
+            /// An agent's vendor mark, drawn from the bundled vector PDFs.
+            case agentMark(providerID: String)
+            /// An SF Symbol, for system readings.
+            case symbol(name: String)
+        }
+
+        let leading: Leading
+        /// The value as drawn: "48%", "58°". Agent segments may prefix a window initial ("S 48%")
+        /// when one agent contributes more than one window.
+        let text: String
     }
 
     /// Standard menu bar icon box.
@@ -32,9 +40,9 @@ enum MenuBarStripRenderer {
     private static let markGap: CGFloat = 5
     /// Gap between two readings.
     private static let segmentGap: CGFloat = 7
-    /// Agent mark size — a touch smaller than the Fluxa mark so the readings stay the loudest thing.
+    /// Leading-glyph size — a touch smaller than the Fluxa mark so the readings stay the loudest thing.
     private static let agentMarkSize: CGFloat = 11
-    /// Gap between an agent's mark and its percentage.
+    /// Gap between a segment's glyph and its value.
     private static let agentMarkGap: CGFloat = 3
 
     // Geometry of `new-icon.svg`: a 24×24 viewBox whose ink only occupies a 20×14 rect inset by
@@ -58,11 +66,14 @@ enum MenuBarStripRenderer {
         guard !segments.isEmpty else { return mark }
 
         let drawn = segments.map { segment in
-            (mark: AgentMarks.image(for: segment.providerID, size: agentMarkSize),
+            (mark: leadingImage(for: segment.leading),
              text: attributedText(for: segment))
         }
-        let segmentWidths = drawn.map { entry in
-            (entry.mark == nil ? 0 : agentMarkSize + agentMarkGap) + entry.text.size().width
+        // Glyph widths are measured rather than assumed square: the agent marks are, but SF Symbols
+        // like `memorychip` are wider than tall, and forcing them into a square box would squash them.
+        let glyphWidths = drawn.map { entry in entry.mark.map(glyphWidth) ?? 0 }
+        let segmentWidths = zip(drawn, glyphWidths).map { entry, glyph in
+            (glyph == 0 ? 0 : glyph + agentMarkGap) + entry.text.size().width
         }
         let width = markInkWidth + markGap + segmentWidths.reduce(0, +) +
             segmentGap * CGFloat(max(0, drawn.count - 1))
@@ -72,14 +83,15 @@ enum MenuBarStripRenderer {
 
             var x = markInkWidth + markGap
             for (index, entry) in drawn.enumerated() {
-                if let agentMark = entry.mark {
-                    agentMark.draw(in: NSRect(
+                if let glyph = entry.mark {
+                    let glyphSize = glyphWidths[index]
+                    glyph.draw(in: NSRect(
                         x: x,
                         y: (height - agentMarkSize) / 2,
-                        width: agentMarkSize,
+                        width: glyphSize,
                         height: agentMarkSize
                     ))
-                    x += agentMarkSize + agentMarkGap
+                    x += glyphSize + agentMarkGap
                 }
                 let size = entry.text.size()
                 entry.text.draw(at: NSPoint(x: x, y: (height - size.height) / 2))
@@ -91,10 +103,28 @@ enum MenuBarStripRenderer {
         return strip
     }
 
+    /// The glyph that opens a segment. SF Symbols are configured at the mark's own point size and
+    /// flagged as templates so they tint with the rest of the strip.
+    private static func leadingImage(for leading: Segment.Leading) -> NSImage? {
+        switch leading {
+        case .agentMark(let providerID):
+            return AgentMarks.image(for: providerID, size: agentMarkSize)
+
+        case .symbol(let name):
+            guard let image = NSImage(systemSymbolName: name, accessibilityDescription: nil) else {
+                return nil
+            }
+            let configured = image.withSymbolConfiguration(
+                NSImage.SymbolConfiguration(pointSize: agentMarkSize, weight: .medium)
+            ) ?? image
+            configured.isTemplate = true
+            return configured
+        }
+    }
+
     private static func attributedText(for segment: Segment) -> NSAttributedString {
-        let prefix = segment.windowInitial.map { "\($0) " } ?? ""
-        return NSAttributedString(
-            string: "\(prefix)\(segment.percent)%",
+        NSAttributedString(
+            string: segment.text,
             attributes: [
                 .font: font,
                 // Black: a template image is tinted from its alpha channel, so the color only has
@@ -129,19 +159,49 @@ enum MenuBarStripRenderer {
 
     // MARK: - Segment building
 
-    /// Builds the segments for the pinned metrics. The window initial is only added when one agent
-    /// contributes more than one window, so the common single-window case stays "mark + percentage".
+    /// Width the glyph occupies once scaled to the strip's glyph height, preserving its aspect.
+    private static func glyphWidth(_ image: NSImage) -> CGFloat {
+        let size = image.size
+        guard size.height > 0 else { return agentMarkSize }
+        return size.width * (agentMarkSize / size.height)
+    }
+
+    // MARK: - Segment building
+
+    /// Builds the segments for the pinned agent metrics. The window initial is only added when one
+    /// agent contributes more than one window, so the common single-window case stays
+    /// "mark + percentage".
     static func segments(for metrics: [AgentUsageMetric]) -> [Segment] {
         metrics.map { metric in
             let sameProvider = metrics.filter { $0.providerID == metric.providerID }
-            let initial = sameProvider.count > 1
-                ? metric.label.first.map { String($0).uppercased() }
-                : nil
+            let prefix = sameProvider.count > 1
+                ? metric.label.first.map { "\(String($0).uppercased()) " } ?? ""
+                : ""
             return Segment(
-                providerID: metric.providerID,
-                windowInitial: initial,
-                percent: metric.percentUsed
+                leading: .agentMark(providerID: metric.providerID),
+                text: "\(prefix)\(metric.percentUsed)%"
             )
         }
+    }
+
+    /// Builds the segments for the pinned system readings.
+    static func segments(for metrics: [SystemMetric]) -> [Segment] {
+        metrics.map { metric in
+            Segment(leading: .symbol(name: metric.id.symbolName), text: metric.displayText)
+        }
+    }
+
+    /// Assembles the whole strip: system readings first, agent quotas after, truncated to the shared
+    /// menu bar budget.
+    ///
+    /// System comes first because it is the faster-moving half — putting the numbers that change
+    /// every couple of seconds nearest the Fluxa mark keeps them in one place instead of letting an
+    /// agent percentage appearing or vanishing shift them around.
+    static func combinedSegments(
+        system: [SystemMetric],
+        agents: [AgentUsageMetric],
+        limit: Int
+    ) -> [Segment] {
+        Array((segments(for: system) + segments(for: agents)).prefix(limit))
     }
 }

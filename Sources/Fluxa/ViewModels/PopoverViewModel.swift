@@ -28,6 +28,7 @@ final class PopoverViewModel {
     let lidAngleMonitor = LidAngleMonitor()
     let trackpadWeight = TrackpadWeightService()
     let agentUsage = AgentUsageService()
+    let systemStats = SystemStatsService()
 
     // MARK: - Observable State
 
@@ -48,6 +49,9 @@ final class PopoverViewModel {
 
     /// Signals PopoverRootView to open the Agent Usage charts window.
     var isShowingAgentUsage = false
+
+    /// Signals PopoverRootView to open the live system history dashboard.
+    var isShowingSystemStats = false
 
     /// Whether an async action is in progress (disables controls during transitions).
     var isBusy = false
@@ -101,6 +105,15 @@ final class PopoverViewModel {
         agentUsage.startAutoRefresh(
             isEnabled: { [settings] in !settings.usageMetricIDs.isEmpty },
             interval: { [settings] in settings.usageRefreshInterval }
+        )
+
+        // Same stance for the system readings: the loop exists from launch, but samples nothing
+        // until at least one metric is on show somewhere.
+        systemStats.start(
+            isEnabled: { [settings] in
+                !settings.systemMetricIDs.isEmpty || !settings.systemMenuBarMetricIDs.isEmpty
+            },
+            interval: { [settings] in settings.systemStatsInterval }
         )
 
         // Keep the toggle in sync when a timed Keep Awake expires on its own.
@@ -276,6 +289,9 @@ final class PopoverViewModel {
         bluetoothAudio.refresh()
         // Fire-and-forget: throttled internally, and a failure only affects the usage strip.
         agentUsage.refresh()
+        // So the system strip shows current numbers the moment the popover opens, rather than
+        // whatever the last background tick left behind.
+        systemStats.refreshNow()
     }
 
     /// Called from FocusOnboardingView when the user taps "Done".
@@ -308,6 +324,7 @@ final class PopoverViewModel {
         micMute.stopMonitoring()
         trackpadWeight.stop()
         agentUsage.stopAutoRefresh()
+        systemStats.stop()
     }
 
     // MARK: - Private

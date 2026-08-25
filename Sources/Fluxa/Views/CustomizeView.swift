@@ -65,9 +65,16 @@ struct CustomizeView: View {
                     sectionHeader("ACTIONS")
                 }
 
+                // MARK: System Stats
+                Section {
+                    CustomizeSystemStatsSection(settings: settings, stats: viewModel.systemStats)
+                } header: {
+                    sectionHeader("SYSTEM STATS")
+                }
+
                 // MARK: Agent Usage
                 Section {
-                    agentUsageRows
+                    CustomizeAgentUsageSection(settings: settings, usage: viewModel.agentUsage)
                 } header: {
                     sectionHeader("AGENT USAGE")
                 }
@@ -115,124 +122,11 @@ struct CustomizeView: View {
         }
         .frame(width: FluxaTheme.panelWidth, height: 500)
         .background(FluxaTheme.panelBackground)
-        // Refresh on entry so the agent section is populated even when no metric is pinned yet.
-        .onAppear { viewModel.agentUsage.refresh() }
-    }
-
-    // MARK: - Agent Usage Section
-
-    /// Picks which agent quota windows appear in the popover's usage strip. The list is what the last
-    /// refresh read from each agent's own usage endpoint, so it fills in a moment after this window
-    /// opens. Per-agent failures are spelled out rather than leaving a row silently missing.
-    @ViewBuilder
-    private var agentUsageRows: some View {
-        let usage = viewModel.agentUsage
-        if usage.metrics.isEmpty && usage.agentErrors.isEmpty {
-            hintRow(usage.isRefreshing
-                ? "Reading agent quotas…"
-                : "Sign in with `claude` or `codex` to show agent quotas here.")
-        } else {
-            ForEach(usage.metrics) { metric in
-                agentUsageRow(metric)
-            }
-            refreshIntervalRow
-            ForEach(usage.agentErrors.sorted(by: { $0.key < $1.key }), id: \.key) { _, message in
-                hintRow(message)
-            }
-            if !usage.metrics.isEmpty {
-                hintRow("Up to \(AppSettings.maxUsageMetrics) fit across the strip.")
-            }
+        // Refresh on entry so both metric sections are populated even when nothing is pinned yet.
+        .onAppear {
+            viewModel.agentUsage.refresh()
+            viewModel.systemStats.refreshNow()
         }
-    }
-
-    private func agentUsageRow(_ metric: AgentUsageMetric) -> some View {
-        let isSelected = settings.usageMetricIDs.contains(metric.id)
-        // At capacity the unselected rows can't be added; dimming them explains why the switch
-        // won't move instead of letting the tap fail silently.
-        let isBlocked = !isSelected && settings.usageMetricIDs.count >= AppSettings.maxUsageMetrics
-
-        return HStack(spacing: 10) {
-            AgentMarkView(providerID: metric.providerID, size: 13)
-                .foregroundStyle(isSelected ? FluxaTheme.accent : Color.secondary)
-                .frame(width: 28, height: 28)
-                .background(
-                    (isSelected ? FluxaTheme.accent.opacity(0.12) : FluxaTheme.elevatedSurface),
-                    in: RoundedRectangle(cornerRadius: 7, style: .continuous)
-                )
-                .overlay {
-                    RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .stroke(isSelected ? FluxaTheme.accent.opacity(0.24) : FluxaTheme.border, lineWidth: 1)
-                }
-
-            VStack(alignment: .leading, spacing: 1) {
-                Text("\(metric.providerName) · \(metric.label)")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(isBlocked ? .secondary : .primary)
-                Text("\(metric.percentUsed)% used")
-                    .font(.system(size: 10))
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
-            Toggle("", isOn: Binding(
-                get: { isSelected },
-                set: { selected in
-                    if selected {
-                        guard settings.usageMetricIDs.count < AppSettings.maxUsageMetrics else { return }
-                        settings.usageMetricIDs.append(metric.id)
-                    } else {
-                        settings.usageMetricIDs.removeAll { $0 == metric.id }
-                    }
-                }
-            ))
-            .labelsHidden()
-            .toggleStyle(.switch)
-            .controlSize(.mini)
-            .tint(FluxaTheme.accent)
-            .disabled(isBlocked)
-        }
-        .padding(.vertical, 2)
-        .listRowBackground(FluxaTheme.surface)
-        .listRowSeparatorTint(FluxaTheme.border)
-    }
-
-    /// How often the background read runs. The help text under it says what each choice buys, since
-    /// "every 3 minutes" only means something once you know a session window moves 1% in that time.
-    private var refreshIntervalRow: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            HStack {
-                Text("Refresh")
-                    .font(.system(size: 13))
-                Spacer()
-                Picker("", selection: Binding(
-                    get: { settings.usageRefreshInterval },
-                    set: { settings.usageRefreshInterval = $0 }
-                )) {
-                    ForEach(UsageRefreshInterval.allCases) { option in
-                        Text(option.label).tag(option)
-                    }
-                }
-                .labelsHidden()
-                .pickerStyle(.menu)
-                .fixedSize()
-            }
-            Text(settings.usageRefreshInterval.detail)
-                .font(.system(size: 10))
-                .foregroundStyle(.secondary)
-        }
-        .padding(.vertical, 2)
-        .listRowBackground(FluxaTheme.surface)
-        .listRowSeparatorTint(FluxaTheme.border)
-    }
-
-    private func hintRow(_ text: String) -> some View {
-        Text(text)
-            .font(.system(size: 10))
-            .foregroundStyle(.secondary)
-            .padding(.vertical, 2)
-            .listRowBackground(FluxaTheme.surface)
-            .listRowSeparatorTint(FluxaTheme.border)
     }
 
     private func sectionHeader(_ title: String) -> some View {

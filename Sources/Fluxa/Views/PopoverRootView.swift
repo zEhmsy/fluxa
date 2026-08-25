@@ -73,6 +73,12 @@ struct PopoverRootView: View {
                 viewModel.isShowingAgentUsage = false
             }
         }
+        .onChange(of: viewModel.isShowingSystemStats) { _, showing in
+            if showing {
+                presentWindow(id: "system-stats")
+                viewModel.isShowingSystemStats = false
+            }
+        }
     }
 
     /// The regular menu-bar screen. Customize is pushed inside the same
@@ -81,6 +87,13 @@ struct PopoverRootView: View {
         VStack(spacing: 0) {
             // MARK: Header
             headerView
+
+            // MARK: System Stats Strip (only when the user pinned something in Customize)
+            if SystemStatsStripView.hasContent(viewModel: viewModel, settings: settings) {
+                SystemStatsStripView(closePopover: closePopover)
+                    .environment(viewModel)
+                    .environment(settings)
+            }
 
             // MARK: Agent Usage Strip (only when the user pinned something in Customize)
             if AgentUsageStripView.hasContent(viewModel: viewModel, settings: settings) {
@@ -109,6 +122,9 @@ struct PopoverRootView: View {
     // MARK: - Navigation
 
     private func presentWindow(id: String) {
+        // MenuBarExtra windows do not always dismiss when another window from the same accessory
+        // app becomes key. Hide it explicitly so it cannot overlap the tool window it just opened.
+        viewModel.menuBarWindow?.orderOut(nil)
         openWindow(id: id)
         FluxaWindowPresenter.shared.bringToFront(id: id)
     }

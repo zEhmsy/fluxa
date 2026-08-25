@@ -34,6 +34,12 @@ Built entirely in **Swift + SwiftUI** with zero third-party dependencies — jus
 <p align="center"><sub>The main panel and Customize share one fluid menu-bar surface — no focus loss and no separate settings window.</sub></p>
 
 <p align="center">
+  <img src="docs/images/fluxa-system-dashboard.png" alt="Fluxa System Dashboard with CPU, GPU, memory, and temperature charts" width="640">
+</p>
+
+<p align="center"><sub>Live hardware readings expand into a rolling 30-minute dashboard with separate percentage and temperature scales.</sub></p>
+
+<p align="center">
   <img src="docs/images/fluxa-lid-angle.png" alt="Fluxa Lid Angle window" width="390">
   &nbsp;&nbsp;
   <img src="docs/images/fluxa-trackpad-scale.png" alt="Fluxa Trackpad Scale window" width="400">
@@ -75,6 +81,23 @@ Fifteen quick actions, every one backed by a real system API — no fake toggles
 - **Menu bar native** — no Dock icon; template icon adapts to light/dark menu bars
 - **Multi-display aware** — Screen Clean and Lock Keyboard cover every connected screen
 - **Global shortcut & launch at login** built in
+
+---
+
+## 🖥 System dashboard
+
+Fluxa can pin live hardware readings in the popover, in the menu bar, or in both places:
+
+- **CPU, GPU and memory usage** — local system counters shown as percentages
+- **Temperature** — CPU/GPU readings when the Mac labels sensors per component, otherwise one honest whole-die reading
+- **Independent destinations** — up to three readings in the popover and four total system/agent readings in the menu bar
+- **Live history window** — click the system strip for separate load and temperature charts covering the latest 30 minutes
+- **In-memory by design** — chart history starts when Fluxa launches and is never written to disk
+- **Configurable sampling** — 1, 2, 5 or 10 seconds; the dashboard uses the same loop and never doubles the sensor work
+
+CPU, GPU and memory share a fixed 0–100% chart. Temperature uses a separate degree axis so neither
+unit is visually compressed. A failed sensor pass creates a gap in the history instead of repeating
+an old value as though it had been measured again.
 
 ---
 
@@ -227,7 +250,10 @@ Sources/Fluxa/
 │   ├── QuickAction.swift            # ActionID, ControlStyle, tints, ActionCatalog
 │   ├── AppSettings.swift            # @Observable, UserDefaults persistence
 │   ├── AgentUsage.swift             # AgentUsageMetric: one agent quota window
-│   └── UsageRefreshInterval.swift   # Poll intervals derived from window size
+│   ├── UsageRefreshInterval.swift   # Agent poll intervals derived from window size
+│   ├── SystemMetric.swift           # System metric identity, value and severity
+│   ├── SystemStatsHistory.swift      # Sparse timestamped samples for charts
+│   └── SystemStatsInterval.swift     # Local sampling intervals
 ├── ViewModels/
 │   └── PopoverViewModel.swift       # Central coordinator, owns all services
 ├── Views/
@@ -240,10 +266,12 @@ Sources/Fluxa/
 │   ├── FocusOnboardingView.swift    # Focus Mode setup wizard
 │   ├── LidAngleWindowView.swift     # Animated lid-angle goniometer
 │   ├── TrackpadScaleWindowView.swift# Force Touch scale readout
+│   ├── SystemStatsStripView.swift    # Live hardware strip under the header
+│   ├── SystemStatsWindowView.swift   # 30-minute load + temperature charts
 │   ├── AgentUsageStripView.swift    # Quota strip under the popover header
 │   ├── AgentUsageWindowView.swift   # Quota meters + contribution grids
 │   ├── ContributionGridView.swift   # GitHub-style calendar of daily tokens
-│   ├── MenuBarStripRenderer.swift   # Menu bar image: mark + per-agent readings
+│   ├── MenuBarStripRenderer.swift   # Menu bar image: mark + system/agent readings
 │   └── AgentMarks.swift             # Vector agent logos, template-rendered
 ├── Services/
 │   ├── KeepAwakeService.swift       # IOKit power assertion + expiry timer
@@ -260,6 +288,8 @@ Sources/Fluxa/
 │   ├── BluetoothAudioService.swift  # IOBluetooth paired-device connect
 │   ├── LidAngleMonitor.swift        # HID sensor (Apple Silicon) + IORegistry (Intel)
 │   ├── TrackpadWeightService.swift  # MultitouchSupport via dlopen, grams from pressure
+│   ├── SystemStatsService.swift      # Live readings + in-memory chart history
+│   ├── SystemStats/                  # CPU, GPU, memory and thermal samplers
 │   ├── AgentCredentials.swift       # Read-only Claude/Codex credential lookup
 │   ├── AgentUsageReaders.swift      # Per-agent usage endpoints & mapping
 │   ├── AgentUsageService.swift      # Orchestration, polling, selection
@@ -299,6 +329,8 @@ Sources/Fluxa/
 | Agent quotas | Refresh tokens rotate on use | Read-only: an expired token is reported, never renewed behind the agent's back |
 | Agent history | No history endpoint exists | Rebuilt from the agents' own session logs |
 | Codex history | Child sessions replay a parent's history | Not filtered — measured at 0.08% on one day out of nine |
+| Temperatures | Later SoCs do not label die sensors by component | Show one Die Temperature instead of inventing separate CPU/GPU values |
+| System history | macOS provides live counters, not an app history log | Keep a rolling 30 minutes in memory; history resets on relaunch |
 
 ---
 
