@@ -21,6 +21,11 @@ struct MetricVisibilityToggles: View {
     /// Set when this Mac cannot report the reading at all; disables both destinations.
     var isUnavailable = false
 
+    @Environment(\.fluxaVisualStyle) private var visualStyle
+
+    private var isCyber: Bool { visualStyle != .classic }
+    private var palette: ControlDeckPalette { .resolve(visualStyle) }
+
     var body: some View {
         HStack(spacing: 5) {
             button(
@@ -47,25 +52,23 @@ struct MetricVisibilityToggles: View {
         // Blocked only bites when turning *on* — a reading already in the menu bar must always be
         // removable, otherwise a full menu bar would be impossible to get out of.
         let isBlocked = isUnavailable || (blockedReason != nil && !isOn.wrappedValue)
+        let activeTint = isCyber ? palette.brandBlue : FluxaTheme.accent
+        let inactiveFill = isCyber ? palette.recessed : FluxaTheme.elevatedSurface
+        let inactiveBorder = isCyber ? palette.border : FluxaTheme.border
 
         return Button {
             isOn.wrappedValue.toggle()
         } label: {
             Image(systemName: symbol)
                 .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(isOn.wrappedValue ? FluxaTheme.accent : Color.secondary)
+                .foregroundStyle(isOn.wrappedValue ? activeTint : Color.secondary)
                 .frame(width: 26, height: 22)
-                .background(
-                    isOn.wrappedValue ? FluxaTheme.accent.opacity(0.12) : FluxaTheme.elevatedSurface,
-                    in: RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fluxaModuleChrome(
+                    fill: isOn.wrappedValue ? activeTint.opacity(0.12) : inactiveFill,
+                    border: isOn.wrappedValue ? activeTint.opacity(isCyber ? 0.34 : 0.24) : inactiveBorder,
+                    cornerRadius: 6,
+                    cut: 5
                 )
-                .overlay {
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .stroke(
-                            isOn.wrappedValue ? FluxaTheme.accent.opacity(0.24) : FluxaTheme.border,
-                            lineWidth: 1
-                        )
-                }
         }
         .buttonStyle(.plain)
         .disabled(isBlocked)

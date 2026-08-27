@@ -66,7 +66,7 @@ Fifteen quick actions, every one backed by a real system API — no fake toggles
 | 📥 **Auto-hide Dock** | Toggle | Shows the Dock only on hover |
 | 🌙 **Screen Saver** | Button | Launches the system screen saver |
 | ✨ **Screen Clean** | Button | Full-screen black overlay on every display; exits by click or ESC and follows display changes |
-| ⌨️ **Lock Keyboard** | Toggle | Transparent overlay that intercepts keyboard input (ESC to exit) |
+| ⌨️ **Lock Keyboard** | Toggle | Blocks keyboard input globally until its toggle is switched off; the mouse stays available to unlock |
 | 🎯 **Focus Mode** | Toggle | Enables/disables Do Not Disturb via user-created Shortcuts |
 | 🔊 **Audio Output** | Menu | Switches audio output device with one click, hot-plug aware |
 | 🎧 **Bluetooth Audio** | Menu | Connects/disconnects paired AirPods & headphones — no Bluetooth menu digging |
@@ -79,11 +79,11 @@ Fifteen quick actions, every one backed by a real system API — no fake toggles
 
 - **Customizable layout** — reorder, show, or hide actions without leaving the menu-bar panel
 - **Focus-safe navigation** — Customize transitions in place while hardware tools reliably come to the foreground
-- **Adaptive high-contrast UI** — shared surfaces, borders, semantic accents, and controls tuned for light and dark appearances
+- **Three visual styles** — Classic keeps the adaptive native interface; Cyber and Cyber Dark apply the Control Deck design across the popover and every tool window
 - **Per-action color design** — tinted icon tiles that fill when a toggle is active
 - **Persistent preferences** — order, visibility, and states survive relaunches
-- **Menu bar native** — no Dock icon; template icon adapts to light/dark menu bars
-- **Multi-display safe** — Screen Clean and Lock Keyboard cover every connected display; Screen Clean also rebuilds its overlays after a monitor is connected, disconnected, or rearranged
+- **Menu bar native** — no Dock icon; pinned readings use the whole status item, while the Fluxa mark appears only when no metric is selected
+- **Multi-display safe** — Screen Clean covers every connected display and rebuilds its overlays after a monitor is connected, disconnected, or rearranged; Keyboard Lock filters input globally
 - **Global shortcut & launch at login** built in
 - **About & support page** — live public GitHub profile/repository details plus an optional Buy Me a Coffee link
 
@@ -111,10 +111,10 @@ an old value as though it had been measured again.
 Fluxa reads how much of your AI coding agents' quota you've burned and keeps it in the menu bar.
 
 ```
- ⏻  ✳ 74%   19%          ← the switch mark, then one reading per pinned agent
+ ✳ 74%   19%              ← one compact reading per pinned agent
 ```
 
-- **Menu bar strip** — each selected agent's mark and percentage, rendered as one template image so it tints itself for light and dark menu bars
+- **Menu bar strip** — each selected agent's mark and percentage, rendered as one template image so it tints itself for light and dark menu bars; no redundant Fluxa icon while readings are visible
 - **Popover strip** — the same readings with severity colors (blue → amber at 75% → red at 90%) and a meter per window
 - **Charts window** — click the strip: live quota meters plus a GitHub-style contribution grid of tokens spent per day
 - **Configurable in Customize** — pick up to three quota windows and the refresh interval
@@ -214,17 +214,19 @@ Fluxa asks only for what a feature actually needs, when you first use it:
 |-----------|---------|------|
 | **Automation (System Events)** | Dark Mode | First toggle — one-time macOS prompt |
 | **Bluetooth** | Bluetooth Audio | First connection |
-| **Accessibility** *(optional)* | Lock Keyboard | Stricter key interception; works without it too |
+| **Accessibility** | Lock Keyboard | First activation — required to intercept keyboard events globally |
 | **Shortcuts app** | Focus Mode | One-time guided setup (see below) |
 | **Keychain** | Agent Usage (Claude) | First read of the `Claude Code-credentials` item — choose *Always Allow* |
 | **Network** | Agent Usage / About | Agent quota endpoints; public GitHub profile data only while About is opened |
 
-> **Keychain prompt returns after every rebuild.** macOS ties the "Always Allow" grant to the app's
-> code signature, and `build.sh` signs ad-hoc, so each build is a new app as far as the keychain is
-> concerned. Signing with a stable Apple Development identity (free with Xcode) makes it stick:
+> **Permission prompts during development.** A normal ad-hoc signature changes identity with every
+> rebuild. Prefer a stable Apple Development identity (free with Xcode):
 > ```bash
 > CODESIGN_IDENTITY="Apple Development: you@example.com" ./build.sh
 > ```
+> For repeated local-only builds without a certificate, `FLUXA_STABLE_LOCAL_REQUIREMENT=1 ./build.sh`
+> keeps the designated requirement stable. That identifier-only fallback is intentionally opt-in and
+> must not be used for a public release artifact.
 
 ### Focus Mode setup
 

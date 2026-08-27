@@ -7,6 +7,7 @@ import SwiftUI
 struct InfoView: View {
 
     @Environment(PopoverViewModel.self) private var viewModel
+    @Environment(\.fluxaVisualStyle) private var visualStyle
 
     let onDone: () -> Void
 
@@ -20,6 +21,8 @@ struct InfoView: View {
     }()
 
     private var github: GitHubProfileService { viewModel.githubProfile }
+    private var isCyber: Bool { visualStyle != .classic }
+    private var palette: ControlDeckPalette { .resolve(visualStyle) }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -36,7 +39,7 @@ struct InfoView: View {
             }
         }
         .frame(width: FluxaTheme.panelWidth, height: 560)
-        .background(FluxaTheme.panelBackground)
+        .fluxaPanelSurface()
         .task {
             await github.load()
         }
@@ -45,40 +48,15 @@ struct InfoView: View {
     // MARK: - Header
 
     private var header: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "info.circle.fill")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(FluxaTheme.accent)
-                .frame(width: 30, height: 30)
-                .background(
-                    FluxaTheme.accent.opacity(0.12),
-                    in: RoundedRectangle(cornerRadius: 8, style: .continuous)
-                )
-                .overlay {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .stroke(FluxaTheme.accent.opacity(0.22), lineWidth: 1)
-                }
-                .accessibilityHidden(true)
-
-            VStack(alignment: .leading, spacing: 1) {
-                Text("About Fluxa")
-                    .font(.system(size: 14, weight: .semibold))
-                Text("Open source · local first")
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
+        FluxaPageHeader(
+            title: "About Fluxa",
+            subtitle: "Open source · local first",
+            systemImage: "info.circle.fill",
+            tint: FluxaTheme.accent
+        ) {
             Button("Done", action: onDone)
                 .buttonStyle(FluxaPrimaryButtonStyle())
                 .keyboardShortcut(.defaultAction)
-        }
-        .padding(.horizontal, 14)
-        .frame(height: 58)
-        .background(FluxaTheme.surface)
-        .overlay(alignment: .bottom) {
-            FluxaPanelDivider(horizontalInset: 0)
         }
     }
 
@@ -206,7 +184,7 @@ struct InfoView: View {
     private var avatar: some View {
         ZStack {
             Circle()
-                .fill(FluxaTheme.elevatedSurface)
+                .fill(isCyber ? palette.recessed : FluxaTheme.elevatedSurface)
 
             AsyncImage(url: github.profile?.avatarURL) { phase in
                 if case .success(let image) = phase {
@@ -223,7 +201,7 @@ struct InfoView: View {
         .frame(width: 44, height: 44)
         .clipShape(Circle())
         .overlay {
-            Circle().stroke(FluxaTheme.border, lineWidth: 1)
+            Circle().stroke(isCyber ? palette.border : FluxaTheme.border, lineWidth: 1)
         }
         .accessibilityHidden(true)
     }
@@ -258,11 +236,12 @@ struct InfoView: View {
             )
         }
         .padding(.vertical, 8)
-        .background(FluxaTheme.elevatedSurface, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 9, style: .continuous)
-                .stroke(FluxaTheme.border, lineWidth: 1)
-        }
+        .fluxaModuleChrome(
+            fill: isCyber ? palette.recessed : FluxaTheme.elevatedSurface,
+            border: isCyber ? palette.border : FluxaTheme.border,
+            cornerRadius: 9,
+            cut: 8
+        )
     }
 
     private func githubStat(value: String, label: String, systemImage: String) -> some View {
@@ -297,14 +276,12 @@ struct InfoView: View {
             .foregroundStyle(FluxaTheme.accent)
             .padding(.horizontal, 8)
             .frame(maxWidth: .infinity, minHeight: 27)
-            .background(
-                FluxaTheme.accent.opacity(0.10),
-                in: RoundedRectangle(cornerRadius: 7, style: .continuous)
+            .fluxaModuleChrome(
+                fill: FluxaTheme.accent.opacity(0.10),
+                border: FluxaTheme.accent.opacity(isCyber ? 0.32 : 0.20),
+                cornerRadius: 7,
+                cut: 6
             )
-            .overlay {
-                RoundedRectangle(cornerRadius: 7, style: .continuous)
-                    .stroke(FluxaTheme.accent.opacity(0.20), lineWidth: 1)
-            }
         }
         .buttonStyle(.plain)
         .help("Open \(title) on GitHub")
@@ -319,9 +296,11 @@ struct InfoView: View {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(FluxaTheme.amber)
                     .frame(width: 34, height: 34)
-                    .background(
-                        FluxaTheme.brown.opacity(0.16),
-                        in: RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    .fluxaModuleChrome(
+                        fill: FluxaTheme.brown.opacity(0.16),
+                        border: FluxaTheme.brown.opacity(isCyber ? 0.34 : 0),
+                        cornerRadius: 9,
+                        cut: 8
                     )
                     .accessibilityHidden(true)
 
@@ -347,17 +326,25 @@ struct InfoView: View {
                 .foregroundStyle(.white)
                 .padding(.horizontal, 12)
                 .frame(maxWidth: .infinity, minHeight: 34)
-                .background(
-                    LinearGradient(
+                .background {
+                    let gradient = LinearGradient(
                         colors: [FluxaTheme.brown, FluxaTheme.orange],
                         startPoint: .leading,
                         endPoint: .trailing
-                    ),
-                    in: RoundedRectangle(cornerRadius: 9, style: .continuous)
-                )
+                    )
+                    if isCyber {
+                        FluxCutShape(cut: 8).fill(gradient)
+                    } else {
+                        RoundedRectangle(cornerRadius: 9, style: .continuous).fill(gradient)
+                    }
+                }
                 .overlay {
-                    RoundedRectangle(cornerRadius: 9, style: .continuous)
-                        .stroke(.white.opacity(0.16), lineWidth: 1)
+                    if isCyber {
+                        FluxCutShape(cut: 8).stroke(.white.opacity(0.18), lineWidth: 1)
+                    } else {
+                        RoundedRectangle(cornerRadius: 9, style: .continuous)
+                            .stroke(.white.opacity(0.16), lineWidth: 1)
+                    }
                 }
             }
             .buttonStyle(.plain)
@@ -365,17 +352,25 @@ struct InfoView: View {
             .accessibilityLabel("Buy Giuseppe a coffee")
         }
         .padding(14)
-        .background(
-            LinearGradient(
+        .background {
+            let gradient = LinearGradient(
                 colors: [FluxaTheme.amber.opacity(0.10), FluxaTheme.brown.opacity(0.08)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
-            ),
-            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-        )
+            )
+            if isCyber {
+                FluxCutShape(cut: 12).fill(gradient)
+            } else {
+                RoundedRectangle(cornerRadius: 14, style: .continuous).fill(gradient)
+            }
+        }
         .overlay {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(FluxaTheme.brown.opacity(0.30), lineWidth: 1)
+            if isCyber {
+                FluxCutShape(cut: 12).stroke(FluxaTheme.brown.opacity(0.38), lineWidth: 1)
+            } else {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(FluxaTheme.brown.opacity(0.30), lineWidth: 1)
+            }
         }
     }
 

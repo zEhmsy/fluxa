@@ -126,7 +126,7 @@ enum ActionCatalog {
         QuickAction(
             id: .lockKeyboard,
             title: "Lock Keyboard",
-            subtitle: "Overlay shield — ESC or click to exit",
+            subtitle: "Blocks keys until switched off",
             icon: "keyboard",
             activeIcon: nil,
             tint: FluxaTheme.red,

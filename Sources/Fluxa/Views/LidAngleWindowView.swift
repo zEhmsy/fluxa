@@ -6,11 +6,13 @@ import SwiftUI
 struct LidAngleWindowView: View {
 
     @Environment(PopoverViewModel.self) private var viewModel
+    @Environment(\.fluxaVisualStyle) private var visualStyle
 
     /// Smoothed angle used for animation — updated from the monitor via withAnimation.
     @State private var displayAngle: Double = 90
 
     private var monitor: LidAngleMonitor { viewModel.lidAngleMonitor }
+    private var isCyber: Bool { visualStyle != .classic }
 
     var body: some View {
         VStack(spacing: 14) {
@@ -62,7 +64,7 @@ struct LidAngleWindowView: View {
         }
         .padding(16)
         .frame(width: 390, height: 360)
-        .background(FluxaTheme.panelBackground)
+        .fluxaPanelSurface()
         .onAppear {
             monitor.startPolling()
             displayAngle = monitor.angleDegrees
@@ -106,9 +108,11 @@ struct LidAngleWindowView: View {
                 .font(.system(size: 30, weight: .light))
                 .foregroundStyle(FluxaTheme.orange)
                 .frame(width: 56, height: 56)
-                .background(
-                    FluxaTheme.orange.opacity(0.10),
-                    in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fluxaModuleChrome(
+                    fill: FluxaTheme.orange.opacity(0.10),
+                    border: FluxaTheme.orange.opacity(isCyber ? 0.32 : 0),
+                    cornerRadius: 14,
+                    cut: 11
                 )
             Text("Lid Angle Not Available")
                 .font(.system(size: 14, weight: .semibold))
@@ -134,11 +138,15 @@ struct MacBookProfileView: View {
     /// Lid angle in degrees (0 = closed, 90 = upright, 180 = fully flat open).
     let angle: Double
 
+    @Environment(\.fluxaVisualStyle) private var visualStyle
+
     // Design constants
-    private let baseColor = Color.secondary
-    private let screenColor = Color.primary
-    private let arcColor = FluxaTheme.blue
-    private let overColor = FluxaTheme.orange // used when angle > 180°
+    private var isCyber: Bool { visualStyle != .classic }
+    private var palette: ControlDeckPalette { .resolve(visualStyle) }
+    private var baseColor: Color { isCyber ? palette.secondaryText : Color.secondary }
+    private var screenColor: Color { isCyber ? palette.primaryText : Color.primary }
+    private var arcColor: Color { isCyber ? palette.brandBlue : FluxaTheme.blue }
+    private var overColor: Color { isCyber ? palette.warning : FluxaTheme.orange }
 
     var body: some View {
         Canvas { ctx, size in

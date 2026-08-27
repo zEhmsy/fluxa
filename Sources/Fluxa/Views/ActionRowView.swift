@@ -270,21 +270,36 @@ struct ActionRowView: View {
 struct FluxaButtonStyle: ButtonStyle {
     var tint: Color = FluxaTheme.accent
 
+    @Environment(\.fluxaVisualStyle) private var visualStyle
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var isCyber: Bool { visualStyle != .classic }
+    private var palette: ControlDeckPalette { .resolve(visualStyle) }
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 11, weight: .semibold))
             .foregroundStyle(tint)
             .padding(.horizontal, 9)
             .padding(.vertical, 5)
-            .background(
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .fill(tint.opacity(configuration.isPressed ? 0.22 : 0.12))
-            )
-            .overlay {
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .stroke(tint.opacity(0.28), lineWidth: 1)
+            .background {
+                if isCyber {
+                    FluxCutShape(cut: 6)
+                        .fill(configuration.isPressed ? palette.pressed : tint.opacity(0.11))
+                } else {
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(tint.opacity(configuration.isPressed ? 0.22 : 0.12))
+                }
             }
-            .scaleEffect(configuration.isPressed ? 0.96 : 1)
-            .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
+            .overlay {
+                if isCyber {
+                    FluxCutShape(cut: 6).stroke(tint.opacity(0.36), lineWidth: 1)
+                } else {
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .stroke(tint.opacity(0.28), lineWidth: 1)
+                }
+            }
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.96 : 1)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.1), value: configuration.isPressed)
     }
 }

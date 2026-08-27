@@ -92,9 +92,15 @@ enum FluxaTheme {
 struct FluxaPanelDivider: View {
     var horizontalInset: CGFloat = 12
 
+    @Environment(\.fluxaVisualStyle) private var visualStyle
+
+    private var color: Color {
+        visualStyle == .classic ? FluxaTheme.border : ControlDeckPalette.resolve(visualStyle).border
+    }
+
     var body: some View {
         Rectangle()
-            .fill(FluxaTheme.border)
+            .fill(color)
             .frame(height: 1)
             .padding(.horizontal, horizontalInset)
             .accessibilityHidden(true)
@@ -105,19 +111,24 @@ struct FluxaSectionLabel: View {
     let title: String
     var trailing: String?
 
+    @Environment(\.fluxaVisualStyle) private var visualStyle
+
+    private var isCyber: Bool { visualStyle != .classic }
+    private var palette: ControlDeckPalette { .resolve(visualStyle) }
+
     var body: some View {
         HStack {
             Text(title.uppercased())
-                .font(.system(size: 10, weight: .semibold))
-                .tracking(0.7)
-                .foregroundStyle(.secondary)
+                .font(.system(size: isCyber ? 9 : 10, weight: .semibold))
+                .tracking(isCyber ? 0.9 : 0.7)
+                .foregroundStyle(isCyber ? palette.secondaryText : Color.secondary)
 
             Spacer()
 
             if let trailing {
                 Text(trailing)
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(isCyber ? palette.tertiaryText : Color.secondary.opacity(0.72))
             }
         }
         .accessibilityElement(children: .combine)
@@ -125,22 +136,244 @@ struct FluxaSectionLabel: View {
 }
 
 struct FluxaPrimaryButtonStyle: ButtonStyle {
+    @Environment(\.fluxaVisualStyle) private var visualStyle
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var isCyber: Bool { visualStyle != .classic }
+    private var palette: ControlDeckPalette { .resolve(visualStyle) }
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(.white)
+            .foregroundStyle(isCyber ? palette.brandBlue : Color.white)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(
-                FluxaTheme.accentFill.opacity(configuration.isPressed ? 0.82 : 1),
-                in: RoundedRectangle(cornerRadius: 7, style: .continuous)
-            )
-            .overlay {
-                RoundedRectangle(cornerRadius: 7, style: .continuous)
-                    .stroke(.white.opacity(0.14), lineWidth: 1)
+            .background {
+                if isCyber {
+                    FluxCutShape(cut: 6)
+                        .fill(configuration.isPressed ? palette.pressed : palette.brandBlue.opacity(0.11))
+                } else {
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .fill(FluxaTheme.accentFill.opacity(configuration.isPressed ? 0.82 : 1))
+                }
             }
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
-            .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
+            .overlay {
+                if isCyber {
+                    FluxCutShape(cut: 6)
+                        .stroke(palette.brandBlue.opacity(0.42), lineWidth: 1)
+                } else {
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .stroke(.white.opacity(0.14), lineWidth: 1)
+                }
+            }
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.97 : 1)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.1), value: configuration.isPressed)
+    }
+}
+
+// MARK: - Page Surfaces
+
+/// Applies the selected palette at a complete page/window boundary. Classic remains adaptive to
+/// Aqua; Cyber variants intentionally use their fixed light or dark palette.
+private struct FluxaPanelSurfaceModifier: ViewModifier {
+    let classicBackground: Color
+
+    @Environment(\.fluxaVisualStyle) private var visualStyle
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if visualStyle == .classic {
+            content
+                .background(classicBackground)
+        } else {
+            let palette = ControlDeckPalette.resolve(visualStyle)
+            content
+                .foregroundStyle(palette.primaryText)
+                .background(palette.deck)
+                .preferredColorScheme(palette.isDark ? .dark : .light)
+        }
+    }
+}
+
+extension View {
+    func fluxaPanelSurface(classicBackground: Color = FluxaTheme.panelBackground) -> some View {
+        modifier(FluxaPanelSurfaceModifier(classicBackground: classicBackground))
+    }
+}
+
+private struct FluxaListRowSurfaceModifier: ViewModifier {
+    @Environment(\.fluxaVisualStyle) private var visualStyle
+
+    func body(content: Content) -> some View {
+        let isCyber = visualStyle != .classic
+        let palette = ControlDeckPalette.resolve(visualStyle)
+        content
+            .listRowBackground(isCyber ? palette.module : FluxaTheme.surface)
+            .listRowSeparatorTint(isCyber ? palette.border : FluxaTheme.border)
+    }
+}
+
+extension View {
+    func fluxaListRowSurface() -> some View {
+        modifier(FluxaListRowSurfaceModifier())
+    }
+}
+
+/// Keeps existing Classic fills and borders while changing the module silhouette in Control Deck
+/// themes. Useful for feature-specific cards that should not be forced into one shared content API.
+private struct FluxaModuleChromeModifier: ViewModifier {
+    let fill: Color
+    let border: Color
+    let cornerRadius: CGFloat
+    let cut: CGFloat
+
+    @Environment(\.fluxaVisualStyle) private var visualStyle
+
+    func body(content: Content) -> some View {
+        let isCyber = visualStyle != .classic
+        content
+            .background {
+                if isCyber {
+                    FluxCutShape(cut: cut).fill(fill)
+                } else {
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous).fill(fill)
+                }
+            }
+            .overlay {
+                if isCyber {
+                    FluxCutShape(cut: cut).stroke(border, lineWidth: 1)
+                } else {
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .stroke(border, lineWidth: 1)
+                }
+            }
+    }
+}
+
+extension View {
+    func fluxaModuleChrome(
+        fill: Color,
+        border: Color,
+        cornerRadius: CGFloat = 10,
+        cut: CGFloat = 8
+    ) -> some View {
+        modifier(FluxaModuleChromeModifier(
+            fill: fill,
+            border: border,
+            cornerRadius: cornerRadius,
+            cut: cut
+        ))
+    }
+}
+
+/// Shared top bar for in-popover pages and standalone tool windows. The cyber variant carries the
+/// Control Deck rail and cut-corner icon tile while preserving native controls in the trailing slot.
+struct FluxaPageHeader<Trailing: View>: View {
+    let title: String
+    let subtitle: String
+    let systemImage: String
+    let tint: Color
+    @ViewBuilder let trailing: Trailing
+
+    @Environment(\.fluxaVisualStyle) private var visualStyle
+
+    init(
+        title: String,
+        subtitle: String,
+        systemImage: String,
+        tint: Color,
+        @ViewBuilder trailing: () -> Trailing
+    ) {
+        self.title = title
+        self.subtitle = subtitle
+        self.systemImage = systemImage
+        self.tint = tint
+        self.trailing = trailing()
+    }
+
+    private var isCyber: Bool { visualStyle != .classic }
+    private var palette: ControlDeckPalette { .resolve(visualStyle) }
+
+    var body: some View {
+        Group {
+            if isCyber {
+                cyberHeader
+            } else {
+                classicHeader
+            }
+        }
+        .frame(height: 58)
+        .background(isCyber ? palette.module : FluxaTheme.surface)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(isCyber ? palette.border : FluxaTheme.border)
+                .frame(height: 1)
+        }
+    }
+
+    private var classicHeader: some View {
+        HStack(spacing: 10) {
+            iconTile(cyber: false)
+            labels
+            Spacer()
+            trailing
+        }
+        .padding(.horizontal, 14)
+    }
+
+    private var cyberHeader: some View {
+        HStack(spacing: 0) {
+            ZStack {
+                ControlDeckRailCell(palette: palette)
+                iconTile(cyber: true)
+            }
+            .frame(width: 40)
+
+            HStack(spacing: 10) {
+                labels
+                Spacer()
+                trailing
+            }
+            .padding(.leading, 4)
+            .padding(.trailing, 14)
+        }
+    }
+
+    @ViewBuilder
+    private func iconTile(cyber: Bool) -> some View {
+        Image(systemName: systemImage)
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(tint)
+            .frame(width: 30, height: 30)
+            .background {
+                if cyber {
+                    FluxCutShape(cut: 8).fill(tint.opacity(0.12))
+                } else {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(tint.opacity(0.12))
+                }
+            }
+            .overlay {
+                if cyber {
+                    FluxCutShape(cut: 8).stroke(tint.opacity(0.30), lineWidth: 1)
+                } else {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(tint.opacity(0.22), lineWidth: 1)
+                }
+            }
+            .accessibilityHidden(true)
+    }
+
+    private var labels: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(title)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(isCyber ? palette.primaryText : Color.primary)
+            Text(subtitle)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(isCyber ? palette.secondaryText : Color.secondary)
+                .lineLimit(1)
+        }
     }
 }
 
@@ -152,26 +385,41 @@ struct FluxaToolHeader: View {
     let systemImage: String
     let tint: Color
 
+    @Environment(\.fluxaVisualStyle) private var visualStyle
+
+    private var isCyber: Bool { visualStyle != .classic }
+    private var palette: ControlDeckPalette { .resolve(visualStyle) }
+
     var body: some View {
         HStack(spacing: 11) {
             Image(systemName: systemImage)
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(tint)
                 .frame(width: 36, height: 36)
-                .background(tint.opacity(0.11), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .background {
+                    if isCyber {
+                        FluxCutShape(cut: 9).fill(tint.opacity(0.11))
+                    } else {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous).fill(tint.opacity(0.11))
+                    }
+                }
                 .overlay {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(tint.opacity(0.24), lineWidth: 1)
+                    if isCyber {
+                        FluxCutShape(cut: 9).stroke(tint.opacity(0.34), lineWidth: 1)
+                    } else {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .stroke(tint.opacity(0.24), lineWidth: 1)
+                    }
                 }
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(isCyber ? palette.primaryText : Color.primary)
                 Text(subtitle)
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(isCyber ? palette.secondaryText : Color.secondary)
             }
 
             Spacer()
@@ -183,6 +431,11 @@ struct FluxaToolHeader: View {
 struct FluxaToolCard<Content: View>: View {
     @ViewBuilder let content: Content
 
+    @Environment(\.fluxaVisualStyle) private var visualStyle
+
+    private var isCyber: Bool { visualStyle != .classic }
+    private var palette: ControlDeckPalette { .resolve(visualStyle) }
+
     init(@ViewBuilder content: () -> Content) {
         self.content = content()
     }
@@ -191,10 +444,20 @@ struct FluxaToolCard<Content: View>: View {
         content
             .padding(14)
             .frame(maxWidth: .infinity)
-            .background(FluxaTheme.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .background {
+                if isCyber {
+                    FluxCutShape(cut: 12).fill(palette.module)
+                } else {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous).fill(FluxaTheme.surface)
+                }
+            }
             .overlay {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .stroke(FluxaTheme.border, lineWidth: 1)
+                if isCyber {
+                    FluxCutShape(cut: 12).stroke(palette.border, lineWidth: 1)
+                } else {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(FluxaTheme.border, lineWidth: 1)
+                }
             }
     }
 }
@@ -202,6 +465,10 @@ struct FluxaToolCard<Content: View>: View {
 struct FluxaStatusBadge: View {
     let text: String
     let color: Color
+
+    @Environment(\.fluxaVisualStyle) private var visualStyle
+
+    private var isCyber: Bool { visualStyle != .classic }
 
     var body: some View {
         HStack(spacing: 6) {
@@ -214,10 +481,19 @@ struct FluxaStatusBadge: View {
         }
         .padding(.horizontal, 9)
         .padding(.vertical, 5)
-        .background(color.opacity(0.11), in: Capsule())
+        .background {
+            if isCyber {
+                FluxCutShape(cut: 5).fill(color.opacity(0.11))
+            } else {
+                Capsule().fill(color.opacity(0.11))
+            }
+        }
         .overlay {
-            Capsule()
-                .stroke(color.opacity(0.22), lineWidth: 1)
+            if isCyber {
+                FluxCutShape(cut: 5).stroke(color.opacity(0.34), lineWidth: 1)
+            } else {
+                Capsule().stroke(color.opacity(0.22), lineWidth: 1)
+            }
         }
         .accessibilityElement(children: .combine)
     }

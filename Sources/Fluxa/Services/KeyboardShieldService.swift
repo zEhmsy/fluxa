@@ -1,163 +1,223 @@
 import AppKit
 import ApplicationServices
 
+// MARK: - Keyboard Event Tap Context
+
+/// Retained by `KeyboardShieldService` for as long as the event tap is installed. The callback is
+/// a C function and cannot capture the service directly, so this small context keeps the tap
+/// available when macOS temporarily disables it after a timeout or a secure-input transition.
+private final class KeyboardEventTapContext {
+    var tap: CFMachPort?
+}
+
 // MARK: - KeyboardShieldService
 
-/// Presents a full-screen overlay that absorbs keyboard input while the panel is the key window.
+/// Blocks keyboard events globally until explicitly deactivated from Fluxa's toggle.
 ///
-/// IMPORTANT LIMITATION:
-/// macOS does not provide a public API to globally lock keyboard input for all applications.
-/// This service implements a "keyboard shield" — an NSPanel at screen-saver window level that
-/// becomes the key window and absorbs keystrokes via a local event monitor.
-///
-/// The shield is effective while the panel remains the key window. If the user clicks on
-/// another application's window, focus shifts and keystrokes reach that app.
-///
-/// For most use cases (e.g., keeping a sleeping keyboard clean), this is sufficient.
-///
-/// TRUE keyboard lock would require:
-/// - A kernel extension (kext) — deprecated and unsigned in modern macOS
-/// - Accessibility API + CGEventTap — possible but requires Accessibility permission
-///
-/// TODO: For a stricter implementation, consider using CGEventTap with
-///       kCGHeadInsertEventTap to intercept events at the system level.
-///       This would require Accessibility permission and explicit user consent.
+/// The mouse is intentionally left untouched so the user can always reopen the menu-bar popover
+/// and switch the lock off. A compact, click-through HUD reports the active state without covering
+/// the desktop. Filtering global keyboard events requires Accessibility permission on macOS.
 @MainActor
 final class KeyboardShieldService {
 
+    enum ActivationError: LocalizedError {
+        case accessibilityPermissionRequired
+        case eventTapUnavailable
+
+        var errorDescription: String? {
+            switch self {
+            case .accessibilityPermissionRequired:
+                return "Grant Fluxa Accessibility access, then switch Lock Keyboard on again."
+            case .eventTapUnavailable:
+                return "Keyboard Lock could not start. Check Fluxa's Accessibility access and try again."
+            }
+        }
+    }
+
     // MARK: - State
 
-    private var panel: NSPanel?
-    private var eventMonitor: Any?
+    private var eventTap: CFMachPort?
+    private var runLoopSource: CFRunLoopSource?
+    private var eventTapContext: KeyboardEventTapContext?
+    private var statusPanel: NSPanel?
 
-    var isActive: Bool { panel != nil }
+    var isActive: Bool {
+        guard let eventTap else { return false }
+        return CFMachPortIsValid(eventTap)
+    }
 
     // MARK: - Public API
 
-    /// Activates the keyboard shield. Requests Accessibility if not yet granted.
-    func activate() {
-        guard panel == nil else { return }
+    /// Starts a session-level event tap and leaves it active until `deactivate()` is called.
+    func activate() throws {
+        guard !isActive else { return }
 
-        // Check accessibility for the informational banner (not strictly required for
-        // local monitor, but good practice to surface the limitation to the user).
-        let trusted = AXIsProcessTrusted()
-
-        let shield = makeShieldPanel(accessibilityGranted: trusted)
-        panel = shield
-        shield.makeKeyAndOrderFront(nil)
-        installKeyboardMonitor()
-    }
-
-    /// Deactivates the keyboard shield and restores normal keyboard routing.
-    func deactivate() {
-        removeKeyboardMonitor()
-        panel?.close()
-        panel = nil
-    }
-
-    // MARK: - Panel Construction
-
-    private func makeShieldPanel(accessibilityGranted: Bool) -> NSPanel {
-        guard let screen = NSScreen.main ?? NSScreen.screens.first else {
-            return NSPanel()
+        guard AXIsProcessTrusted() else {
+            Self.requestAccessibilityIfNeeded()
+            throw ActivationError.accessibilityPermissionRequired
         }
 
-        let shieldPanel = NSPanel(
-            contentRect: screen.frame,
+        let context = KeyboardEventTapContext()
+        let contextPointer = Unmanaged.passUnretained(context).toOpaque()
+
+        guard let tap = CGEvent.tapCreate(
+            tap: .cgSessionEventTap,
+            place: .headInsertEventTap,
+            options: .defaultTap,
+            eventsOfInterest: Self.keyboardEventMask,
+            callback: Self.keyboardEventCallback,
+            userInfo: contextPointer
+        ) else {
+            throw ActivationError.eventTapUnavailable
+        }
+
+        guard let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0) else {
+            CFMachPortInvalidate(tap)
+            throw ActivationError.eventTapUnavailable
+        }
+
+        context.tap = tap
+        eventTapContext = context
+        eventTap = tap
+        runLoopSource = source
+
+        CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
+        CGEvent.tapEnable(tap: tap, enable: true)
+        showStatusPanel()
+    }
+
+    /// Removes the event tap and HUD. This is the only normal exit path while the app is running.
+    func deactivate() {
+        statusPanel?.close()
+        statusPanel = nil
+
+        if let eventTap {
+            CGEvent.tapEnable(tap: eventTap, enable: false)
+        }
+        if let runLoopSource {
+            CFRunLoopRemoveSource(CFRunLoopGetMain(), runLoopSource, .commonModes)
+            CFRunLoopSourceInvalidate(runLoopSource)
+        }
+        if let eventTap {
+            CFMachPortInvalidate(eventTap)
+        }
+
+        runLoopSource = nil
+        eventTap = nil
+        eventTapContext = nil
+    }
+
+    // MARK: - Event Tap
+
+    private static let keyboardEventMask: CGEventMask = {
+        let eventTypes: [CGEventType] = [.keyDown, .keyUp, .flagsChanged]
+        return eventTypes.reduce(CGEventMask(0)) { mask, eventType in
+            mask | (CGEventMask(1) << eventType.rawValue)
+        }
+    }()
+
+    private static let keyboardEventCallback: CGEventTapCallBack = { _, type, event, userInfo in
+        guard let userInfo else {
+            return Unmanaged.passUnretained(event)
+        }
+
+        let context = Unmanaged<KeyboardEventTapContext>
+            .fromOpaque(userInfo)
+            .takeUnretainedValue()
+
+        switch type {
+        case .tapDisabledByTimeout, .tapDisabledByUserInput:
+            if let tap = context.tap {
+                CGEvent.tapEnable(tap: tap, enable: true)
+            }
+            return Unmanaged.passUnretained(event)
+
+        case .keyDown, .keyUp, .flagsChanged:
+            return nil
+
+        default:
+            return Unmanaged.passUnretained(event)
+        }
+    }
+
+    // MARK: - Status HUD
+
+    private func showStatusPanel() {
+        guard statusPanel == nil,
+              let screen = NSScreen.main ?? NSScreen.screens.first else {
+            return
+        }
+
+        let panelSize = NSSize(width: 240, height: 52)
+        let visibleFrame = screen.visibleFrame
+        let origin = NSPoint(
+            x: visibleFrame.midX - panelSize.width / 2,
+            y: visibleFrame.maxY - panelSize.height - 14
+        )
+
+        let panel = NSPanel(
+            contentRect: NSRect(origin: origin, size: panelSize),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
-            defer: false,
-            screen: screen
+            defer: false
         )
+        panel.level = .statusBar
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+        panel.backgroundColor = .clear
+        panel.isOpaque = false
+        panel.hasShadow = true
+        panel.ignoresMouseEvents = true
+        panel.isReleasedWhenClosed = false
 
-        shieldPanel.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.screenSaverWindow)))
-        shieldPanel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
-        shieldPanel.backgroundColor = NSColor.black.withAlphaComponent(0.85)
-        shieldPanel.isOpaque = false
-        shieldPanel.hasShadow = false
-        shieldPanel.ignoresMouseEvents = false
-        shieldPanel.acceptsMouseMovedEvents = false
-        shieldPanel.isReleasedWhenClosed = false
+        let effectView = NSVisualEffectView(frame: NSRect(origin: .zero, size: panelSize))
+        effectView.material = .hudWindow
+        effectView.blendingMode = .behindWindow
+        effectView.state = .active
+        effectView.wantsLayer = true
+        effectView.layer?.cornerRadius = 12
+        effectView.layer?.masksToBounds = true
 
-        let contentView = NSView(frame: screen.frame)
-        shieldPanel.contentView = contentView
+        let iconView = NSImageView()
+        iconView.image = NSImage(systemSymbolName: "keyboard", accessibilityDescription: nil)
+        iconView.contentTintColor = .labelColor
+        iconView.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 15, weight: .semibold)
+        iconView.translatesAutoresizingMaskIntoConstraints = false
 
-        // Main label
-        let titleLabel = NSTextField(labelWithString: "Keyboard Shield Active")
-        titleLabel.font = NSFont.systemFont(ofSize: 22, weight: .medium)
-        titleLabel.textColor = .white
-        titleLabel.alignment = .center
-        titleLabel.sizeToFit()
+        let titleLabel = NSTextField(labelWithString: "Keyboard locked")
+        titleLabel.font = .systemFont(ofSize: 13, weight: .semibold)
+        titleLabel.textColor = .labelColor
 
-        // Subtitle
-        let subtitleText = accessibilityGranted
-            ? "Keyboard input is blocked · Press ESC or click to exit"
-            : "Overlay mode (limited) · Press ESC or click to exit\nFor full keyboard lock, grant Accessibility in System Settings"
+        let instructionLabel = NSTextField(labelWithString: "Use the Fluxa toggle to unlock")
+        instructionLabel.font = .systemFont(ofSize: 10.5, weight: .regular)
+        instructionLabel.textColor = .secondaryLabelColor
 
-        let subtitleLabel = NSTextField(labelWithString: subtitleText)
-        subtitleLabel.font = NSFont.systemFont(ofSize: 13, weight: .regular)
-        subtitleLabel.textColor = NSColor.white.withAlphaComponent(0.6)
-        subtitleLabel.alignment = .center
-        subtitleLabel.maximumNumberOfLines = 2
-        subtitleLabel.sizeToFit()
+        let labels = NSStackView(views: [titleLabel, instructionLabel])
+        labels.orientation = .vertical
+        labels.alignment = .leading
+        labels.spacing = 1
 
-        // Stack vertically in center
-        let centerX = screen.frame.width / 2
-        let centerY = screen.frame.height / 2
+        let content = NSStackView(views: [iconView, labels])
+        content.orientation = .horizontal
+        content.alignment = .centerY
+        content.spacing = 10
+        content.translatesAutoresizingMaskIntoConstraints = false
 
-        titleLabel.frame = CGRect(
-            x: centerX - titleLabel.frame.width / 2,
-            y: centerY + 8,
-            width: titleLabel.frame.width,
-            height: titleLabel.frame.height
-        )
+        effectView.addSubview(content)
+        NSLayoutConstraint.activate([
+            iconView.widthAnchor.constraint(equalToConstant: 22),
+            iconView.heightAnchor.constraint(equalToConstant: 22),
+            content.leadingAnchor.constraint(equalTo: effectView.leadingAnchor, constant: 14),
+            content.trailingAnchor.constraint(lessThanOrEqualTo: effectView.trailingAnchor, constant: -14),
+            content.centerYAnchor.constraint(equalTo: effectView.centerYAnchor)
+        ])
 
-        subtitleLabel.frame = CGRect(
-            x: centerX - 200,
-            y: centerY - subtitleLabel.frame.height - 4,
-            width: 400,
-            height: subtitleLabel.frame.height + 20
-        )
-
-        contentView.addSubview(titleLabel)
-        contentView.addSubview(subtitleLabel)
-
-        return shieldPanel
+        panel.contentView = effectView
+        statusPanel = panel
+        panel.orderFrontRegardless()
     }
 
-    // MARK: - Event Monitoring
+    // MARK: - Accessibility
 
-    private func installKeyboardMonitor() {
-        // Local event monitor: intercepts key events while our panel is key window.
-        // Returns nil to swallow events (prevents them from reaching other views).
-        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .leftMouseDown, .rightMouseDown]) { [weak self] event in
-            // ESC (keyCode 53) or any mouse click → dismiss
-            if event.type == .keyDown && event.keyCode == 53 {
-                Task { @MainActor in self?.deactivate() }
-                return nil
-            }
-            if event.type == .leftMouseDown || event.type == .rightMouseDown {
-                Task { @MainActor in self?.deactivate() }
-                return nil
-            }
-            // Swallow all other keystrokes
-            if event.type == .keyDown {
-                return nil
-            }
-            return event
-        }
-    }
-
-    private func removeKeyboardMonitor() {
-        if let monitor = eventMonitor {
-            NSEvent.removeMonitor(monitor)
-            eventMonitor = nil
-        }
-    }
-
-    // MARK: - Accessibility Helper
-
-    /// Checks if the app has Accessibility permission and optionally prompts.
     static func requestAccessibilityIfNeeded() {
         let options: NSDictionary = [kAXTrustedCheckOptionPrompt.takeRetainedValue(): true]
         _ = AXIsProcessTrustedWithOptions(options)

@@ -57,6 +57,10 @@ final class PopoverViewModel {
     /// Whether an async action is in progress (disables controls during transitions).
     var isBusy = false
 
+    /// Identifies the action responsible for `isBusy`, allowing the Control Deck to show loading
+    /// feedback on the correct module without moving service logic into the view.
+    private(set) var busyActionID: ActionID?
+
     /// Weak reference to the MenuBarExtra window, set by PopoverRootView on first appear.
     /// Used by the global hotkey to toggle the popover.
     weak var menuBarWindow: NSWindow?
@@ -130,7 +134,11 @@ final class PopoverViewModel {
     func toggleAction(_ id: ActionID) async {
         clearError()
         isBusy = true
-        defer { isBusy = false }
+        busyActionID = id
+        defer {
+            isBusy = false
+            busyActionID = nil
+        }
 
         let current = toggleStates[id.rawValue] ?? false
         let desiredActive = !current
@@ -158,7 +166,7 @@ final class PopoverViewModel {
                 toggleStates[id.rawValue] = dockAutohide.isActive
 
             case .lockKeyboard:
-                if desiredActive { keyboardShield.activate() } else { keyboardShield.deactivate() }
+                if desiredActive { try keyboardShield.activate() } else { keyboardShield.deactivate() }
                 toggleStates[id.rawValue] = keyboardShield.isActive
 
             case .micMute:
@@ -221,7 +229,11 @@ final class PopoverViewModel {
     func triggerAction(_ id: ActionID, closePopover: (() -> Void)? = nil) async {
         clearError()
         isBusy = true
-        defer { isBusy = false }
+        busyActionID = id
+        defer {
+            isBusy = false
+            busyActionID = nil
+        }
 
         do {
             switch id {
@@ -264,7 +276,11 @@ final class PopoverViewModel {
     func toggleBluetoothDevice(_ id: String) async {
         clearError()
         isBusy = true
-        defer { isBusy = false }
+        busyActionID = .bluetoothAudio
+        defer {
+            isBusy = false
+            busyActionID = nil
+        }
         do {
             try await bluetoothAudio.toggleConnection(for: id)
         } catch {

@@ -13,13 +13,15 @@ struct SystemStatsWindowView: View {
 
     @Environment(PopoverViewModel.self) private var viewModel
     @Environment(AppSettings.self) private var settings
+    @Environment(\.fluxaVisualStyle) private var visualStyle
 
     private var stats: SystemStatsService { viewModel.systemStats }
+    private var isCyber: Bool { visualStyle != .classic }
+    private var palette: ControlDeckPalette { .resolve(visualStyle) }
 
     var body: some View {
         VStack(spacing: 0) {
             header
-            FluxaPanelDivider(horizontalInset: 0)
 
             VStack(spacing: 14) {
                 currentReadings
@@ -29,7 +31,7 @@ struct SystemStatsWindowView: View {
             .padding(14)
         }
         .frame(width: 640, height: 620)
-        .background(FluxaTheme.panelBackground)
+        .fluxaPanelSurface()
         .onAppear {
             stats.setDashboardVisible(true)
         }
@@ -41,54 +43,35 @@ struct SystemStatsWindowView: View {
     // MARK: - Header
 
     private var header: some View {
-        HStack(spacing: 11) {
-            Image(systemName: "waveform.path.ecg.rectangle")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(FluxaTheme.teal)
-                .frame(width: 36, height: 36)
-                .background(
-                    FluxaTheme.teal.opacity(0.11),
-                    in: RoundedRectangle(cornerRadius: 10, style: .continuous)
-                )
-                .overlay {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(FluxaTheme.teal.opacity(0.24), lineWidth: 1)
+        FluxaPageHeader(
+            title: "System Dashboard",
+            subtitle: headerSubtitle,
+            systemImage: "waveform.path.ecg.rectangle",
+            tint: FluxaTheme.teal
+        ) {
+            HStack(spacing: 8) {
+                Button {
+                    stats.clearHistory()
+                } label: {
+                    Image(systemName: "trash")
+                        .font(.system(size: 11, weight: .semibold))
                 }
-                .accessibilityHidden(true)
+                .buttonStyle(FluxaButtonStyle())
+                .disabled(stats.history.isEmpty)
+                .help("Clear chart history")
+                .accessibilityLabel("Clear chart history")
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text("System Dashboard")
-                    .font(.system(size: 15, weight: .semibold))
-                Text(headerSubtitle)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.secondary)
+                Button {
+                    stats.refreshNow()
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 11, weight: .semibold))
+                }
+                .buttonStyle(FluxaButtonStyle())
+                .help("Sample now")
+                .accessibilityLabel("Sample now")
             }
-
-            Spacer()
-
-            Button {
-                stats.clearHistory()
-            } label: {
-                Image(systemName: "trash")
-                    .font(.system(size: 11, weight: .semibold))
-            }
-            .buttonStyle(FluxaButtonStyle())
-            .disabled(stats.history.isEmpty)
-            .help("Clear chart history")
-            .accessibilityLabel("Clear chart history")
-
-            Button {
-                stats.refreshNow()
-            } label: {
-                Image(systemName: "arrow.clockwise")
-                    .font(.system(size: 11, weight: .semibold))
-            }
-            .buttonStyle(FluxaButtonStyle())
-            .help("Sample now")
-            .accessibilityLabel("Sample now")
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
     }
 
     private var headerSubtitle: String {
@@ -156,11 +139,12 @@ struct SystemStatsWindowView: View {
         }
         .padding(10)
         .frame(maxWidth: .infinity, minHeight: 79, alignment: .leading)
-        .background(FluxaTheme.surface, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 11, style: .continuous)
-                .stroke(FluxaTheme.border, lineWidth: 1)
-        }
+        .fluxaModuleChrome(
+            fill: isCyber ? palette.module : FluxaTheme.surface,
+            border: isCyber ? palette.border : FluxaTheme.border,
+            cornerRadius: 11,
+            cut: 9
+        )
         .help(metric.tooltip)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(metric.id.title)
@@ -448,6 +432,9 @@ struct SystemStatsWindowView: View {
     // MARK: - Colors
 
     private func seriesColor(for id: SystemMetricID) -> Color {
+        if isCyber {
+            return palette.metricIdentity(for: id)
+        }
         switch id {
         case .cpuUsage:        return FluxaTheme.blue
         case .gpuUsage:        return FluxaTheme.purple
@@ -461,6 +448,9 @@ struct SystemStatsWindowView: View {
     /// Keep every element inside a live card visually coherent. Series identity wins in the normal
     /// state; warning and critical colors replace it as a unit when the reading crosses a threshold.
     private func currentMetricColor(for metric: SystemMetric) -> Color {
+        if isCyber {
+            return palette.metricColor(for: metric)
+        }
         switch metric.severity {
         case .normal:   return seriesColor(for: metric.id)
         case .warning:  return FluxaTheme.orange

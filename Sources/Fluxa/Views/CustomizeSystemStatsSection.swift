@@ -17,6 +17,11 @@ struct CustomizeSystemStatsSection: View {
     let settings: AppSettings
     let stats: SystemStatsService
 
+    @Environment(\.fluxaVisualStyle) private var visualStyle
+
+    private var isCyber: Bool { visualStyle != .classic }
+    private var palette: ControlDeckPalette { .resolve(visualStyle) }
+
     var body: some View {
         ForEach(loadMetrics) { id in
             row(for: id)
@@ -52,17 +57,16 @@ struct CustomizeSystemStatsSection: View {
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(isUnavailable ? Color.secondary : FluxaTheme.teal)
                 .frame(width: 28, height: 28)
-                .background(
-                    isUnavailable ? FluxaTheme.elevatedSurface : FluxaTheme.teal.opacity(0.10),
-                    in: RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .fluxaModuleChrome(
+                    fill: isUnavailable
+                        ? (isCyber ? palette.recessed : FluxaTheme.elevatedSurface)
+                        : FluxaTheme.teal.opacity(0.10),
+                    border: isUnavailable
+                        ? (isCyber ? palette.border : FluxaTheme.border)
+                        : FluxaTheme.teal.opacity(isCyber ? 0.30 : 0.20),
+                    cornerRadius: 7,
+                    cut: 7
                 )
-                .overlay {
-                    RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .stroke(
-                            isUnavailable ? FluxaTheme.border : FluxaTheme.teal.opacity(0.20),
-                            lineWidth: 1
-                        )
-                }
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 1) {
@@ -85,8 +89,7 @@ struct CustomizeSystemStatsSection: View {
             )
         }
         .padding(.vertical, 2)
-        .listRowBackground(FluxaTheme.surface)
-        .listRowSeparatorTint(FluxaTheme.border)
+        .fluxaListRowSurface()
     }
 
     private func subtitle(for id: SystemMetricID, metric: SystemMetric?, isUnavailable: Bool) -> String {
@@ -99,8 +102,7 @@ struct CustomizeSystemStatsSection: View {
             .font(.system(size: 10))
             .foregroundStyle(.secondary)
             .padding(.vertical, 2)
-            .listRowBackground(FluxaTheme.surface)
-            .listRowSeparatorTint(FluxaTheme.border)
+            .fluxaListRowSurface()
     }
 
     /// Nil while there is room. Non-nil is both the reason and the signal to block the button.
@@ -134,8 +136,7 @@ struct CustomizeSystemStatsSection: View {
                 .foregroundStyle(.secondary)
         }
         .padding(.vertical, 2)
-        .listRowBackground(FluxaTheme.surface)
-        .listRowSeparatorTint(FluxaTheme.border)
+        .fluxaListRowSurface()
     }
 
     // MARK: - Bindings

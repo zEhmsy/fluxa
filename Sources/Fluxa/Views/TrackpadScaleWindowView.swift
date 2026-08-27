@@ -11,10 +11,13 @@ struct TrackpadScaleWindowView: View {
 
     @Environment(PopoverViewModel.self) private var viewModel
     @Environment(AppSettings.self) private var settings
+    @Environment(\.fluxaVisualStyle) private var visualStyle
 
     @State private var unit: WeightUnit = .grams
 
     private var scale: TrackpadWeightService { viewModel.trackpadWeight }
+    private var isCyber: Bool { visualStyle != .classic }
+    private var palette: ControlDeckPalette { .resolve(visualStyle) }
 
     var body: some View {
         VStack(spacing: 14) {
@@ -37,7 +40,7 @@ struct TrackpadScaleWindowView: View {
         }
         .padding(16)
         .frame(width: 400, height: 500)
-        .background(FluxaTheme.panelBackground)
+        .fluxaPanelSurface()
         .onAppear {
             unit = settings.trackpadScaleUnit
             scale.start()
@@ -142,7 +145,13 @@ struct TrackpadScaleWindowView: View {
                 .font(.system(size: 9, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
                 .frame(width: 17, height: 17)
-                .background(Circle().fill(FluxaTheme.accentFill))
+                .background {
+                    if isCyber {
+                        FluxCutShape(cut: 5).fill(palette.brandGradient)
+                    } else {
+                        Circle().fill(FluxaTheme.accentFill)
+                    }
+                }
             Text(text)
                 .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(.secondary)
@@ -191,9 +200,11 @@ struct TrackpadScaleWindowView: View {
                 .font(.system(size: 30, weight: .light))
                 .foregroundStyle(FluxaTheme.orange)
                 .frame(width: 56, height: 56)
-                .background(
-                    FluxaTheme.orange.opacity(0.10),
-                    in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fluxaModuleChrome(
+                    fill: FluxaTheme.orange.opacity(0.10),
+                    border: FluxaTheme.orange.opacity(isCyber ? 0.32 : 0),
+                    cornerRadius: 14,
+                    cut: 11
                 )
             Text("Trackpad Scale Not Available")
                 .font(.system(size: 14, weight: .semibold))

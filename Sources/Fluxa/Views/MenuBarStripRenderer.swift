@@ -2,8 +2,9 @@ import AppKit
 
 // MARK: - MenuBarStripRenderer
 
-/// Draws the menu bar item: the Fluxa switch mark, followed by one compact segment per reading the
-/// user pinned — system stats first ("􀫥 42%"), then agent quotas ("CL 48%").
+/// Draws one compact segment per reading the user pinned — system stats first ("􀫥 42%"), then
+/// agent quotas ("CL 48%"). The Fluxa mark is used only when no readings are selected, ensuring the
+/// status item always remains visible and clickable without wasting space beside live metrics.
 ///
 /// Rendered as a single template `NSImage` rather than a SwiftUI `HStack` label: the status item
 /// sizes itself to whatever image it's handed, so composing the strip here gives exact control over
@@ -36,8 +37,6 @@ enum MenuBarStripRenderer {
     static let height: CGFloat = 18
 
     private static let font = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .medium)
-    /// Gap between the mark and the first reading.
-    private static let markGap: CGFloat = 5
     /// Gap between two readings.
     private static let segmentGap: CGFloat = 7
     /// Leading-glyph size — a touch smaller than the Fluxa mark so the readings stay the loudest thing.
@@ -45,25 +44,20 @@ enum MenuBarStripRenderer {
     /// Gap between a segment's glyph and its value.
     private static let agentMarkGap: CGFloat = 3
 
-    // Geometry of `new-icon.svg`: a 24×24 viewBox whose ink only occupies a 20×14 rect inset by
-    // (2, 5). Drawing the PDF into a plain 18×18 box would therefore render a 10.5pt mark — visibly
-    // smaller than neighbouring menu bar icons. These constants scale the box so the *ink* lands at
-    // `markInkHeight` and shift it so the ink starts at x = 0.
+    // Geometry of `new-icon.svg`: a 24×24 viewBox whose ink is only 14pt tall. Scaling the fallback
+    // box from that ink height keeps the mark optically aligned with neighbouring menu bar icons.
     private static let viewBoxSize: CGFloat = 24
     private static let artSize = CGSize(width: 20, height: 14)
-    private static let artOrigin = CGPoint(x: 2, y: 5)
     /// Ink height that matches the optical weight of the system menu bar glyphs.
     private static let markInkHeight: CGFloat = 12
 
     private static var markScale: CGFloat { markInkHeight / artSize.height }
     private static var markBoxSize: CGFloat { viewBoxSize * markScale }
-    private static var markInkWidth: CGFloat { artSize.width * markScale }
 
     // MARK: - Image
 
     static func image(segments: [Segment]) -> NSImage? {
-        guard let mark = markImage() else { return nil }
-        guard !segments.isEmpty else { return mark }
+        guard !segments.isEmpty else { return markImage() }
 
         let drawn = segments.map { segment in
             (mark: leadingImage(for: segment.leading),
@@ -75,13 +69,11 @@ enum MenuBarStripRenderer {
         let segmentWidths = zip(drawn, glyphWidths).map { entry, glyph in
             (glyph == 0 ? 0 : glyph + agentMarkGap) + entry.text.size().width
         }
-        let width = markInkWidth + markGap + segmentWidths.reduce(0, +) +
+        let width = segmentWidths.reduce(0, +) +
             segmentGap * CGFloat(max(0, drawn.count - 1))
 
         let strip = NSImage(size: NSSize(width: ceil(width), height: height), flipped: false) { _ in
-            mark.draw(in: markRect)
-
-            var x = markInkWidth + markGap
+            var x: CGFloat = 0
             for (index, entry) in drawn.enumerated() {
                 if let glyph = entry.mark {
                     let glyphSize = glyphWidths[index]
@@ -146,19 +138,6 @@ enum MenuBarStripRenderer {
         return image
     }
 
-    /// Where to draw the mark's 24×24 box so its ink starts at x = 0 and is vertically centered.
-    /// The box overhangs the strip on both axes; only the padding overhangs, never the ink.
-    private static var markRect: NSRect {
-        NSRect(
-            x: -artOrigin.x * markScale,
-            y: (height - markBoxSize) / 2,
-            width: markBoxSize,
-            height: markBoxSize
-        )
-    }
-
-    // MARK: - Segment building
-
     /// Width the glyph occupies once scaled to the strip's glyph height, preserving its aspect.
     private static func glyphWidth(_ image: NSImage) -> CGFloat {
         let size = image.size
@@ -195,8 +174,8 @@ enum MenuBarStripRenderer {
     /// menu bar budget.
     ///
     /// System comes first because it is the faster-moving half — putting the numbers that change
-    /// every couple of seconds nearest the Fluxa mark keeps them in one place instead of letting an
-    /// agent percentage appearing or vanishing shift them around.
+    /// every couple of seconds first keeps them in one place instead of letting an agent percentage
+    /// appearing or vanishing shift them around.
     static func combinedSegments(
         system: [SystemMetric],
         agents: [AgentUsageMetric],

@@ -26,6 +26,12 @@ final class AppSettings {
         didSet { UserDefaults.standard.set(showSubtitles, forKey: Keys.showSubtitles) }
     }
 
+    /// Main popover appearance. Classic preserves the existing adaptive interface; the Control
+    /// Deck variants intentionally use fixed light and dark palettes.
+    var visualStyle: FluxaVisualStyle {
+        didSet { UserDefaults.standard.set(visualStyle.rawValue, forKey: Keys.visualStyle) }
+    }
+
     /// Whether the user has completed the Focus Mode onboarding (created the two Shortcuts).
     var focusModeOnboardingComplete: Bool {
         didSet { UserDefaults.standard.set(focusModeOnboardingComplete, forKey: Keys.focusModeOnboardingComplete) }
@@ -125,6 +131,10 @@ final class AppSettings {
         // Show subtitles: default true
         showSubtitles = defaults.object(forKey: Keys.showSubtitles) as? Bool ?? true
 
+        // Existing installs have no stored value and must retain the interface they already know.
+        visualStyle = defaults.string(forKey: Keys.visualStyle)
+            .flatMap(FluxaVisualStyle.init(rawValue:)) ?? .classic
+
         // Focus Mode
         focusModeOnboardingComplete = defaults.bool(forKey: Keys.focusModeOnboardingComplete)
         focusModeEnabled = defaults.bool(forKey: Keys.focusModeEnabled)
@@ -169,6 +179,7 @@ final class AppSettings {
         static let actionOrder = "fluxa.actionOrder"
         static let hiddenActionIDs = "fluxa.hiddenActionIDs"
         static let showSubtitles = "fluxa.showSubtitles"
+        static let visualStyle = "fluxa.visualStyle"
         static let focusModeOnboardingComplete = "fluxa.focusModeOnboardingComplete"
         static let focusModeEnabled = "fluxa.focusModeEnabled"
         static let trackpadScaleUnit = "fluxa.trackpadScaleUnit"

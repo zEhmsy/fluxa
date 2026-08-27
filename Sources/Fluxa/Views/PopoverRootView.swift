@@ -86,9 +86,28 @@ struct PopoverRootView: View {
         }
     }
 
-    /// The regular menu-bar screen. Customize is pushed inside the same
-    /// MenuBarExtra window, so opening it never transfers focus to a new window.
+    /// Selects the complete dashboard composition. Keeping Classic as its own subtree prevents the
+    /// optional Control Deck themes from changing the interface existing users already have.
+    @ViewBuilder
     private var dashboard: some View {
+        switch settings.visualStyle {
+        case .classic:
+            classicDashboard
+        case .cyber, .cyberDark:
+            ControlDeckDashboardView(
+                style: settings.visualStyle,
+                onCustomize: showCustomize,
+                onAbout: showInfo,
+                closePopover: closePopover
+            )
+            .environment(viewModel)
+            .environment(settings)
+        }
+    }
+
+    /// The original menu-bar screen. Customize is pushed inside the same MenuBarExtra window, so
+    /// opening it never transfers focus to a new window.
+    private var classicDashboard: some View {
         VStack(spacing: 0) {
             // MARK: Header
             headerView

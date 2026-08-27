@@ -13,17 +13,19 @@ import SwiftUI
 struct AgentUsageWindowView: View {
 
     @Environment(PopoverViewModel.self) private var viewModel
+    @Environment(\.fluxaVisualStyle) private var visualStyle
 
     private var usage: AgentUsageService { viewModel.agentUsage }
+    private var isCyber: Bool { visualStyle != .classic }
+    private var palette: ControlDeckPalette { .resolve(visualStyle) }
 
     var body: some View {
         VStack(spacing: 0) {
             header
-            Divider()
             content
         }
         .frame(width: 480, height: 470)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .fluxaPanelSurface(classicBackground: Color(nsColor: .windowBackgroundColor))
         .onAppear {
             usage.refresh()
             usage.scanLogs()
@@ -33,17 +35,12 @@ struct AgentUsageWindowView: View {
     // MARK: - Header
 
     private var header: some View {
-        HStack(spacing: 10) {
-            VStack(alignment: .leading, spacing: 1) {
-                Text("Agent Usage")
-                    .font(.system(size: 13, weight: .semibold))
-                Text(subtitle)
-                    .font(.system(size: 10))
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
+        FluxaPageHeader(
+            title: "Agent Usage",
+            subtitle: subtitle,
+            systemImage: "chart.bar.xaxis",
+            tint: FluxaTheme.accent
+        ) {
             Button {
                 usage.refresh(force: true)
                 usage.scanLogs()
@@ -55,8 +52,6 @@ struct AgentUsageWindowView: View {
             .disabled(usage.isRefreshing)
             .help("Refresh quotas and re-scan logs")
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
     }
 
     private var subtitle: String {
@@ -126,10 +121,19 @@ struct AgentUsageWindowView: View {
             }
         }
         .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(Color.primary.opacity(0.04))
-        )
+        .background {
+            if isCyber {
+                FluxCutShape(cut: 10).fill(palette.module)
+            } else {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Color.primary.opacity(0.04))
+            }
+        }
+        .overlay {
+            if isCyber {
+                FluxCutShape(cut: 10).stroke(palette.border, lineWidth: 1)
+            }
+        }
     }
 
     /// One live quota window: label, meter, percentage and reset countdown.
@@ -144,7 +148,7 @@ struct AgentUsageWindowView: View {
                 ZStack(alignment: .leading) {
                     Capsule().fill(Color.primary.opacity(0.08))
                     Capsule()
-                        .fill(color(for: metric.severity).gradient)
+                        .fill(color(for: metric).gradient)
                         .frame(width: max(2, proxy.size.width * metric.fraction))
                 }
             }
@@ -153,7 +157,7 @@ struct AgentUsageWindowView: View {
             Text("\(metric.percentUsed)%")
                 .font(.system(size: 11, weight: .semibold))
                 .monospacedDigit()
-                .foregroundStyle(color(for: metric.severity))
+                .foregroundStyle(color(for: metric))
                 .frame(width: 34, alignment: .trailing)
 
             Text(metric.resetNote() ?? "")
@@ -188,8 +192,11 @@ struct AgentUsageWindowView: View {
 
     // MARK: - Colors
 
-    private func color(for severity: AgentUsageMetric.Severity) -> Color {
-        switch severity {
+    private func color(for metric: AgentUsageMetric) -> Color {
+        if isCyber {
+            return palette.agentColor(for: metric)
+        }
+        switch metric.severity {
         case .normal:   return .blue
         case .warning:  return .orange
         case .critical: return .red
@@ -198,6 +205,9 @@ struct AgentUsageWindowView: View {
 
     /// One hue per agent so two grids in the same window stay distinguishable.
     private func tint(for providerID: String) -> Color {
+        if isCyber {
+            return palette.agentIdentity(for: providerID)
+        }
         switch providerID {
         case "claude": return .orange
         case "codex":  return .green

@@ -28,7 +28,24 @@ cp -R "${BUILD_DIR}/${BINARY_NAME}_${BINARY_NAME}.bundle" "${BUNDLE_NAME}/Conten
 # signature, and an ad-hoc one changes on every build.
 SIGN_IDENTITY="${CODESIGN_IDENTITY:--}"
 echo "🔐 Signing app bundle (identity: ${SIGN_IDENTITY})..."
-codesign --force --sign "${SIGN_IDENTITY}" --entitlements Fluxa.entitlements "${BUNDLE_NAME}"
+SIGN_OPTIONS=(
+    --force
+    --sign "${SIGN_IDENTITY}"
+    --entitlements Fluxa.entitlements
+)
+
+# Opt-in local-development fallback: a normal ad-hoc signature derives its designated requirement
+# from the binary hash, which changes on every rebuild and makes macOS ask for Accessibility again.
+# The identifier-only requirement is intentionally never the default because it is weaker than a
+# certificate-backed identity and must not be distributed in a public release artifact.
+if [[ "${SIGN_IDENTITY}" == "-" && "${FLUXA_STABLE_LOCAL_REQUIREMENT:-0}" == "1" ]]; then
+    SIGN_OPTIONS+=(
+        --identifier "com.giuseppe.fluxa"
+        --requirements '=designated => identifier "com.giuseppe.fluxa"'
+    )
+fi
+
+codesign "${SIGN_OPTIONS[@]}" "${BUNDLE_NAME}"
 
 echo "✅ Done! Bundle created: ${BUNDLE_NAME}"
 echo ""

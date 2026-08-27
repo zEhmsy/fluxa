@@ -14,40 +14,15 @@ struct CustomizeView: View {
     var body: some View {
         VStack(spacing: 0) {
             // MARK: Header
-            HStack(spacing: 10) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(FluxaTheme.accent.opacity(0.12))
-                    Image(systemName: "slider.horizontal.3")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(FluxaTheme.accent)
-                }
-                .frame(width: 30, height: 30)
-                .overlay {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .stroke(FluxaTheme.accent.opacity(0.22), lineWidth: 1)
-                }
-                .accessibilityHidden(true)
-
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Customize Fluxa")
-                        .font(.system(size: 14, weight: .semibold))
-                    Text("Arrange actions and menu-bar metrics")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
+            FluxaPageHeader(
+                title: "Customize Fluxa",
+                subtitle: "Arrange actions and menu-bar metrics",
+                systemImage: "slider.horizontal.3",
+                tint: FluxaTheme.accent
+            ) {
                 Button("Done", action: onDone)
                     .buttonStyle(FluxaPrimaryButtonStyle())
                     .keyboardShortcut(.defaultAction)
-            }
-            .padding(.horizontal, 14)
-            .frame(height: 58)
-            .background(FluxaTheme.surface)
-            .overlay(alignment: .bottom) {
-                FluxaPanelDivider(horizontalInset: 0)
             }
 
             // MARK: Action List (reorderable + togglable)
@@ -81,6 +56,27 @@ struct CustomizeView: View {
 
                 // MARK: Display Options
                 Section {
+                    VStack(alignment: .leading, spacing: 7) {
+                        Text("Appearance")
+                            .font(.system(size: 13))
+
+                        Picker("Appearance", selection: Binding(
+                            get: { settings.visualStyle },
+                            set: { settings.visualStyle = $0 }
+                        )) {
+                            ForEach(FluxaVisualStyle.allCases) { style in
+                                Text(style.title).tag(style)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.segmented)
+                        .controlSize(.small)
+                        .accessibilityLabel("Fluxa appearance")
+                        .help("Classic follows macOS. Cyber and Cyber Dark use the Control Deck design.")
+                    }
+                    .padding(.vertical, 3)
+                    .fluxaListRowSurface()
+
                     Toggle("Show Subtitles", isOn: Binding(
                         get: { settings.showSubtitles },
                         set: { settings.showSubtitles = $0 }
@@ -89,8 +85,7 @@ struct CustomizeView: View {
                     .toggleStyle(.switch)
                     .controlSize(.mini)
                     .tint(FluxaTheme.accent)
-                    .listRowBackground(FluxaTheme.surface)
-                    .listRowSeparatorTint(FluxaTheme.border)
+                    .fluxaListRowSurface()
                 } header: {
                     sectionHeader("DISPLAY")
                 }
@@ -107,8 +102,7 @@ struct CustomizeView: View {
                     .toggleStyle(.switch)
                     .controlSize(.mini)
                     .tint(FluxaTheme.accent)
-                    .listRowBackground(FluxaTheme.surface)
-                    .listRowSeparatorTint(FluxaTheme.border)
+                    .fluxaListRowSurface()
                 } header: {
                     sectionHeader("SYSTEM")
                 }
@@ -121,7 +115,7 @@ struct CustomizeView: View {
             // drag handles automatically — no editMode needed.
         }
         .frame(width: FluxaTheme.panelWidth, height: 500)
-        .background(FluxaTheme.panelBackground)
+        .fluxaPanelSurface()
         // Refresh on entry so both metric sections are populated even when nothing is pinned yet.
         .onAppear {
             viewModel.agentUsage.refresh()
@@ -143,6 +137,11 @@ private struct CustomizeRowView: View {
     let action: QuickAction
     let settings: AppSettings
 
+    @Environment(\.fluxaVisualStyle) private var visualStyle
+
+    private var isCyber: Bool { visualStyle != .classic }
+    private var palette: ControlDeckPalette { .resolve(visualStyle) }
+
     private var isHidden: Bool {
         settings.hiddenActionIDs.contains(action.id)
     }
@@ -153,14 +152,16 @@ private struct CustomizeRowView: View {
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(isHidden ? .secondary : action.tint)
                 .frame(width: 28, height: 28)
-                .background(
-                    (isHidden ? FluxaTheme.elevatedSurface : action.tint.opacity(0.10)),
-                    in: RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .fluxaModuleChrome(
+                    fill: isHidden
+                        ? (isCyber ? palette.recessed : FluxaTheme.elevatedSurface)
+                        : action.tint.opacity(0.10),
+                    border: isHidden
+                        ? (isCyber ? palette.border : FluxaTheme.border)
+                        : action.tint.opacity(isCyber ? 0.30 : 0.20),
+                    cornerRadius: 7,
+                    cut: 7
                 )
-                .overlay {
-                    RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .stroke(isHidden ? FluxaTheme.border : action.tint.opacity(0.20), lineWidth: 1)
-                }
                 .accessibilityHidden(true)
 
             Text(action.title)
@@ -185,7 +186,6 @@ private struct CustomizeRowView: View {
             .tint(action.tint)
         }
         .padding(.vertical, 2)
-        .listRowBackground(FluxaTheme.surface)
-        .listRowSeparatorTint(FluxaTheme.border)
+        .fluxaListRowSurface()
     }
 }

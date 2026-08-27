@@ -12,6 +12,11 @@ struct CustomizeAgentUsageSection: View {
     let settings: AppSettings
     let usage: AgentUsageService
 
+    @Environment(\.fluxaVisualStyle) private var visualStyle
+
+    private var isCyber: Bool { visualStyle != .classic }
+    private var palette: ControlDeckPalette { .resolve(visualStyle) }
+
     var body: some View {
         if usage.metrics.isEmpty && usage.agentErrors.isEmpty {
             hintRow(usage.isRefreshing
@@ -41,14 +46,16 @@ struct CustomizeAgentUsageSection: View {
             AgentMarkView(providerID: metric.providerID, size: 13)
                 .foregroundStyle(isPinned ? FluxaTheme.accent : Color.secondary)
                 .frame(width: 28, height: 28)
-                .background(
-                    (isPinned ? FluxaTheme.accent.opacity(0.12) : FluxaTheme.elevatedSurface),
-                    in: RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .fluxaModuleChrome(
+                    fill: isPinned
+                        ? FluxaTheme.accent.opacity(0.12)
+                        : (isCyber ? palette.recessed : FluxaTheme.elevatedSurface),
+                    border: isPinned
+                        ? FluxaTheme.accent.opacity(isCyber ? 0.34 : 0.24)
+                        : (isCyber ? palette.border : FluxaTheme.border),
+                    cornerRadius: 7,
+                    cut: 7
                 )
-                .overlay {
-                    RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .stroke(isPinned ? FluxaTheme.accent.opacity(0.24) : FluxaTheme.border, lineWidth: 1)
-                }
 
             VStack(alignment: .leading, spacing: 1) {
                 Text("\(metric.providerName) · \(metric.label)")
@@ -68,8 +75,7 @@ struct CustomizeAgentUsageSection: View {
             )
         }
         .padding(.vertical, 2)
-        .listRowBackground(FluxaTheme.surface)
-        .listRowSeparatorTint(FluxaTheme.border)
+        .fluxaListRowSurface()
     }
 
     /// How often the background read runs. The help text under it says what each choice buys, since
@@ -97,8 +103,7 @@ struct CustomizeAgentUsageSection: View {
                 .foregroundStyle(.secondary)
         }
         .padding(.vertical, 2)
-        .listRowBackground(FluxaTheme.surface)
-        .listRowSeparatorTint(FluxaTheme.border)
+        .fluxaListRowSurface()
     }
 
     private func hintRow(_ text: String) -> some View {
@@ -106,8 +111,7 @@ struct CustomizeAgentUsageSection: View {
             .font(.system(size: 10))
             .foregroundStyle(.secondary)
             .padding(.vertical, 2)
-            .listRowBackground(FluxaTheme.surface)
-            .listRowSeparatorTint(FluxaTheme.border)
+            .fluxaListRowSurface()
     }
 
     // MARK: - Bindings

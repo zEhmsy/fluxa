@@ -10,6 +10,10 @@ struct FocusOnboardingView: View {
 
     @Environment(PopoverViewModel.self) private var viewModel
     @Environment(\.dismissWindow) private var dismissWindow
+    @Environment(\.fluxaVisualStyle) private var visualStyle
+
+    private var isCyber: Bool { visualStyle != .classic }
+    private var palette: ControlDeckPalette { .resolve(visualStyle) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -19,7 +23,21 @@ struct FocusOnboardingView: View {
                 HStack(spacing: 10) {
                     Image(systemName: "moon.fill")
                         .font(.system(size: 20))
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(isCyber ? palette.gpu : Color.blue)
+                        .frame(
+                            width: isCyber ? 34 : nil,
+                            height: isCyber ? 34 : nil
+                        )
+                        .background {
+                            if isCyber {
+                                FluxCutShape(cut: 9).fill(palette.gpu.opacity(0.12))
+                            }
+                        }
+                        .overlay {
+                            if isCyber {
+                                FluxCutShape(cut: 9).stroke(palette.gpu.opacity(0.34), lineWidth: 1)
+                            }
+                        }
                     Text("Focus Mode Setup")
                         .font(.system(size: 15, weight: .semibold))
                 }
@@ -29,8 +47,9 @@ struct FocusOnboardingView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding(16)
+            .background(isCyber ? palette.module : Color.clear)
 
-            Divider()
+            pageDivider
 
             // MARK: Steps
             VStack(alignment: .leading, spacing: 0) {
@@ -51,7 +70,7 @@ struct FocusOnboardingView: View {
                     }
                 }
 
-                Divider().padding(.leading, 44)
+                pageDivider.padding(.leading, 44)
 
                 stepRow(number: 2) {
                     VStack(alignment: .leading, spacing: 8) {
@@ -65,7 +84,7 @@ struct FocusOnboardingView: View {
                     }
                 }
 
-                Divider().padding(.leading, 44)
+                pageDivider.padding(.leading, 44)
 
                 stepRow(number: 3) {
                     VStack(alignment: .leading, spacing: 8) {
@@ -80,7 +99,7 @@ struct FocusOnboardingView: View {
                 }
             }
 
-            Divider()
+            pageDivider
 
             // MARK: Footer
             HStack(spacing: 10) {
@@ -93,18 +112,13 @@ struct FocusOnboardingView: View {
                 .foregroundStyle(.secondary)
                 .font(.system(size: 13))
 
-                Button("Done") {
-                    viewModel.completeFocusOnboarding()
-                    dismissWindow(id: "focus-onboarding")
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.regular)
-                .keyboardShortcut(.defaultAction)
+                doneButton
             }
             .padding(16)
+            .background(isCyber ? palette.recessed : Color.clear)
         }
         .frame(width: 380)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .fluxaPanelSurface(classicBackground: Color(nsColor: .windowBackgroundColor))
     }
 
     // MARK: - Subviews
@@ -116,7 +130,13 @@ struct FocusOnboardingView: View {
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.white)
                 .frame(width: 20, height: 20)
-                .background(Color.blue, in: Circle())
+                .background {
+                    if isCyber {
+                        FluxCutShape(cut: 6).fill(palette.brandGradient)
+                    } else {
+                        Circle().fill(Color.blue)
+                    }
+                }
 
             content()
         }
@@ -128,9 +148,15 @@ struct FocusOnboardingView: View {
         HStack(spacing: 10) {
             Image(systemName: icon)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(.blue)
+                .foregroundStyle(isCyber ? palette.gpu : Color.blue)
                 .frame(width: 26, height: 26)
-                .background(Color.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 6))
+                .background {
+                    if isCyber {
+                        FluxCutShape(cut: 6).fill(palette.gpu.opacity(0.11))
+                    } else {
+                        RoundedRectangle(cornerRadius: 6).fill(Color.blue.opacity(0.1))
+                    }
+                }
 
             VStack(alignment: .leading, spacing: 2) {
                 // Shortcut name with copy button
@@ -145,7 +171,43 @@ struct FocusOnboardingView: View {
             }
         }
         .padding(10)
-        .background(Color.secondary.opacity(0.06), in: RoundedRectangle(cornerRadius: 8))
+        .background {
+            if isCyber {
+                FluxCutShape(cut: 8).fill(palette.module)
+            } else {
+                RoundedRectangle(cornerRadius: 8).fill(Color.secondary.opacity(0.06))
+            }
+        }
+        .overlay {
+            if isCyber {
+                FluxCutShape(cut: 8).stroke(palette.border, lineWidth: 1)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var pageDivider: some View {
+        if isCyber {
+            Rectangle()
+                .fill(palette.border)
+                .frame(height: 1)
+        } else {
+            Divider()
+        }
+    }
+
+    @ViewBuilder
+    private var doneButton: some View {
+        if isCyber {
+            Button("Done", action: completeSetup)
+                .buttonStyle(FluxaPrimaryButtonStyle())
+                .keyboardShortcut(.defaultAction)
+        } else {
+            Button("Done", action: completeSetup)
+                .buttonStyle(.borderedProminent)
+                .controlSize(.regular)
+                .keyboardShortcut(.defaultAction)
+        }
     }
 
     // MARK: - Actions
@@ -162,6 +224,11 @@ struct FocusOnboardingView: View {
             // Fallback for non-standard installations
             NSWorkspace.shared.open(URL(string: "shortcuts://")!)
         }
+    }
+
+    private func completeSetup() {
+        viewModel.completeFocusOnboarding()
+        dismissWindow(id: "focus-onboarding")
     }
 }
 

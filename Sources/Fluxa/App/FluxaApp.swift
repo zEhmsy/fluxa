@@ -45,6 +45,7 @@ struct FluxaApp: App {
             PopoverRootView()
                 .environment(viewModel)
                 .environment(settings)
+                .environment(\.fluxaVisualStyle, settings.visualStyle)
                 .onAppear {
                     appDelegate.viewModel = viewModel
                     viewModel.refreshStates()
@@ -60,6 +61,7 @@ struct FluxaApp: App {
         Window("Focus Mode Setup", id: "focus-onboarding") {
             FocusOnboardingView()
                 .environment(viewModel)
+                .environment(\.fluxaVisualStyle, settings.visualStyle)
                 .registersFluxaWindow(id: "focus-onboarding")
         }
         .windowResizability(.contentSize)
@@ -69,6 +71,7 @@ struct FluxaApp: App {
         Window("Lid Angle", id: "lid-angle") {
             LidAngleWindowView()
                 .environment(viewModel)
+                .environment(\.fluxaVisualStyle, settings.visualStyle)
                 .registersFluxaWindow(id: "lid-angle")
         }
         .windowResizability(.contentSize)
@@ -79,6 +82,7 @@ struct FluxaApp: App {
             TrackpadScaleWindowView()
                 .environment(viewModel)
                 .environment(settings)
+                .environment(\.fluxaVisualStyle, settings.visualStyle)
                 .registersFluxaWindow(id: "trackpad-scale")
         }
         .windowResizability(.contentSize)
@@ -89,6 +93,7 @@ struct FluxaApp: App {
             SystemStatsWindowView()
                 .environment(viewModel)
                 .environment(settings)
+                .environment(\.fluxaVisualStyle, settings.visualStyle)
                 .registersFluxaWindow(id: "system-stats")
         }
         .windowResizability(.contentSize)
@@ -99,6 +104,7 @@ struct FluxaApp: App {
             AgentUsageWindowView()
                 .environment(viewModel)
                 .environment(settings)
+                .environment(\.fluxaVisualStyle, settings.visualStyle)
                 .registersFluxaWindow(id: "agent-usage")
         }
         .windowResizability(.contentSize)
@@ -107,9 +113,9 @@ struct FluxaApp: App {
 
     // MARK: - Menu Bar Icon
 
-    /// The switch mark, followed by a reading for each metric the user sent to the menu bar in
-    /// Customize. Reading the observable services here is what makes the strip refresh itself: a new
-    /// value re-renders the label, which re-renders the status item.
+    /// A reading for each metric the user sent to the menu bar in Customize. When the list is empty,
+    /// the Fluxa mark is used as a compact fallback. Reading the observable services here is what
+    /// makes the strip refresh itself: a new value re-renders the label and status item.
     @ViewBuilder
     private var menuBarIcon: some View {
         if let image = MenuBarStripRenderer.image(segments: menuBarSegments) {
