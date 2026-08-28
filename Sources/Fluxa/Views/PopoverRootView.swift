@@ -46,7 +46,7 @@ struct PopoverRootView: View {
                     .transition(.move(edge: .trailing))
             }
         }
-        .frame(width: FluxaTheme.panelWidth)
+        .frame(width: panelWidth)
         .background(FluxaTheme.panelBackground)
         .clipped()
         .onAppear {
@@ -90,6 +90,14 @@ struct PopoverRootView: View {
                 presentWindow(id: "system-stats")
                 viewModel.isShowingSystemStats = false
             }
+        }
+    }
+
+    private var panelWidth: CGFloat {
+        switch screen {
+        case .dashboard: FluxaTheme.panelWidth
+        case .customize: CustomizeView.panelWidth
+        case .info: InfoView.panelWidth
         }
     }
 

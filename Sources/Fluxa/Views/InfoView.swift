@@ -6,6 +6,9 @@ import SwiftUI
 /// In-popover About page: app identity, live public GitHub details, and a focused support callout.
 struct InfoView: View {
 
+    /// About uses a wider panel so its details fit beside the update and support controls.
+    static let panelWidth: CGFloat = 480
+
     @Environment(PopoverViewModel.self) private var viewModel
     @Environment(\.fluxaVisualStyle) private var visualStyle
 
@@ -28,18 +31,26 @@ struct InfoView: View {
         VStack(spacing: 0) {
             header
 
-            ScrollView {
-                VStack(spacing: 12) {
-                    appCard
-                    updatesCard
+            VStack(spacing: 12) {
+                appCard
+
+                HStack(alignment: .top, spacing: 12) {
                     developerCard
-                    supportCard
-                    privacyNote
+                        .frame(maxWidth: .infinity)
+
+                    VStack(spacing: 12) {
+                        updatesCard
+                        supportCard
+                    }
+                    .frame(maxWidth: .infinity)
                 }
-                .padding(12)
+
+                privacyNote
             }
+            .padding(12)
         }
-        .frame(width: FluxaTheme.panelWidth, height: 560)
+        .frame(width: Self.panelWidth)
+        .fixedSize(horizontal: false, vertical: true)
         .fluxaPanelSurface()
         .task {
             await github.load()

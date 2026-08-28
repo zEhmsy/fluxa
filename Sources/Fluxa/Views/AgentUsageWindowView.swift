@@ -24,7 +24,10 @@ struct AgentUsageWindowView: View {
             header
             content
         }
-        .frame(width: 480, height: 470)
+        // The Window scene uses contentSize: expose both cards' full height, including any
+        // additional quota rows, instead of trapping them in a shorter scroll viewport.
+        .frame(width: 480)
+        .fixedSize(horizontal: false, vertical: true)
         .fluxaPanelSurface(classicBackground: Color(nsColor: .windowBackgroundColor))
         .onAppear {
             usage.refresh()
@@ -68,14 +71,12 @@ struct AgentUsageWindowView: View {
         if usage.metrics.isEmpty && usage.dailyTokens.isEmpty {
             emptyState
         } else {
-            ScrollView {
-                VStack(spacing: 16) {
-                    ForEach(agents, id: \.self) { providerID in
-                        agentCard(providerID)
-                    }
+            VStack(spacing: 16) {
+                ForEach(agents, id: \.self) { providerID in
+                    agentCard(providerID)
                 }
-                .padding(14)
             }
+            .padding(14)
         }
     }
 
@@ -187,7 +188,7 @@ struct AgentUsageWindowView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 30)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, minHeight: 220)
     }
 
     // MARK: - Colors

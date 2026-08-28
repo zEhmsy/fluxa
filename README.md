@@ -30,12 +30,45 @@ Built in **Swift + SwiftUI**, with Apple system frameworks and Sparkle 2 for Dir
 <p align="center">
   <img src="docs/images/fluxa-menu.png" alt="Fluxa menu-bar panel" width="300">
   &nbsp;&nbsp;
-  <img src="docs/images/fluxa-customize.png" alt="Fluxa in-panel Customize screen" width="300">
+  <img src="docs/images/fluxa-customize.png" alt="Fluxa General settings tab with appearance, startup and permissions controls" width="300">
   &nbsp;&nbsp;
-  <img src="docs/images/fluxa-about.png" alt="Fluxa About page with GitHub details and support link" width="300">
+  <img src="docs/images/fluxa-about.png" alt="Fluxa About page with version, GitHub details, updates and support on one screen" width="300">
 </p>
 
-<p align="center"><sub>The dashboard, Customize, and About share one fluid menu-bar surface — no focus loss and no separate settings window.</sub></p>
+<p align="center"><sub>Customize groups preferences into General, Actions, System, Agents and Updates. About fits version details, updates and support into one screen; both stay inside the menu-bar panel.</sub></p>
+
+> Customize, About and Agent Usage screenshots show the **2.6.2 (13) local preview** in Cyber Dark.
+> These layout changes are not yet in the public **v2.6.1** release. The other screenshots are unchanged from earlier builds.
+
+<details>
+<summary>Explore the Actions, System, Agents and Updates tabs</summary>
+
+<table>
+  <tr>
+    <th>Actions</th>
+    <th>System</th>
+  </tr>
+  <tr>
+    <td valign="top"><img src="docs/images/fluxa-customize-actions.png" alt="Actions tab showing all action visibility switches and drag reordering" width="420"></td>
+    <td valign="top"><img src="docs/images/fluxa-customize-system.png" alt="System tab with hardware readings, popover and menu-bar visibility, and sampling interval" width="420"></td>
+  </tr>
+  <tr>
+    <th>Agents</th>
+    <th>Updates</th>
+  </tr>
+  <tr>
+    <td valign="top"><img src="docs/images/fluxa-customize-agents.png" alt="Agents tab with available quotas, visibility controls, refresh interval and Claude permission guidance" width="420"></td>
+    <td valign="top"><img src="docs/images/fluxa-customize-updates.png" alt="Updates tab with left-aligned automatic-check preference, manual update button and status" width="420"></td>
+  </tr>
+</table>
+
+</details>
+
+<p align="center">
+  <img src="docs/images/fluxa-agent-usage.png" alt="Agent Usage window showing the complete daily token contribution grids without a scrollbar" width="480">
+</p>
+
+<p align="center"><sub>Agent Usage sizes its window to the quota readings and full contribution grids. Live quota availability depends on each provider's connection and permissions.</sub></p>
 
 <p align="center">
   <img src="docs/images/fluxa-system-dashboard.png" alt="Fluxa System Dashboard with CPU, GPU, memory, and temperature charts" width="640">
@@ -77,7 +110,7 @@ Fifteen quick actions, every one backed by a real system API — no fake toggles
 
 ### Beyond the actions
 
-- **Customizable layout** — reorder, show, or hide actions without leaving the menu-bar panel
+- **Customizable layout** — five settings tabs keep appearance, actions, hardware readings, agent quotas and updates separate; reorder, show or hide actions in the Actions tab
 - **Focus-safe navigation** — Customize transitions in place while hardware tools reliably come to the foreground
 - **Three visual styles** — Classic keeps the adaptive native interface; Cyber and Cyber Dark apply the Control Deck design across the popover and every tool window
 - **Per-action color design** — tinted icon tiles that fill when a toggle is active
@@ -85,7 +118,7 @@ Fifteen quick actions, every one backed by a real system API — no fake toggles
 - **Menu bar native** — no Dock icon; pinned readings use the whole status item, while the Fluxa mark appears only when no metric is selected
 - **Multi-display safe** — Screen Clean covers every connected display and rebuilds its overlays after a monitor is connected, disconnected, or rearranged; Keyboard Lock filters input globally
 - **Global shortcut & launch at login** built in
-- **About & support page** — live public GitHub profile/repository details plus an optional Buy Me a Coffee link
+- **About & support page** — version, live public GitHub details, update checks and an optional Buy Me a Coffee link in one view
 
 ---
 
@@ -117,7 +150,7 @@ Fluxa reads how much of your AI coding agents' quota you've burned and keeps it 
 - **Menu bar strip** — each selected agent's mark and percentage, rendered as one template image so it tints itself for light and dark menu bars; no redundant Fluxa icon while readings are visible
 - **Popover strip** — the same readings with severity colors (blue → amber at 75% → red at 90%) and a meter per window
 - **Charts window** — click the strip: live quota meters plus a GitHub-style contribution grid of tokens spent per day
-- **Configurable in Customize** — pick up to three quota windows and the refresh interval
+- **Configurable in Customize → Agents** — pick up to three quota windows and the refresh interval
 
 ### Where the numbers come from
 
@@ -262,7 +295,7 @@ the checked-in TIFF and does not need the renderer.
 ### Direct updates
 
 Fluxa **2.6.1** integrates Sparkle **2.9.4**. About includes **Check for Updates…** and
-Customize includes automatic-check consent/state. Downloads and installation require confirmation;
+Customize includes automatic-check consent/state (under **Updates** in the local preview). Downloads and installation require confirmation;
 the updater's windows are independent of the menu-bar popover. Updates use an
 [HTTPS feed](https://zehmsy.github.io/fluxa/updates/appcast.xml) and Ed25519-signed archives.
 
@@ -352,7 +385,7 @@ Sources/Fluxa/
 │   ├── FluxaTheme.swift             # Adaptive palette + shared UI components
 │   ├── ActionListView.swift         # Action list
 │   ├── ActionRowView.swift          # Row: toggle / timed toggle / button / menu
-│   ├── CustomizeView.swift          # In-panel reorder & visibility editor
+│   ├── CustomizeView.swift          # General, Actions, System, Agents and Updates tabs
 │   ├── InfoView.swift               # About, public GitHub details + support link
 │   ├── BottomBarView.swift          # Customize + About + Quit
 │   ├── FocusOnboardingView.swift    # Focus Mode setup wizard
