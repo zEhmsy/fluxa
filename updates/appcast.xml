@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+  <channel>
+    <title>Fluxa Direct Updates</title>
+    <link>https://github.com/zEhmsy/fluxa</link>
+    <description>Stable updates for Fluxa Direct on Apple silicon.</description>
+    <language>en</language>
+    <!-- No update is advertised until its signed archive has been published. -->
+  </channel>
+</rss>
