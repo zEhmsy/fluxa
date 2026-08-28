@@ -12,10 +12,11 @@ Built in **Swift + SwiftUI**, with Apple system frameworks and Sparkle 2 for Dir
 ![Swift](https://img.shields.io/badge/Swift-5.9-orange?logo=swift&logoColor=white)
 [![Release](https://img.shields.io/github/v/release/zEhmsy/fluxa?color=brightgreen)](https://github.com/zEhmsy/fluxa/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/zEhmsy/fluxa/total)](https://github.com/zEhmsy/fluxa/releases)
+[![Website](https://img.shields.io/badge/Website-fluxa-2F80ED)](https://zehmsy.github.io/fluxa/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue)](LICENSE)
 ![SPM](https://img.shields.io/badge/SPM-compatible-brightgreen)
 
-[**⬇ Download**](https://github.com/zEhmsy/fluxa/releases/latest) · [Features](#-features) · [Install](#-installation) · [Architecture](#-architecture) · [Support](#-support)
+[**⬇ Download**](https://github.com/zEhmsy/fluxa/releases/latest) · [**Website**](https://zehmsy.github.io/fluxa/) · [Features](#-features) · [Install](#-installation) · [Architecture](#-architecture) · [Support](#-support)
 
 <a href="https://www.buymeacoffee.com/gturturro">
   <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="41" width="174">
@@ -37,8 +38,8 @@ Built in **Swift + SwiftUI**, with Apple system frameworks and Sparkle 2 for Dir
 
 <p align="center"><sub>Customize groups preferences into General, Actions, System, Agents and Updates. About fits version details, updates and support into one screen; both stay inside the menu-bar panel.</sub></p>
 
-> Customize, About and Agent Usage screenshots show the **2.6.2 (13) local preview** in Cyber Dark.
-> These layout changes are not yet in the public **v2.6.1** release. The other screenshots are unchanged from earlier builds.
+> Customize, About and Agent Usage screenshots show **2.6.2 (13)** in Cyber Dark — the current
+> release. The other screenshots are unchanged from earlier builds.
 
 <details>
 <summary>Explore the Actions, System, Agents and Updates tabs</summary>
@@ -294,15 +295,17 @@ the checked-in TIFF and does not need the renderer.
 
 ### Direct updates
 
-Fluxa **2.6.1** integrates Sparkle **2.9.4**. About includes **Check for Updates…** and
-Customize includes automatic-check consent/state (under **Updates** in the local preview). Downloads and installation require confirmation;
+Fluxa **2.6.2** integrates Sparkle **2.9.4**. About includes **Check for Updates…** and
+Customize keeps automatic-check consent/state under its **Updates** tab. Downloads and installation require confirmation;
 the updater's windows are independent of the menu-bar popover. Updates use an
 [HTTPS feed](https://zehmsy.github.io/fluxa/updates/appcast.xml) and Ed25519-signed archives.
 
 **Upgrading from v2.5.0 or earlier:** install the new DMG manually once. Those versions do not
-include Sparkle. The first updater-enabled release is [v2.6.1](https://github.com/zEhmsy/fluxa/releases/tag/v2.6.1).
-The owner completed a real build 9 → 10 update before release; the released ZIP preserves those
-accepted bytes. The product presentation website remains a separate future task.
+include Sparkle. The first updater-enabled release is [v2.6.1](https://github.com/zEhmsy/fluxa/releases/tag/v2.6.1);
+2.6.1 users are offered **2.6.2** through the feed. The owner completed a real build 9 → 10 update
+before the 2.6.1 release; that ZIP preserves the accepted bytes and remains downloadable at its
+original URL. The [product site](https://zehmsy.github.io/fluxa/) now serves the Pages root, with the
+feed unchanged at `/fluxa/updates/appcast.xml`.
 
 A separate `Fluxa.zip`, made with `./package-update.sh --output path/to/Fluxa.zip`, contains the
 same signed bundle as the approved `Fluxa.dmg`. Each newly packaged ZIP needs an Ed25519 signature
