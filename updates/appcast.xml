@@ -7,6 +7,25 @@
         <language>en</language>
         <!-- No update is advertised until its signed archive has been published. -->
         <item>
+            <title>2.6.2</title>
+            <pubDate>Fri, 28 Aug 2026 19:49:23 +0200</pubDate>
+            <link>https://github.com/zEhmsy/fluxa/releases/tag/v2.6.2</link>
+            <sparkle:version>13</sparkle:version>
+            <sparkle:shortVersionString>2.6.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<h2>Fluxa 2.6.2</h2>
+<ul>
+<li>Customize is grouped into General, Actions, System, Agents and Updates tabs. The panel widens for Customize and About and still transitions in place, without a separate settings window.</li>
+<li>About fits version and build, the public GitHub card, Check for Updates and the optional support link into one screen.</li>
+<li>The Agent Usage window sizes itself to its content, showing both quota cards and the complete daily contribution grids without an inner scrollbar.</li>
+</ul>
+<p>Requires macOS 14 or later and Apple silicon. Preferences, action order and history are unchanged by this update.</p>
+<p>Fluxa is ad-hoc signed, not notarized. A changed signing identity may require renewed macOS permissions.</p>
+]]></description>
+            <enclosure url="https://github.com/zEhmsy/fluxa/releases/download/v2.6.2/Fluxa.zip" length="3299191" type="application/octet-stream" sparkle:edSignature="jLn6Ug8sugKo6oX8RDTWy9E2B4S3eixV7iqI/MF0S4v+nSmUklha9o3BwIRpzMPhifQqIZWrRVXlG689jeCDDQ=="/>
+        </item>
+        <item>
             <title>2.6.1</title>
             <pubDate>Fri, 28 Aug 2026 13:38:21 +0200</pubDate>
             <link>https://github.com/zEhmsy/fluxa/releases/tag/v2.6.1</link>

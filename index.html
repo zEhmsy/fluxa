@@ -1,2 +1,595 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex"><meta http-equiv="refresh" content="0;url=https://github.com/zEhmsy/fluxa"><title>Fluxa</title></head><body><a href="https://github.com/zEhmsy/fluxa">Fluxa on GitHub</a></body></html>
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fluxa — Essential macOS system controls, one click away</title>
+<meta name="description" content="Fluxa puts fifteen real system controls, live hardware readings and AI agent quotas in your macOS menu bar. Swift + SwiftUI, zero dependencies.">
+<link rel="icon" href="images/fluxa-logo.svg">
+<meta property="og:title" content="Fluxa — macOS system controls in your menu bar">
+<meta property="og:description" content="Fifteen quick actions, every one backed by a real system API. Built in Swift + SwiftUI.">
+<meta property="og:image" content="images/fluxa-system-dashboard.png">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script>
+tailwind.config = {
+  theme: { extend: {
+    colors: { ink:'#08090d', panel:'#101219', edge:'#22242e', blue:'#2F80ED', violet:'#6C5CE7' },
+    fontFamily: { sans:['-apple-system','BlinkMacSystemFont','Inter','Segoe UI','sans-serif'],
+                  mono:['ui-monospace','SFMono-Regular','Menlo','monospace'] }
+  }}
+};
+</script>
+<style>
+  body { background:#08090d; color:#e7e9f0; -webkit-font-smoothing:antialiased; }
+  .grain { background-image:radial-gradient(circle at 20% 0%, rgba(47,128,237,.18), transparent 55%),
+                            radial-gradient(circle at 85% 30%, rgba(108,92,231,.16), transparent 50%); }
+
+  /* ── Rain background (adapted from Uiverse.io by SelfMadeSystem) ────────────
+     Confined to the hero: the animated backdrop-filter repaints every frame,
+     so it must never sit behind the sticky scrollytelling panel.            */
+  .rain {
+    position:relative; overflow:hidden; isolation:isolate;
+    --c:#2F80ED;
+    background-color:#05060a;
+    background-image:
+      radial-gradient(4px 100px at 0px 235px, var(--c), #0000), radial-gradient(4px 100px at 300px 235px, var(--c), #0000), radial-gradient(1.5px 1.5px at 150px 117.5px, var(--c) 100%, #0000 150%),
+      radial-gradient(4px 100px at 0px 252px, var(--c), #0000), radial-gradient(4px 100px at 300px 252px, var(--c), #0000), radial-gradient(1.5px 1.5px at 150px 126px, var(--c) 100%, #0000 150%),
+      radial-gradient(4px 100px at 0px 150px, var(--c), #0000), radial-gradient(4px 100px at 300px 150px, var(--c), #0000), radial-gradient(1.5px 1.5px at 150px 75px, var(--c) 100%, #0000 150%),
+      radial-gradient(4px 100px at 0px 253px, var(--c), #0000), radial-gradient(4px 100px at 300px 253px, var(--c), #0000), radial-gradient(1.5px 1.5px at 150px 126.5px, var(--c) 100%, #0000 150%),
+      radial-gradient(4px 100px at 0px 204px, var(--c), #0000), radial-gradient(4px 100px at 300px 204px, var(--c), #0000), radial-gradient(1.5px 1.5px at 150px 102px, var(--c) 100%, #0000 150%),
+      radial-gradient(4px 100px at 0px 134px, var(--c), #0000), radial-gradient(4px 100px at 300px 134px, var(--c), #0000), radial-gradient(1.5px 1.5px at 150px 67px, var(--c) 100%, #0000 150%),
+      radial-gradient(4px 100px at 0px 179px, var(--c), #0000), radial-gradient(4px 100px at 300px 179px, var(--c), #0000), radial-gradient(1.5px 1.5px at 150px 89.5px, var(--c) 100%, #0000 150%),
+      radial-gradient(4px 100px at 0px 299px, var(--c), #0000), radial-gradient(4px 100px at 300px 299px, var(--c), #0000), radial-gradient(1.5px 1.5px at 150px 149.5px, var(--c) 100%, #0000 150%),
+      radial-gradient(4px 100px at 0px 215px, var(--c), #0000), radial-gradient(4px 100px at 300px 215px, var(--c), #0000), radial-gradient(1.5px 1.5px at 150px 107.5px, var(--c) 100%, #0000 150%),
+      radial-gradient(4px 100px at 0px 281px, var(--c), #0000), radial-gradient(4px 100px at 300px 281px, var(--c), #0000), radial-gradient(1.5px 1.5px at 150px 140.5px, var(--c) 100%, #0000 150%),
+      radial-gradient(4px 100px at 0px 158px, var(--c), #0000), radial-gradient(4px 100px at 300px 158px, var(--c), #0000), radial-gradient(1.5px 1.5px at 150px 79px, var(--c) 100%, #0000 150%),
+      radial-gradient(4px 100px at 0px 210px, var(--c), #0000), radial-gradient(4px 100px at 300px 210px, var(--c), #0000), radial-gradient(1.5px 1.5px at 150px 105px, var(--c) 100%, #0000 150%);
+    background-size:
+      300px 235px, 300px 235px, 300px 235px, 300px 252px, 300px 252px, 300px 252px,
+      300px 150px, 300px 150px, 300px 150px, 300px 253px, 300px 253px, 300px 253px,
+      300px 204px, 300px 204px, 300px 204px, 300px 134px, 300px 134px, 300px 134px,
+      300px 179px, 300px 179px, 300px 179px, 300px 299px, 300px 299px, 300px 299px,
+      300px 215px, 300px 215px, 300px 215px, 300px 281px, 300px 281px, 300px 281px,
+      300px 158px, 300px 158px, 300px 158px, 300px 210px, 300px 210px, 300px 210px;
+    animation:rain-fall 150s linear infinite;
+  }
+  /* Pinhole mask + bloom. Hue is held inside the blue→violet band of the logo. */
+  .rain::before {
+    content:""; position:absolute; inset:0; z-index:1; pointer-events:none;
+    background-image:radial-gradient(circle at 50% 50%, #0000 0, #0000 2px, #06070c 2px);
+    background-size:8px 8px;
+    --f:blur(.85em) brightness(5);
+    -webkit-backdrop-filter:var(--f); backdrop-filter:var(--f);
+    animation:rain-bloom 14s ease-in-out infinite alternate;
+  }
+  /* Legibility scrim: calms the dot grid under the words, leaves the rain
+     untouched at the edges, and melts the hero into the page below.        */
+  .rain::after {
+    content:""; position:absolute; inset:0; z-index:2; pointer-events:none;
+    background:
+      radial-gradient(ellipse 58% 46% at 50% 46%, rgba(5,6,10,.94), rgba(5,6,10,.72) 42%, rgba(5,6,10,0) 78%),
+      linear-gradient(to bottom, rgba(5,6,10,.75), rgba(5,6,10,0) 22%, rgba(5,6,10,0) 68%, #08090d);
+  }
+  /* Band variant: a mid-page section is shorter and has neighbours above and
+     below, so the scrim spreads wider and fades into both edges.           */
+  .rain--band::after {
+    background:
+      radial-gradient(ellipse 62% 62% at 50% 50%, rgba(5,6,10,.93), rgba(5,6,10,.7) 45%, rgba(5,6,10,.2) 82%),
+      linear-gradient(to bottom, #08090d, rgba(5,6,10,0) 18%, rgba(5,6,10,0) 82%, #08090d);
+  }
+  /* Hero content rides above both layers without extra wrapper markup. */
+  .rain > * { position:relative; z-index:3; }
+  .rain h1, .rain h2, .rain p { text-shadow:0 2px 18px rgba(5,6,10,.85); }
+  /* Declared after `.rain > *` so it keeps its absolute placement. */
+  .hero-scroll { position:absolute; bottom:2.5rem; left:0; right:0; z-index:3; }
+  /* Paused while off-screen so the bloom never competes with scrollytelling. */
+  .rain.is-idle, .rain.is-idle::before { animation-play-state:paused; }
+
+  @keyframes rain-bloom {
+    from { -webkit-backdrop-filter:var(--f) hue-rotate(-8deg); backdrop-filter:var(--f) hue-rotate(-8deg); }
+    to   { -webkit-backdrop-filter:var(--f) hue-rotate(42deg); backdrop-filter:var(--f) hue-rotate(42deg); }
+  }
+  @keyframes rain-fall {
+    0%  { background-position:0px 220px,3px 220px,151.5px 337.5px,25px 24px,28px 24px,176.5px 150px,50px 16px,53px 16px,201.5px 91px,75px 224px,78px 224px,226.5px 350.5px,100px 19px,103px 19px,251.5px 121px,125px 120px,128px 120px,276.5px 187px,150px 31px,153px 31px,301.5px 120.5px,175px 235px,178px 235px,326.5px 384.5px,200px 121px,203px 121px,351.5px 228.5px,225px 224px,228px 224px,376.5px 364.5px,250px 26px,253px 26px,401.5px 105px,275px 75px,278px 75px,426.5px 180px; }
+    to  { background-position:0px 6800px,3px 6800px,151.5px 6917.5px,25px 13632px,28px 13632px,176.5px 13758px,50px 5416px,53px 5416px,201.5px 5491px,75px 17175px,78px 17175px,226.5px 17301.5px,100px 5119px,103px 5119px,251.5px 5221px,125px 8428px,128px 8428px,276.5px 8495px,150px 9876px,153px 9876px,301.5px 9965.5px,175px 13391px,178px 13391px,326.5px 13540.5px,200px 14741px,203px 14741px,351.5px 14848.5px,225px 18770px,228px 18770px,376.5px 18910.5px,250px 5082px,253px 5082px,401.5px 5161px,275px 6375px,278px 6375px,426.5px 6480px; }
+  }
+  /* Phones: keep the rain, drop the per-frame backdrop repaint. */
+  @media (max-width:640px) {
+    .rain::before { -webkit-backdrop-filter:none; backdrop-filter:none; animation:none; background-image:radial-gradient(circle at 50% 50%, #0000 0, #0000 2px, #06070ce6 2px); }
+    .rain::after { background:radial-gradient(ellipse 90% 42% at 50% 46%, rgba(5,6,10,.95), rgba(5,6,10,.78) 45%, rgba(5,6,10,.35) 80%),
+                              linear-gradient(to bottom, rgba(5,6,10,.8), rgba(5,6,10,0) 20%, rgba(5,6,10,0) 70%, #08090d); }
+    .rain--band::after { background:radial-gradient(ellipse 95% 70% at 50% 50%, rgba(5,6,10,.95), rgba(5,6,10,.82) 50%, rgba(5,6,10,.5) 85%),
+                                    linear-gradient(to bottom, #08090d, rgba(5,6,10,0) 15%, rgba(5,6,10,0) 85%, #08090d); }
+  }
+  .gtext { background:linear-gradient(115deg,#5aa2ff,#a68cff); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .layer { opacity:0; transform:scale(.965) translateY(10px); transition:opacity .55s ease, transform .55s cubic-bezier(.2,.7,.3,1); }
+  .layer.is-active { opacity:1; transform:scale(1) translateY(0); }
+  .step { opacity:.32; transition:opacity .4s ease; }
+  .step.is-active { opacity:1; }
+  .step.is-active .rail { background:linear-gradient(180deg,#2F80ED,#6C5CE7); }
+  pre code.hljs { background:transparent!important; padding:0!important; font-size:12.5px; line-height:1.6; }
+  .tab-pill { padding:.2rem .6rem; border-radius:.4rem; font-size:11px; color:rgba(255,255,255,.4);
+              transition:background .35s ease, color .35s ease; white-space:nowrap; }
+  .tab-pill.is-on { background:linear-gradient(120deg,#2F80ED,#6C5CE7); color:#fff; }
+  @media (prefers-reduced-motion: reduce) {
+    .layer,.step { transition:none } html { scroll-behavior:auto }
+    .rain, .rain::before { animation:none }
+    .rain::before { -webkit-backdrop-filter:blur(.85em) brightness(5); backdrop-filter:blur(.85em) brightness(5); }
+  }
+</style>
+</head>
+<body class="font-sans antialiased">
+
+<!-- ══ HERO ══ -->
+<header class="rain relative min-h-screen flex flex-col items-center justify-center px-6 text-center">
+  <img src="images/fluxa-logo.svg" alt="Fluxa icon" width="88" height="88" class="rounded-[26px] shadow-2xl shadow-violet/30">
+  <h1 class="mt-8 text-5xl sm:text-7xl font-semibold tracking-tight">Fluxa</h1>
+  <p class="mt-5 max-w-xl text-lg sm:text-xl text-white/70 leading-relaxed">
+    Essential macOS system controls, <span class="gtext font-medium">one click away</span> in your menu bar.
+  </p>
+  <p class="mt-4 max-w-lg text-sm text-white/70">
+    Fifteen quick actions, every one backed by a real system API — no fake toggles.
+    Built in Swift&nbsp;+&nbsp;SwiftUI with zero third-party runtime dependencies.
+  </p>
+
+  <div class="mt-8 flex flex-wrap justify-center gap-2 text-[11px] font-medium">
+    <span class="px-3 py-1 rounded-full bg-ink/75 backdrop-blur-sm border border-white/15">macOS 14+</span>
+    <span class="px-3 py-1 rounded-full bg-ink/75 backdrop-blur-sm border border-white/15">Swift 5.9</span>
+    <span class="px-3 py-1 rounded-full bg-ink/75 backdrop-blur-sm border border-white/15">SwiftUI</span>
+    <span class="px-3 py-1 rounded-full bg-ink/75 backdrop-blur-sm border border-white/15">Apache-2.0</span>
+    <span class="px-3 py-1 rounded-full bg-ink/75 backdrop-blur-sm border border-white/15">Sparkle 2</span>
+  </div>
+
+  <div class="mt-10 flex flex-col sm:flex-row gap-3">
+    <a href="https://github.com/zEhmsy/fluxa/releases/latest"
+       class="px-7 py-3 rounded-xl font-medium bg-gradient-to-r from-blue to-violet hover:brightness-110 transition shadow-lg shadow-violet/25">
+      ⬇ Download the DMG
+    </a>
+    <a href="https://github.com/zEhmsy/fluxa"
+       class="px-7 py-3 rounded-xl font-medium border border-white/15 bg-ink/80 backdrop-blur-sm hover:bg-ink transition">
+      View source
+    </a>
+  </div>
+
+  <div class="hero-scroll text-xs text-white/50 tracking-widest uppercase animate-pulse">Scroll</div>
+</header>
+
+<!-- ══ SCROLLYTELLING ══ -->
+<main id="scrolly" class="relative max-w-7xl mx-auto px-5 sm:px-8 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,520px)] lg:gap-14">
+
+  <!-- Sticky macOS device -->
+  <div class="lg:sticky lg:top-0 lg:h-screen flex items-center order-1
+              max-lg:sticky max-lg:top-0 max-lg:z-20 max-lg:bg-ink/85 max-lg:backdrop-blur-md max-lg:py-4">
+    <figure class="w-full">
+      <!-- window chrome -->
+      <div class="relative mx-auto w-full max-w-[560px] rounded-[18px] border border-edge bg-panel
+                  shadow-[0_40px_90px_-30px_rgba(0,0,0,.9)] overflow-hidden">
+        <!-- macOS menu bar -->
+        <div class="flex items-center gap-2 px-4 h-9 border-b border-edge bg-white/[.03]">
+          <span class="w-3 h-3 rounded-full bg-[#ff5f57]"></span>
+          <span class="w-3 h-3 rounded-full bg-[#febc2e]"></span>
+          <span class="w-3 h-3 rounded-full bg-[#28c840]"></span>
+          <span id="frame-title" class="ml-3 text-[11px] text-white/45 font-mono truncate">PopoverRootView.swift</span>
+          <span class="ml-auto flex items-center gap-2 text-[10px] text-white/35 font-mono">
+            <img src="images/fluxa-logo.svg" alt="" width="12" height="12" class="rounded-[3px]">
+            <span id="frame-metric">CPU 7%</span>
+          </span>
+        </div>
+        <!-- tab bar: mirrors the app's five Customize tabs, revealed on those steps -->
+        <div id="frame-tabs" class="hidden items-center justify-center gap-1 px-3 py-2 border-b border-edge bg-black/30">
+          <span data-tab="General"  class="tab-pill">General</span>
+          <span data-tab="Actions"  class="tab-pill">Actions</span>
+          <span data-tab="System"   class="tab-pill">System</span>
+          <span data-tab="Agents"   class="tab-pill">Agents</span>
+          <span data-tab="Updates"  class="tab-pill">Updates</span>
+        </div>
+        <!-- screen -->
+        <div class="relative h-[clamp(300px,52vh,560px)] bg-[radial-gradient(circle_at_50%_0%,#181c28,#0a0b10)]">
+          <img class="layer absolute inset-0 m-auto max-h-[88%] max-w-[88%] object-contain rounded-lg" data-layer="0"
+               src="images/fluxa-menu.png" alt="Fluxa menu-bar panel with system readings and quick actions">
+          <img class="layer absolute inset-0 m-auto max-h-[88%] max-w-[88%] object-contain rounded-lg" data-layer="1"
+               src="images/fluxa-system-dashboard.png" alt="Fluxa System Dashboard with CPU, GPU, memory and temperature charts">
+          <img class="layer absolute inset-0 m-auto max-h-[88%] max-w-[88%] object-contain rounded-lg" data-layer="2"
+               src="images/fluxa-agent-usage.png" alt="Agent Usage window with Codex and Claude quota meters and daily token contribution grids">
+          <img class="layer absolute inset-0 m-auto max-h-[88%] max-w-[88%] object-contain rounded-lg" data-layer="3"
+               src="images/fluxa-lid-angle.png" alt="Fluxa Lid Angle window">
+          <img class="layer absolute inset-0 m-auto max-h-[88%] max-w-[88%] object-contain rounded-lg" data-layer="4"
+               src="images/fluxa-trackpad-scale.png" alt="Fluxa Trackpad Scale window">
+          <img class="layer absolute inset-0 m-auto max-h-[88%] max-w-[88%] object-contain rounded-lg" data-layer="5"
+               src="images/fluxa-customize.png?v=262" alt="Customize General tab with appearance, startup and permissions controls">
+          <img class="layer absolute inset-0 m-auto max-h-[88%] max-w-[88%] object-contain rounded-lg" data-layer="6"
+               src="images/fluxa-customize-actions.png" alt="Customize Actions tab with per-action visibility switches and drag reordering">
+          <img class="layer absolute inset-0 m-auto max-h-[88%] max-w-[88%] object-contain rounded-lg" data-layer="7"
+               src="images/fluxa-customize-system.png" alt="Customize System tab with hardware readings, destinations and sampling interval">
+          <img class="layer absolute inset-0 m-auto max-h-[88%] max-w-[88%] object-contain rounded-lg" data-layer="8"
+               src="images/fluxa-customize-agents.png" alt="Customize Agents tab with quota windows, refresh interval and Claude permission guidance">
+          <img class="layer absolute inset-0 m-auto max-h-[88%] max-w-[88%] object-contain rounded-lg" data-layer="9"
+               src="images/fluxa-customize-updates.png" alt="Customize Updates tab with automatic-check preference and manual update button">
+          <img class="layer absolute inset-0 m-auto max-h-[88%] max-w-[88%] object-contain rounded-lg" data-layer="10"
+               src="images/fluxa-about.png?v=262" alt="Fluxa About page with version, updates, GitHub details and support link">
+        </div>
+      </div>
+      <figcaption id="frame-caption" class="mt-3 text-center text-xs text-white/35 max-lg:hidden">
+        One fluid menu-bar surface — no separate settings window.
+      </figcaption>
+    </figure>
+  </div>
+
+  <!-- Narrative steps -->
+  <div class="order-2 lg:py-[30vh]">
+
+    <!-- 0 -->
+    <section class="step is-active min-h-[70vh] flex flex-col justify-center py-16" data-step="0" data-image="0"
+             data-title="PopoverRootView.swift" data-metric="CPU 7%"
+             data-caption="The dashboard, Customize and About share one surface.">
+      <div class="rail h-[3px] w-14 rounded-full bg-white/15 mb-6 transition-colors"></div>
+      <h2 class="text-3xl sm:text-4xl font-semibold tracking-tight">Fifteen real controls</h2>
+      <p class="mt-4 text-white/65 leading-relaxed">
+        Keep Awake, Dark Mode, Screen Clean, Lock Keyboard, Audio Output, Microphone Mute — every action calls
+        a real system API. Keep Awake registers an IOKit power assertion; it doesn't fake a state and hope
+        the display stays on.
+      </p>
+      <div class="mt-5 flex flex-wrap gap-2 text-[11px]">
+        <span class="px-2.5 py-1 rounded-md bg-blue/15 text-blue border border-blue/25">SwiftUI</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">IOKit</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">MenuBarExtra</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">@MainActor</span>
+      </div>
+      <pre class="mt-6 p-4 rounded-xl bg-black/45 border border-edge overflow-x-auto"><code class="language-swift">// Services/KeepAwakeService.swift
+let result = IOPMAssertionCreateWithName(
+    kIOPMAssertionTypeNoDisplaySleep as CFString,
+    IOPMAssertionLevel(kIOPMAssertionLevelOn),
+    "Fluxa Keep Awake — user requested" as CFString,
+    &assertionID
+)
+guard result == kIOReturnSuccess else { assertionID = 0; throw … }</code></pre>
+    </section>
+
+    <!-- 1 -->
+    <section class="step min-h-[70vh] flex flex-col justify-center py-16" data-step="1" data-image="1"
+             data-title="SystemStatsWindowView.swift" data-metric="DIE 44°"
+             data-caption="A rolling 30 minutes, in memory, never on disk.">
+      <div class="rail h-[3px] w-14 rounded-full bg-white/15 mb-6 transition-colors"></div>
+      <h2 class="text-3xl sm:text-4xl font-semibold tracking-tight">Hardware you can watch</h2>
+      <p class="mt-4 text-white/65 leading-relaxed">
+        CPU, GPU, memory and temperature pin to the popover, the menu bar, or both. Click the strip and the
+        readings expand into a 30-minute dashboard with separate percentage and degree axes, so neither unit
+        is visually compressed. A failed sensor pass leaves a gap — it never repeats an old value as if it
+        had been measured again.
+      </p>
+      <div class="mt-5 flex flex-wrap gap-2 text-[11px]">
+        <span class="px-2.5 py-1 rounded-md bg-violet/15 text-[#a68cff] border border-violet/25">Swift Charts</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">IOKit / SMC</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">@Observable</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">1–10 s sampling</span>
+      </div>
+      <pre class="mt-6 p-4 rounded-xl bg-black/45 border border-edge overflow-x-auto"><code class="language-swift">// Services/SystemStatsService.swift — rolling window, in memory only
+static let historyDuration: TimeInterval = 30 * 60
+
+history.append(SystemStatsHistorySample(timestamp: timestamp, values: measuredValues))
+let cutoff = timestamp.addingTimeInterval(-Self.historyDuration)
+if let firstRetained = history.firstIndex(where: { $0.timestamp >= cutoff }),
+   firstRetained > 0 {
+    history.removeFirst(firstRetained)
+}</code></pre>
+    </section>
+
+    <!-- 2 -->
+    <section class="step min-h-[70vh] flex flex-col justify-center py-16" data-step="2" data-image="2"
+             data-title="AgentUsageWindowView.swift" data-metric="✳ 87%"
+             data-caption="The window sizes itself to the full grids — no scrollbar.">
+      <div class="rail h-[3px] w-14 rounded-full bg-white/15 mb-6 transition-colors"></div>
+      <h2 class="text-3xl sm:text-4xl font-semibold tracking-tight">Your agent quota, in the menu bar</h2>
+      <p class="mt-4 text-white/65 leading-relaxed">
+        Session and weekly meters with reset countdowns, plus six months of daily token history as a
+        contribution grid per agent. The quotas come from the same endpoints each CLI calls; the history is
+        rebuilt from the agents' own session logs, which is why the grid is already populated the first time
+        you open it. Fluxa never refreshes those tokens — both providers rotate the refresh token on use, so
+        renewing one here would break the very login being read.
+      </p>
+      <div class="mt-5 flex flex-wrap gap-2 text-[11px]">
+        <span class="px-2.5 py-1 rounded-md bg-blue/15 text-blue border border-blue/25">async/await</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">URLSession</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">Keychain</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">JSONL scanning</span>
+      </div>
+      <pre class="mt-6 p-4 rounded-xl bg-black/45 border border-edge overflow-x-auto"><code class="language-swift">// Services/AgentUsageReaders.swift
+// Deliberately not refreshed here — using the agent once renews it.
+guard !credentials.isExpired else {
+    throw AgentUsageReadError.tokenExpired(agent: Self.agentName,
+                                           hint: Self.loginHint)
+}
+let (json, _) = try await AgentHTTP.getJSON(url: Self.usageURL, …)</code></pre>
+    </section>
+
+    <!-- 3 -->
+    <section class="step min-h-[70vh] flex flex-col justify-center py-16" data-step="3" data-image="3"
+             data-title="LidAngleWindowView.swift" data-metric="105°"
+             data-caption="Two hardware paths: HID sensor and IORegistry.">
+      <div class="rail h-[3px] w-14 rounded-full bg-white/15 mb-6 transition-colors"></div>
+      <h2 class="text-3xl sm:text-4xl font-semibold tracking-tight">The hinge, at 60 fps</h2>
+      <p class="mt-4 text-white/65 leading-relaxed">
+        On Apple Silicon the lid angle is a HID sensor whose feature report returns whole degrees; on Intel
+        it's an IORegistry property in raw units. Fluxa tries both and animates a goniometer from whichever
+        answers. On a desktop Mac the feature simply reports itself unavailable.
+      </p>
+      <div class="mt-5 flex flex-wrap gap-2 text-[11px]">
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">IOKit.hid</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">CADisplayLink</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">Apple Silicon + Intel</span>
+      </div>
+      <pre class="mt-6 p-4 rounded-xl bg-black/45 border border-edge overflow-x-auto"><code class="language-swift">// Services/LidAngleMonitor.swift
+/// 1. Apple Silicon: HID device (usage page 0x20 Sensor, usage 0x8A).
+///    Feature report 1 returns [reportID, lo, hi] — lo|hi<<8 = degrees.
+/// 2. Intel: the `LidAngle` IORegistry property (~16384 = 180°).
+init() {
+    if openHIDSensor() { isAvailable = true }
+    else { … }
+}</code></pre>
+    </section>
+
+    <!-- 4 -->
+    <section class="step min-h-[70vh] flex flex-col justify-center py-16" data-step="4" data-image="4"
+             data-title="TrackpadScaleWindowView.swift" data-metric="12.4 g"
+             data-caption="Strain gauges, read through MultitouchSupport.">
+      <div class="rail h-[3px] w-14 rounded-full bg-white/15 mb-6 transition-colors"></div>
+      <h2 class="text-3xl sm:text-4xl font-semibold tracking-tight">A scale hiding in your trackpad</h2>
+      <p class="mt-4 text-white/65 leading-relaxed">
+        Force Touch strain gauges already report pressure in grams — but only under a capacitive touch, and
+        <code class="text-[13px] text-white/80">NSEvent.pressure</code> only fires during a click. Fluxa
+        <code class="text-[13px] text-white/80">dlopen</code>s the private MultitouchSupport framework,
+        validates the frame layout at runtime, and hides the feature entirely if that layout ever changes.
+      </p>
+      <div class="mt-5 flex flex-wrap gap-2 text-[11px]">
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">dlopen</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">MultitouchSupport</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">UnsafeRawPointer</span>
+      </div>
+      <pre class="mt-6 p-4 rounded-xl bg-black/45 border border-edge overflow-x-auto"><code class="language-swift">// Services/TrackpadWeightService.swift
+// off 8  double timestamp   |   off 52  float pressure (GRAMS)
+let pressure = record.loadUnaligned(fromByteOffset: offsetPressure,
+                                    as: Float.self)
+guard total.isFinite, pressure.isFinite,
+      (0...20_000).contains(pressure) else { continue }</code></pre>
+    </section>
+
+    <!-- 5 — Customize sub-sequence: one step per tab -->
+    <section class="step min-h-[70vh] flex flex-col justify-center py-16" data-step="5" data-image="5"
+             data-title="CustomizeView.swift" data-tab="General"
+             data-metric="Cyber Dark" data-caption="Five tabs, still inside the menu-bar panel.">
+      <div class="rail h-[3px] w-14 rounded-full bg-white/15 mb-6 transition-colors"></div>
+      <p class="text-[11px] uppercase tracking-[.2em] text-white/40 mb-3">Customize · 5 tabs</p>
+      <h2 class="text-3xl sm:text-4xl font-semibold tracking-tight">Settings that stopped being one list</h2>
+      <p class="mt-4 text-white/65 leading-relaxed">
+        Preferences are grouped into <span class="text-white/85">General</span>,
+        <span class="text-white/85">Actions</span>, <span class="text-white/85">System</span>,
+        <span class="text-white/85">Agents</span> and <span class="text-white/85">Updates</span> — and all of it
+        still transitions in place inside the <code class="text-[13px] text-white/80">MenuBarExtra</code>
+        instead of opening a settings window, so the popover never loses focus. General holds the three visual
+        styles, subtitles, Launch at Login and the door into Permissions &amp; First Run.
+      </p>
+      <div class="mt-5 flex flex-wrap gap-2 text-[11px]">
+        <span class="px-2.5 py-1 rounded-md bg-violet/15 text-[#a68cff] border border-violet/25">In-panel navigation</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">SMAppService</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">Classic · Cyber · Cyber Dark</span>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section class="step min-h-[60vh] flex flex-col justify-center py-12" data-step="6" data-image="6"
+             data-title="CustomizeView.swift" data-tab="Actions"
+             data-metric="15 actions" data-caption="Drag to reorder; switch off to hide.">
+      <div class="rail h-[3px] w-14 rounded-full bg-white/15 mb-6 transition-colors"></div>
+      <h3 class="text-2xl font-semibold tracking-tight">Actions — order and visibility</h3>
+      <p class="mt-3 text-white/65 leading-relaxed">
+        Every action gets a tinted icon tile and a switch in its own colour. Drag to reorder, turn one off to
+        hide it from the dashboard; the layout survives relaunches through <code class="text-[13px] text-white/80">UserDefaults</code>.
+      </p>
+      <pre class="mt-5 p-4 rounded-xl bg-black/45 border border-edge overflow-x-auto"><code class="language-swift">// Models/AppSettings.swift — one @Observable source of truth
+@Observable
+final class AppSettings {
+    var actionOrder: [ActionID] = ActionCatalog.defaultOrder
+    var hiddenActions: Set&lt;ActionID&gt; = []
+    var controlStyle: ControlStyle = .classic
+}</code></pre>
+    </section>
+
+    <!-- 7 -->
+    <section class="step min-h-[60vh] flex flex-col justify-center py-12" data-step="7" data-image="7"
+             data-title="CustomizeSystemStatsSection.swift" data-tab="System"
+             data-metric="DIE 43°" data-caption="Popover and menu bar are independent destinations.">
+      <div class="rail h-[3px] w-14 rounded-full bg-white/15 mb-6 transition-colors"></div>
+      <h3 class="text-2xl font-semibold tracking-tight">System — pick the readings and where they go</h3>
+      <p class="mt-3 text-white/65 leading-relaxed">
+        CPU, GPU, memory and die temperature each carry their current value right in the row, with two separate
+        toggles: one for the popover, one for the menu bar. Sampling runs at 1, 2, 5 or 10 seconds — and the
+        dashboard reuses that same loop rather than doubling the sensor work.
+      </p>
+      <div class="mt-5 flex flex-wrap gap-2 text-[11px]">
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">3 readings in the popover</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">4 in the menu bar</span>
+      </div>
+    </section>
+
+    <!-- 8 -->
+    <section class="step min-h-[60vh] flex flex-col justify-center py-12" data-step="8" data-image="8"
+             data-title="CustomizeAgentUsageSection.swift" data-tab="Agents"
+             data-metric="every 5 min" data-caption="Intervals derived from what the data can express.">
+      <div class="rail h-[3px] w-14 rounded-full bg-white/15 mb-6 transition-colors"></div>
+      <h3 class="text-2xl font-semibold tracking-tight">Agents — quota windows and refresh rate</h3>
+      <p class="mt-3 text-white/65 leading-relaxed">
+        Each detected quota window is listed with its live percentage. The refresh choices aren't round numbers:
+        a 5-hour session window spends 100 points over 300 minutes, so one percentage point takes three minutes.
+        Polling faster can't return a different integer — it only spends requests. The tab spells out the cost
+        of the interval you picked.
+      </p>
+      <pre class="mt-5 p-4 rounded-xl bg-black/45 border border-edge overflow-x-auto"><code class="language-swift">// Models/UsageRefreshInterval.swift
+// "About 1.7% of a session window between reads."
+case everyFiveMinutes   // ≈1.7%   ← default
+case everyThreeMinutes  // the fastest that can show a new number</code></pre>
+    </section>
+
+    <!-- 9 -->
+    <section class="step min-h-[60vh] flex flex-col justify-center py-12" data-step="9" data-image="9"
+             data-title="Sparkle 2.9.4" data-tab="Updates"
+             data-metric="v2.6.2 (13)" data-caption="You choose when to download and install.">
+      <div class="rail h-[3px] w-14 rounded-full bg-white/15 mb-6 transition-colors"></div>
+      <h3 class="text-2xl font-semibold tracking-tight">Updates — checked daily, installed on your word</h3>
+      <p class="mt-3 text-white/65 leading-relaxed">
+        Automatic checking is a consent toggle, not a default that acts on its own: it checks daily, and
+        downloading and installing still require confirmation. Updates arrive over an HTTPS feed as
+        Ed25519-signed archives, and the updater's windows stay independent of the menu-bar popover.
+      </p>
+      <div class="mt-5 flex flex-wrap gap-2 text-[11px]">
+        <span class="px-2.5 py-1 rounded-md bg-blue/15 text-blue border border-blue/25">Sparkle 2.9.4</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">Ed25519</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">HTTPS appcast</span>
+      </div>
+    </section>
+
+    <!-- 10 -->
+    <section class="step min-h-[70vh] flex flex-col justify-center py-16" data-step="10" data-image="10"
+             data-title="InfoView.swift" data-metric="v2.6.2"
+             data-caption="Public GitHub data, fetched only while About is open.">
+      <div class="rail h-[3px] w-14 rounded-full bg-white/15 mb-6 transition-colors"></div>
+      <h2 class="text-3xl sm:text-4xl font-semibold tracking-tight">No ads · No analytics · No system profiling</h2>
+      <p class="mt-4 text-white/65 leading-relaxed">
+        That line sits at the bottom of the About screen, and it's the whole policy. There is no Fluxa server of
+        any kind. The only network calls are the agent quota endpoints and — only while About is open —
+        GitHub's public API for the developer card. Token counts, the scan cache and your preferences live in
+        Application Support and UserDefaults, never in a release artifact.
+      </p>
+      <p class="mt-4 text-white/65 leading-relaxed">
+        About now fits it all on one screen: version and build, the live GitHub profile card with stars, repos
+        and followers, <span class="text-white/85">Check for Updates…</span> with its last-checked timestamp,
+        and the optional coffee link — no scrolling, no second window.
+      </p>
+      <div class="mt-5 flex flex-wrap gap-2 text-[11px]">
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">Local first</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">No telemetry</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">Apache-2.0</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">Zero dependencies</span>
+      </div>
+      <p class="mt-8 text-xs text-white/40 leading-relaxed border-l-2 border-edge pl-4">
+        Screenshots show <span class="text-white/60">2.6.2 (13)</span> in the Cyber Dark appearance —
+        the current release.
+      </p>
+    </section>
+
+  </div>
+</main>
+
+<!-- ══ FEATURE GRID ══ -->
+<section class="max-w-6xl mx-auto px-5 sm:px-8 py-28">
+  <h2 class="text-3xl sm:text-4xl font-semibold tracking-tight text-center">All fifteen actions</h2>
+  <p class="mt-3 text-center text-white/50 text-sm">Every one backed by a real system API.</p>
+  <div class="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-sm">
+    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">⚡</div><h3 class="mt-2 font-medium">Keep Awake</h3><p class="mt-1 text-white/50 text-[13px]">IOKit power assertion — indefinitely or 15 min / 1 h / 4 h with auto-off.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">🌗</div><h3 class="mt-2 font-medium">Dark Mode</h3><p class="mt-1 text-white/50 text-[13px]">Switches the system appearance instantly via System Events.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">🖥</div><h3 class="mt-2 font-medium">Hide Desktop Icons</h3><p class="mt-1 text-white/50 text-[13px]">Clean screenshots and presentations, one toggle away.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">👁</div><h3 class="mt-2 font-medium">Show Hidden Files</h3><p class="mt-1 text-white/50 text-[13px]">Reveals dotfiles in Finder.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">📥</div><h3 class="mt-2 font-medium">Auto-hide Dock</h3><p class="mt-1 text-white/50 text-[13px]">Shows the Dock only on hover.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">🌙</div><h3 class="mt-2 font-medium">Screen Saver</h3><p class="mt-1 text-white/50 text-[13px]">Launches the system screen saver.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">✨</div><h3 class="mt-2 font-medium">Screen Clean</h3><p class="mt-1 text-white/50 text-[13px]">Black overlay on every display; hot-plug aware, exits on click or ESC.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">⌨️</div><h3 class="mt-2 font-medium">Lock Keyboard</h3><p class="mt-1 text-white/50 text-[13px]">Blocks keyboard input globally; the mouse stays free to unlock.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">🎯</div><h3 class="mt-2 font-medium">Focus Mode</h3><p class="mt-1 text-white/50 text-[13px]">Do Not Disturb through two user-created Shortcuts.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">🔊</div><h3 class="mt-2 font-medium">Audio Output</h3><p class="mt-1 text-white/50 text-[13px]">CoreAudio device switching, hot-plug aware.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">🎧</div><h3 class="mt-2 font-medium">Bluetooth Audio</h3><p class="mt-1 text-white/50 text-[13px]">Connect paired AirPods without digging through menus.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">🎤</div><h3 class="mt-2 font-medium">Microphone Mute</h3><p class="mt-1 text-white/50 text-[13px]">Mutes the default input device via CoreAudio.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">📐</div><h3 class="mt-2 font-medium">Lid Angle</h3><p class="mt-1 text-white/50 text-[13px]">Live hinge readout on Apple Silicon and Intel.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">⚖️</div><h3 class="mt-2 font-medium">Trackpad Scale</h3><p class="mt-1 text-white/50 text-[13px]">Weighs small objects on the Force Touch strain gauges.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">📊</div><h3 class="mt-2 font-medium">Agent Usage</h3><p class="mt-1 text-white/50 text-[13px]">Live Claude &amp; Codex quotas plus token history charts.</p></div>
+  </div>
+</section>
+
+<!-- ══ INSTALL ══ -->
+<section class="rain rain--band border-y border-edge">
+  <div class="max-w-3xl mx-auto px-5 sm:px-8 py-24 text-center">
+    <h2 class="text-3xl sm:text-4xl font-semibold tracking-tight">Install it in a minute</h2>
+    <p class="mt-4 text-white/60">Download the DMG and drag <span class="font-mono text-white/85">Fluxa.app</span> into Applications.</p>
+    <div class="mt-8 text-left p-5 rounded-xl bg-ink/85 backdrop-blur-sm border border-white/10 shadow-xl shadow-black/40">
+      <p class="text-[11px] uppercase tracking-widest text-white/45 mb-3">Or build from source</p>
+      <pre class="overflow-x-auto"><code class="language-bash">git clone https://github.com/zEhmsy/fluxa.git
+cd fluxa
+./build.sh
+cp -r Fluxa.app /Applications/</code></pre>
+    </div>
+    <p class="mt-6 text-xs text-white/55 leading-relaxed">
+      ⚠️ Fluxa is ad-hoc signed, not notarized. If macOS blocks the first launch, verify the download's origin
+      and use <span class="text-white/60">System Settings → Privacy &amp; Security → Open Anyway</span>, if offered.
+      Don't disable Gatekeeper. Requires macOS 14 (Sonoma) or later.
+    </p>
+    <a href="https://github.com/zEhmsy/fluxa/releases/latest"
+       class="inline-block mt-9 px-8 py-3.5 rounded-xl font-medium bg-gradient-to-r from-blue to-violet hover:brightness-110 transition shadow-lg shadow-violet/25">
+      ⬇ Get the latest release
+    </a>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══ -->
+<footer class="max-w-6xl mx-auto px-5 sm:px-8 py-16 flex flex-col sm:flex-row items-center justify-between gap-6 text-sm text-white/45">
+  <div class="flex items-center gap-3">
+    <img src="images/fluxa-logo.svg" alt="" width="28" height="28" class="rounded-lg">
+    <span>Built with Swift and caffeine.</span>
+  </div>
+  <div class="flex items-center gap-6">
+    <a class="hover:text-white transition" href="https://github.com/zEhmsy/fluxa">GitHub</a>
+    <a class="hover:text-white transition" href="https://github.com/zEhmsy/fluxa/blob/main/LICENSE">Apache-2.0</a>
+    <a class="hover:text-white transition" href="https://www.buymeacoffee.com/gturturro">☕ Buy me a coffee</a>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/scrollama"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/swift.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+<script>
+(function () {
+  if (window.hljs) hljs.highlightAll();
+
+  // Stop the hero's animated backdrop-filter once it scrolls away: it repaints
+  // every frame and would otherwise compete with the sticky panel below.
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(
+      entries => entries.forEach(e => e.target.classList.toggle('is-idle', !e.isIntersecting)),
+      { rootMargin: '120px' }
+    );
+    document.querySelectorAll('.rain').forEach(el => io.observe(el));
+  }
+
+  const layers  = document.querySelectorAll('.layer');
+  const steps   = document.querySelectorAll('.step');
+  const title   = document.getElementById('frame-title');
+  const metric  = document.getElementById('frame-metric');
+  const caption = document.getElementById('frame-caption');
+  const tabBar  = document.getElementById('frame-tabs');
+  const pills   = tabBar.querySelectorAll('.tab-pill');
+
+  function activate(el) {
+    const d = el.dataset;
+    steps.forEach(s => s.classList.toggle('is-active', s === el));
+    layers.forEach(l => l.classList.toggle('is-active', l.dataset.layer === d.image));
+    if (d.title)   title.textContent   = d.title;
+    if (d.metric)  metric.textContent  = d.metric;
+    if (d.caption) caption.textContent = d.caption;
+    // The tab bar only exists while the story is inside Customize.
+    tabBar.classList.toggle('hidden', !d.tab);
+    tabBar.classList.toggle('flex', !!d.tab);
+    pills.forEach(p => p.classList.toggle('is-on', p.dataset.tab === d.tab));
+  }
+
+  activate(steps[0]);
+
+  if (!window.scrollama) return;               // graceful degradation: first frame stays visible
+  const scroller = scrollama();
+  scroller
+    .setup({ step: '#scrolly .step', offset: 0.55, progress: false })
+    .onStepEnter(response => activate(response.element));
+
+  window.addEventListener('resize', () => scroller.resize());
+})();
+</script>
+</body>
+</html>
