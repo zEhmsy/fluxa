@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?><rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>Fluxa Direct — update acceptance</title>
+        <link>https://github.com/zEhmsy/fluxa</link>
+        <description>Stable updates for Fluxa Direct on Apple silicon.</description>
+        <language>en</language>
+        <!-- Owner-authorized acceptance feed. Production updates/appcast.xml remains unchanged. -->
+        <item>
+            <title>2.6.1</title>
+            <pubDate>Fri, 28 Aug 2026 11:39:34 +0200</pubDate>
+            <link>https://github.com/zEhmsy/fluxa</link>
+            <sparkle:version>10</sparkle:version>
+            <sparkle:shortVersionString>2.6.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<h2>Fluxa updater acceptance candidate</h2>
+<p>Local candidate 2.6.1 (10) for an owner-run upgrade from 2.6.0 (9). Application code is unchanged; only version metadata was increased. This is not a published feature release.</p>
+<p>Requires macOS 14 or later and an Apple silicon Mac. Installation requires confirmation.</p>
+]]></description>
+            <enclosure url="https://zehmsy.github.io/fluxa/updates-test/build-10/Fluxa.zip" length="3265652" type="application/octet-stream" sparkle:edSignature="Xu0c4Mhd+oD1X8LDaEhofTmOPLYomaJ2r5p7MLRd4nwFk7S0iKFv9rYVBcpNIZh4Dx20rDuX0B7r+2R8s3o1BQ=="/>
+        </item>
+    </channel>
+</rss>
