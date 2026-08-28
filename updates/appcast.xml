@@ -1,10 +1,29 @@
-<?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
-  <channel>
-    <title>Fluxa Direct Updates</title>
-    <link>https://github.com/zEhmsy/fluxa</link>
-    <description>Stable updates for Fluxa Direct on Apple silicon.</description>
-    <language>en</language>
-    <!-- No update is advertised until its signed archive has been published. -->
-  </channel>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>Fluxa Direct Updates</title>
+        <link>https://github.com/zEhmsy/fluxa</link>
+        <description>Stable updates for Fluxa Direct on Apple silicon.</description>
+        <language>en</language>
+        <!-- No update is advertised until its signed archive has been published. -->
+        <item>
+            <title>2.6.1</title>
+            <pubDate>Fri, 28 Aug 2026 13:38:21 +0200</pubDate>
+            <link>https://github.com/zEhmsy/fluxa/releases/tag/v2.6.1</link>
+            <sparkle:version>10</sparkle:version>
+            <sparkle:shortVersionString>2.6.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<h2>Fluxa 2.6.1</h2>
+<ul>
+<li>Sparkle updates from About, with optional automatic checks in Customize. Download and installation require confirmation.</li>
+<li>Optional Permissions &amp; First Run setup for Accessibility, Automation, Bluetooth and Claude credential access.</li>
+<li>Branded installer with an English first-launch guide.</li>
+</ul>
+<p>Requires macOS 14 or later and Apple silicon. Users of v2.5.0 and earlier must install this first updater-enabled release manually once.</p>
+<p>Fluxa is ad-hoc signed, not notarized. A changed signing identity may require renewed macOS permissions.</p>
+]]></description>
+            <enclosure url="https://github.com/zEhmsy/fluxa/releases/download/v2.6.1/Fluxa.zip" length="3265652" type="application/octet-stream" sparkle:edSignature="Xu0c4Mhd+oD1X8LDaEhofTmOPLYomaJ2r5p7MLRd4nwFk7S0iKFv9rYVBcpNIZh4Dx20rDuX0B7r+2R8s3o1BQ=="/>
+        </item>
+    </channel>
 </rss>
