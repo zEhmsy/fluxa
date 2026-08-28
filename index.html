@@ -143,7 +143,9 @@ tailwind.config = {
   </div>
 
   <div class="mt-10 flex flex-col sm:flex-row gap-3">
-    <a href="https://github.com/zEhmsy/fluxa/releases/latest"
+    <!-- /releases/latest/download resolves to the newest release's asset, so this
+         stays correct without editing the page on every release. -->
+    <a href="https://github.com/zEhmsy/fluxa/releases/latest/download/Fluxa.dmg"
        class="px-7 py-3 rounded-xl font-medium bg-gradient-to-r from-blue to-violet hover:brightness-110 transition shadow-lg shadow-violet/25">
       ⬇ Download the DMG
     </a>
@@ -152,6 +154,12 @@ tailwind.config = {
       View source
     </a>
   </div>
+
+  <p class="mt-5 text-xs text-white/50">
+    Apple silicon · macOS 14+ · ≈3&nbsp;MB ·
+    <a class="underline decoration-white/25 hover:text-white transition"
+       href="https://github.com/zEhmsy/fluxa/releases/latest">release notes and checksums</a>
+  </p>
 
   <div class="hero-scroll text-xs text-white/50 tracking-widest uppercase animate-pulse">Scroll</div>
 </header>
@@ -521,10 +529,15 @@ cp -r Fluxa.app /Applications/</code></pre>
       and use <span class="text-white/60">System Settings → Privacy &amp; Security → Open Anyway</span>, if offered.
       Don't disable Gatekeeper. Requires macOS 14 (Sonoma) or later.
     </p>
-    <a href="https://github.com/zEhmsy/fluxa/releases/latest"
+    <a href="https://github.com/zEhmsy/fluxa/releases/latest/download/Fluxa.dmg"
        class="inline-block mt-9 px-8 py-3.5 rounded-xl font-medium bg-gradient-to-r from-blue to-violet hover:brightness-110 transition shadow-lg shadow-violet/25">
-      ⬇ Get the latest release
+      ⬇ Download Fluxa.dmg
     </a>
+    <p class="mt-4 text-xs text-white/50">
+      Already running Fluxa? <span class="text-white/70">About → Check for Updates…</span> installs it in place.
+      · <a class="underline decoration-white/25 hover:text-white transition"
+           href="https://github.com/zEhmsy/fluxa/releases">All releases</a>
+    </p>
   </div>
 </section>
 
