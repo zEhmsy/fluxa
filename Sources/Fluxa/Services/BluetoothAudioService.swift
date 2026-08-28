@@ -1,4 +1,5 @@
 import IOBluetooth
+import CoreBluetooth
 
 // MARK: - BluetoothAudioDevice
 
@@ -32,10 +33,17 @@ final class BluetoothAudioService {
     /// Paired audio devices, connected first, then alphabetical.
     private(set) var devices: [BluetoothAudioDevice] = []
 
+    var hasPermission: Bool { CBManager.authorization == .allowedAlways }
+
     // MARK: - Public API
 
     /// Re-reads the pairing list and connection states.
     func refresh() {
+        // Enumerating paired devices can request access. Startup/refresh must never do that.
+        guard hasPermission else {
+            devices = []
+            return
+        }
         let paired = IOBluetoothDevice.pairedDevices()?.compactMap { $0 as? IOBluetoothDevice } ?? []
         devices = paired
             .filter { $0.deviceClassMajor == kBluetoothDeviceClassMajorAudio }
@@ -54,6 +62,9 @@ final class BluetoothAudioService {
 
     /// Connects the device if disconnected, disconnects it if connected.
     func toggleConnection(for id: String) async throws {
+        guard hasPermission else {
+            throw FluxaError.featureUnavailable("Enable Bluetooth in Customize → Permissions first.")
+        }
         guard let device = IOBluetoothDevice(addressString: id) else {
             throw FluxaError.featureUnavailable("Bluetooth device not found.")
         }

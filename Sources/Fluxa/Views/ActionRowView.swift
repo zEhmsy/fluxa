@@ -172,6 +172,11 @@ struct ActionRowView: View {
     /// connects it (or disconnects it when already connected).
     private var bluetoothDeviceMenu: some View {
         Menu {
+            if !viewModel.bluetoothAudio.hasPermission {
+                Button("Set Up Bluetooth…") { viewModel.isShowingPermissionsSetup = true }
+            } else if viewModel.bluetoothAudio.devices.isEmpty {
+                Text("No paired audio devices")
+            }
             ForEach(viewModel.bluetoothAudio.devices) { device in
                 Button {
                     Task { await viewModel.toggleBluetoothDevice(device.id) }
@@ -200,7 +205,7 @@ struct ActionRowView: View {
         }
         .menuStyle(.borderlessButton)
         .fixedSize()
-        .disabled(viewModel.bluetoothAudio.devices.isEmpty || viewModel.isBusy)
+        .disabled(viewModel.isBusy)
         .accessibilityLabel("Choose Bluetooth audio device")
     }
 

@@ -23,20 +23,11 @@ struct FluxaApp: App {
 
     // MARK: - State
 
-    @State private var settings: AppSettings
-    @State private var viewModel: PopoverViewModel
+    private var settings: AppSettings { appDelegate.settings }
+    private var viewModel: PopoverViewModel { appDelegate.viewModel }
 
     // NSApplicationDelegateAdaptor MUST only appear here, in the App struct.
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-
-    // MARK: - Init
-
-    init() {
-        let s = AppSettings()
-        let vm = PopoverViewModel(settings: s)
-        _settings = State(wrappedValue: s)
-        _viewModel = State(wrappedValue: vm)
-    }
 
     // MARK: - Scene
 
@@ -47,13 +38,24 @@ struct FluxaApp: App {
                 .environment(settings)
                 .environment(\.fluxaVisualStyle, settings.visualStyle)
                 .onAppear {
-                    appDelegate.viewModel = viewModel
                     viewModel.refreshStates()
                 }
         } label: {
-            menuBarIcon
+            FluxaLaunchLabel(settings: settings, viewModel: viewModel) {
+                menuBarIcon
+            }
         }
         .menuBarExtraStyle(.window)
+
+        Window("Fluxa Setup", id: PermissionsService.windowID) {
+            PermissionsSetupView()
+                .environment(viewModel)
+                .environment(settings)
+                .environment(\.fluxaVisualStyle, settings.visualStyle)
+                .registersFluxaWindow(id: PermissionsService.windowID)
+        }
+        .windowResizability(.contentSize)
+        .defaultPosition(.center)
 
         // Standalone window for Focus Mode onboarding.
         // A Window scene (not a sheet) so it stays open when the user switches
@@ -131,5 +133,24 @@ struct FluxaApp: App {
             agents: viewModel.agentUsage.selectedMetrics(ids: settings.usageMenuBarMetricIDs),
             limit: AppSettings.maxMenuBarMetrics
         )
+    }
+}
+
+/// The menu-bar label exists at launch, unlike the lazily created popover content. Use its task
+/// to offer setup once even when the user never opens the menu. Updater/cleanup wiring lives in AppDelegate.
+private struct FluxaLaunchLabel<Content: View>: View {
+    let settings: AppSettings
+    let viewModel: PopoverViewModel
+    @ViewBuilder let content: Content
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some View {
+        content.task {
+            guard !settings.hasPresentedPermissionsSetup else { return }
+            settings.hasPresentedPermissionsSetup = true
+            viewModel.permissions.showsWelcome = true
+            openWindow(id: PermissionsService.windowID)
+            FluxaWindowPresenter.shared.bringToFront(id: PermissionsService.windowID)
+        }
     }
 }

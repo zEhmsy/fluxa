@@ -1,0 +1,37 @@
+FLUXA — FIRST LAUNCH
+
+1. Download Fluxa only from the official releases:
+   https://github.com/zEhmsy/fluxa/releases
+
+2. Drag Fluxa.app into Applications. Quit any previous copy, then open the
+   app from Applications, not from the DMG or Downloads.
+
+3. If macOS blocks the app because the developer cannot be verified:
+   - confirm the download's origin;
+   - try opening Fluxa.app in Applications;
+   - open System Settings > Privacy & Security;
+   - choose Open Anyway for Fluxa and confirm, if macOS offers that option.
+   Do not override malware or damaged-app warnings: download the official
+   release again and report the issue. Managed Macs may not allow an
+   exception. Do not disable Gatekeeper or other system protections.
+
+4. Once Fluxa opens, its setup guide explains each optional permission.
+   Access is requested only when you click the corresponding button:
+   - Accessibility: keyboard locking;
+   - Automation > System Events: switching between light and dark mode;
+   - Bluetooth: paired headphones and audio devices;
+   - Claude credentials: reading your existing Claude Code login. If you
+     trust this copy of Fluxa, choose Always Allow in any Keychain prompt.
+   Focus Mode has a separate guide for creating two Shortcuts.
+
+5. You can skip setup and reopen it from the menu bar:
+   Customize > SETUP > Permissions & First Run.
+
+IMPORTANT
+Gatekeeper approval is separate from Accessibility, Automation, Bluetooth
+and Keychain access. The setup guide cannot run until macOS allows the app
+to open. Fluxa is ad-hoc signed, not notarized: a new signing identity,
+revoked permissions or macOS policy changes can require approval again.
+Permission grants cannot be guaranteed to last forever.
+
+Apple's guidance: https://support.apple.com/102445

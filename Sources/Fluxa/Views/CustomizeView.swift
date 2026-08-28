@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - CustomizeView
 
 /// In-popover screen that lets the user reorder, show/hide actions, and toggle subtitle visibility.
-/// All changes are written through to AppSettings immediately (with UserDefaults persistence).
+/// App preferences use AppSettings; update preferences are owned and persisted by Sparkle.
 struct CustomizeView: View {
 
     @Environment(AppSettings.self) private var settings
@@ -27,6 +27,25 @@ struct CustomizeView: View {
 
             // MARK: Action List (reorderable + togglable)
             List {
+                Section {
+                    Button {
+                        viewModel.isShowingPermissionsSetup = true
+                    } label: {
+                        HStack {
+                            Label("Permissions & First Run", systemImage: "checkmark.shield")
+                            Spacer()
+                            Image(systemName: "arrow.up.forward")
+                                .font(.system(size: 10, weight: .semibold))
+                        }
+                        .font(.system(size: 12))
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.vertical, 4)
+                    .fluxaListRowSurface()
+                } header: {
+                    sectionHeader("SETUP")
+                }
+
                 Section {
                     ForEach(settings.actionOrder, id: \.self) { id in
                         if let action = ActionCatalog.action(for: id) {
@@ -91,6 +110,30 @@ struct CustomizeView: View {
                 }
 
                 // MARK: System
+                Section {
+                    VStack(alignment: .leading, spacing: 7) {
+                        Toggle("Automatically Check for Updates", isOn: Binding(
+                            get: { viewModel.updates.automaticallyChecksForUpdates },
+                            set: { viewModel.updates.setAutomaticallyChecksForUpdates($0) }
+                        ))
+                        .font(.system(size: 12))
+                        .toggleStyle(.switch)
+                        .controlSize(.mini)
+                        .tint(FluxaTheme.accent)
+                        .disabled(!viewModel.updates.isStarted)
+
+                        Text(viewModel.updates.configurationError
+                             ?? "Checks daily when enabled. You choose when to download and install.")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.vertical, 3)
+                    .fluxaListRowSurface()
+                } header: {
+                    sectionHeader("UPDATES")
+                }
+
                 Section {
                     Toggle("Launch at Login", isOn: Binding(
                         get: { viewModel.launchAtLogin.isEnabled },

@@ -7,9 +7,13 @@ let package = Package(
         // @Observable macro requires macOS 14; MenuBarExtra available since macOS 13.
         .macOS(.v14)
     ],
+    dependencies: [
+        .package(url: "https://github.com/sparkle-project/Sparkle", exact: "2.9.4")
+    ],
     targets: [
         .executableTarget(
             name: "Fluxa",
+            dependencies: [.product(name: "Sparkle", package: "Sparkle")],
             path: "Sources/Fluxa",
             exclude: ["Resources/Info.plist"],
             resources: [
@@ -34,6 +38,8 @@ let package = Package(
                 .linkedFramework("ApplicationServices"),
                 .linkedFramework("CoreAudio"),
                 .linkedFramework("ServiceManagement"),
+                // build.sh preserves the complete vendor framework in Contents/Frameworks.
+                .unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"]),
                 // Embed Info.plist into the binary so LSUIElement / NSPrincipalClass etc. are found
                 .unsafeFlags([
                     "-Xlinker", "-sectcreate",

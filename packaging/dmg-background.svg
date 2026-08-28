@@ -1,0 +1,49 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Fluxa installer background</title>
+  <desc>Blue to violet Fluxa gradient. Drag Fluxa into Applications. The first-launch guide is below.</desc>
+  <defs>
+    <!-- The exact endpoints of docs/images/fluxa-logo.svg. -->
+    <linearGradient id="brand" x1="0" y1="0" x2="800" y2="600" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2F80ED"/>
+      <stop offset="1" stop-color="#6C5CE7"/>
+    </linearGradient>
+    <radialGradient id="light" cx="0" cy="0" r="1" gradientTransform="translate(20 -100) rotate(40) scale(740 520)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#DCEAFF" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#DCEAFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="track" x1="48" y1="198" x2="712" y2="371" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F4F7FF"/>
+      <stop offset="1" stop-color="#EAE9FE"/>
+    </linearGradient>
+  </defs>
+
+  <!-- The content stays in a 760 × 520 safe area. Extra gradient at the edges
+       covers Finder's varying viewport/chrome without a white strip. -->
+  <rect width="800" height="600" fill="url(#brand)"/>
+  <rect width="800" height="600" fill="url(#light)"/>
+
+  <!-- A quiet, cropped echo of the switch mark, not additional controls. -->
+  <rect x="511" y="-86" width="377" height="229" rx="114.5" transform="rotate(28 511 -86)" stroke="#EEF2FF" stroke-opacity="0.08" stroke-width="36"/>
+
+  <!-- Original Fluxa switch geometry, kept in sync with the canonical logo. -->
+  <g transform="translate(48 46) scale(2.8)" fill="#F6F8FF">
+    <path d="M7 2a5 5 0 1 0 0 10h6a5 5 0 0 0 0-10H7zm0-2h6a7 7 0 0 1 0 14H7A7 7 0 0 1 7 0zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-2a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>
+  </g>
+  <text x="121" y="82" fill="#F6F8FF" font-family="Futura" font-size="43" font-weight="500" letter-spacing="-1.1">Fluxa</text>
+  <g fill="#EDF2FF" font-family="Futura" font-size="11" text-anchor="end" letter-spacing="1.3">
+    <text x="710" y="59">MADE FOR YOUR MENU BAR</text>
+  </g>
+  <text x="48" y="129" fill="#F6F8FF" font-family="Futura" font-size="18">Drag Fluxa into Applications.</text>
+  <text x="48" y="153" fill="#E4EAFF" font-family="Futura" font-size="13">Trascina Fluxa in Applicazioni.</text>
+
+  <!-- One switch-shaped installation track. Finder supplies the actual draggable icons
+       at (210, 270) and (550, 270); do not bake fake icons into the background. -->
+  <rect x="48" y="198" width="664" height="173" rx="86.5" fill="url(#track)"/>
+  <rect x="48.5" y="198.5" width="663" height="172" rx="86" stroke="#F8FAFF" stroke-opacity="0.55"/>
+  <path d="M331 270H429M416 257L429 270L416 283" stroke="#6568AA" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <text x="48" y="428" fill="#F6F8FF" font-family="Futura" font-size="17" font-weight="500">First launch?</text>
+  <text x="48" y="453" fill="#EDF0FF" font-family="Futura" font-size="13">Open Read Me First for permissions &amp; macOS help.</text>
+  <text x="48" y="475" fill="#E4E7FF" font-family="Futura" font-size="12">Guida al primo avvio e ai permessi inclusa.</text>
+  <!-- Finder places Read Me First.txt at (642, 424), with its native filename below. -->
+</svg>

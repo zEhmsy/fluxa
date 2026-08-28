@@ -16,10 +16,33 @@
     <string>com.giuseppe.fluxa</string>
 
     <key>CFBundleVersion</key>
-    <string>7</string>
+    <string>10</string>
 
     <key>CFBundleShortVersionString</key>
-    <string>2.5.0</string>
+    <string>2.6.1</string>
+
+    <key>CFBundleExecutable</key>
+    <string>Fluxa</string>
+
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+
+    <!-- Direct updater. Only the public key belongs in the app; private key custody
+         and release steps are documented in docs/Updates.md.
+         Omit SUEnableAutomaticChecks so Sparkle owns its consent prompt and preference. -->
+    <key>SUFeedURL</key>
+    <string>https://zehmsy.github.io/fluxa/updates/appcast.xml</string>
+    <key>SUPublicEDKey</key>
+    <string>CkRk7WevzhjWm8DTQDDI4eqXc2Tvx+aGvmWFPCSfEe0=</string>
+    <key>SUVerifyUpdateBeforeExtraction</key>
+    <true/>
+    <key>SUAllowsAutomaticUpdates</key>
+    <false/>
+    <key>SUEnableSystemProfiling</key>
+    <false/>
 
     <!-- Custom app icon -->
     <key>CFBundleIconFile</key>

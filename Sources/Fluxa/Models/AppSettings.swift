@@ -32,6 +32,11 @@ final class AppSettings {
         didSet { UserDefaults.standard.set(visualStyle.rawValue, forKey: Keys.visualStyle) }
     }
 
+    /// Records only that the welcome was offered, not that any system permission was granted.
+    var hasPresentedPermissionsSetup: Bool {
+        didSet { UserDefaults.standard.set(hasPresentedPermissionsSetup, forKey: Keys.permissionsSetup) }
+    }
+
     /// Whether the user has completed the Focus Mode onboarding (created the two Shortcuts).
     var focusModeOnboardingComplete: Bool {
         didSet { UserDefaults.standard.set(focusModeOnboardingComplete, forKey: Keys.focusModeOnboardingComplete) }
@@ -134,6 +139,7 @@ final class AppSettings {
         // Existing installs have no stored value and must retain the interface they already know.
         visualStyle = defaults.string(forKey: Keys.visualStyle)
             .flatMap(FluxaVisualStyle.init(rawValue:)) ?? .classic
+        hasPresentedPermissionsSetup = defaults.bool(forKey: Keys.permissionsSetup)
 
         // Focus Mode
         focusModeOnboardingComplete = defaults.bool(forKey: Keys.focusModeOnboardingComplete)
@@ -180,6 +186,7 @@ final class AppSettings {
         static let hiddenActionIDs = "fluxa.hiddenActionIDs"
         static let showSubtitles = "fluxa.showSubtitles"
         static let visualStyle = "fluxa.visualStyle"
+        static let permissionsSetup = "fluxa.hasPresentedPermissionsSetup"
         static let focusModeOnboardingComplete = "fluxa.focusModeOnboardingComplete"
         static let focusModeEnabled = "fluxa.focusModeEnabled"
         static let trackpadScaleUnit = "fluxa.trackpadScaleUnit"

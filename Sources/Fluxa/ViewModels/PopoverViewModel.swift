@@ -30,6 +30,8 @@ final class PopoverViewModel {
     let agentUsage = AgentUsageService()
     let systemStats = SystemStatsService()
     let githubProfile = GitHubProfileService()
+    let permissions = PermissionsService()
+    let updates = UpdateService()
 
     // MARK: - Observable State
 
@@ -53,6 +55,8 @@ final class PopoverViewModel {
 
     /// Signals PopoverRootView to open the live system history dashboard.
     var isShowingSystemStats = false
+
+    var isShowingPermissionsSetup = false
 
     /// Whether an async action is in progress (disables controls during transitions).
     var isBusy = false
@@ -82,6 +86,7 @@ final class PopoverViewModel {
         case .audioOutput:
             return currentOutputDeviceName
         case .bluetoothAudio:
+            guard bluetoothAudio.hasPermission else { return "Set up Bluetooth permission" }
             let connected = bluetoothAudio.devices.filter(\.isConnected)
             if connected.isEmpty { return "Not connected" }
             return connected.map(\.name).joined(separator: ", ")
@@ -166,7 +171,17 @@ final class PopoverViewModel {
                 toggleStates[id.rawValue] = dockAutohide.isActive
 
             case .lockKeyboard:
-                if desiredActive { try keyboardShield.activate() } else { keyboardShield.deactivate() }
+                if desiredActive {
+                    do {
+                        try keyboardShield.activate()
+                    } catch KeyboardShieldService.ActivationError.accessibilityPermissionRequired {
+                        permissions.showsWelcome = false
+                        isShowingPermissionsSetup = true
+                        return
+                    }
+                } else {
+                    keyboardShield.deactivate()
+                }
                 toggleStates[id.rawValue] = keyboardShield.isActive
 
             case .micMute:
@@ -318,6 +333,12 @@ final class PopoverViewModel {
     }
 
     // MARK: - Global Shortcut
+
+    func checkForUpdates() {
+        guard updates.canCheckForUpdates else { return }
+        menuBarWindow?.orderOut(nil)
+        updates.checkForUpdates()
+    }
 
     /// Toggles the MenuBarExtra window visibility. Called by the global hotkey.
     /// No-op if the window reference has not been captured yet (requires at least one popover open).

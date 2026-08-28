@@ -1,5 +1,6 @@
 import Foundation
 import Security
+import LocalAuthentication
 
 // MARK: - ClaudeCredentials
 
@@ -46,6 +47,26 @@ struct CodexCredentials {
 /// one — rather than silently renewed behind the owning tool's back.
 enum AgentCredentialStore {
 
+    enum AccessError: LocalizedError {
+        case approvalNeeded
+        case notAllowed
+
+        var errorDescription: String? {
+            switch self {
+            case .approvalNeeded:
+                "Claude: enable credential access in Customize → Permissions & First Run."
+            case .notAllowed:
+                "Claude credential access was not allowed. Retry from Permissions & First Run; "
+                    + "choose Always Allow only if you trust this copy of Fluxa."
+            }
+        }
+    }
+
+    // This is permission to ATTEMPT a read, never proof that macOS granted access. Associate the
+    // opt-in with the actual signing requirement so a new ad-hoc build cannot prompt from a timer.
+    private static let approvalKey = "fluxa.claudeCredentialApprovedRequirement"
+    private static let readLock = NSLock()
+
     // MARK: - Claude
 
     /// `claude` writes to a file on Linux and to the login keychain on macOS; the file is still
@@ -55,10 +76,28 @@ enum AgentCredentialStore {
     /// Keychain service used by Claude Code for the production endpoint.
     private static let claudeKeychainService = "Claude Code-credentials"
 
-    /// Loads Claude's OAuth blob. Runs off the main thread: the keychain read can block on a user
-    /// authorization prompt the first time a new build of Fluxa asks for the item.
-    static func loadClaude() -> ClaudeCredentials? {
-        let json = readClaudeFile() ?? readClaudeKeychain()
+    /// Only the setup button may initiate first access for a code identity. Ordinary refreshes
+    /// request a noninteractive context, and do not retry a rejected read in a prompt loop.
+    /// The legacy login Keychain still owns its ACL/unlock dialogs; this is not a permanent grant.
+    static func loadClaude(requestAccess: Bool = false) throws -> ClaudeCredentials? {
+        readLock.lock()
+        defer { readLock.unlock() }
+        let json: [String: Any]?
+        if let file = readClaudeFile() {
+            json = file
+        } else {
+            let requirement = currentSigningRequirement()
+            if !requestAccess {
+                guard let requirement,
+                      UserDefaults.standard.string(forKey: approvalKey) == requirement else {
+                    throw AccessError.approvalNeeded
+                }
+            }
+            json = try readClaudeKeychain(requestAccess: requestAccess)
+            if requestAccess, json != nil, let requirement {
+                UserDefaults.standard.set(requirement, forKey: approvalKey)
+            }
+        }
         guard let json,
               let oauth = json["claudeAiOauth"] as? [String: Any],
               let token = (oauth["accessToken"] as? String)?
@@ -83,24 +122,48 @@ enum AgentCredentialStore {
 
     /// Reads the generic-password item, first for the current user's account and then by service
     /// alone — Claude Code has used both shapes.
-    private static func readClaudeKeychain() -> [String: Any]? {
+    private static func readClaudeKeychain(requestAccess: Bool) throws -> [String: Any]? {
+        let context = LAContext()
+        context.interactionNotAllowed = !requestAccess
         for account in [NSUserName(), nil] {
             var query: [String: Any] = [
                 kSecClass as String: kSecClassGenericPassword,
                 kSecAttrService as String: claudeKeychainService,
                 kSecMatchLimit as String: kSecMatchLimitOne,
                 kSecReturnData as String: true,
+                kSecUseAuthenticationContext as String: context,
             ]
             if let account { query[kSecAttrAccount as String] = account }
 
             var item: CFTypeRef?
-            guard SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess,
-                  let data = item as? Data,
+            let status = SecItemCopyMatching(query as CFDictionary, &item)
+            if status == errSecItemNotFound { continue }
+            guard status == errSecSuccess else {
+                UserDefaults.standard.removeObject(forKey: approvalKey)
+                // Do not fall back to a second query after denial/cancel: it can duplicate a dialog.
+                throw AccessError.notAllowed
+            }
+            guard let data = item as? Data,
                   let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
             else { continue }
             return json
         }
         return nil
+    }
+
+    private static func currentSigningRequirement() -> String? {
+        var code: SecCode?
+        var staticCode: SecStaticCode?
+        var requirement: SecRequirement?
+        var text: CFString?
+        guard SecCodeCopySelf(SecCSFlags(), &code) == errSecSuccess, let code,
+              SecCodeCopyStaticCode(code, SecCSFlags(), &staticCode) == errSecSuccess, let staticCode,
+              SecCodeCopyDesignatedRequirement(staticCode, SecCSFlags(), &requirement) == errSecSuccess,
+              let requirement,
+              SecRequirementCopyString(requirement, SecCSFlags(), &text) == errSecSuccess else {
+            return nil
+        }
+        return text as String?
     }
 
     // MARK: - Codex

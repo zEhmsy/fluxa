@@ -166,6 +166,11 @@ struct ControlDeckActionView: View {
 
     private var bluetoothDeviceMenu: some View {
         Menu {
+            if !viewModel.bluetoothAudio.hasPermission {
+                Button("Set Up Bluetooth…") { viewModel.isShowingPermissionsSetup = true }
+            } else if viewModel.bluetoothAudio.devices.isEmpty {
+                Text("No paired audio devices")
+            }
             ForEach(viewModel.bluetoothAudio.devices) { device in
                 Button {
                     Task { await viewModel.toggleBluetoothDevice(device.id) }
@@ -186,7 +191,7 @@ struct ControlDeckActionView: View {
         .menuIndicator(.hidden)
         .tint(tint)
         .fixedSize()
-        .disabled(viewModel.bluetoothAudio.devices.isEmpty || viewModel.isBusy)
+        .disabled(viewModel.isBusy)
         .accessibilityLabel("Choose Bluetooth audio device")
     }
 

@@ -31,6 +31,7 @@ struct InfoView: View {
             ScrollView {
                 VStack(spacing: 12) {
                     appCard
+                    updatesCard
                     developerCard
                     supportCard
                     privacyNote
@@ -102,6 +103,24 @@ struct InfoView: View {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—"
         return "Version \(version) · Build \(build)"
+    }
+
+    private var updatesCard: some View {
+        FluxaToolCard {
+            VStack(alignment: .leading, spacing: 8) {
+                Button(action: viewModel.checkForUpdates) {
+                    Label("Check for Updates…", systemImage: "arrow.triangle.2.circlepath")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(FluxaButtonStyle())
+                .disabled(!viewModel.updates.canCheckForUpdates)
+
+                Text(viewModel.updates.statusDescription)
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
     }
 
     // MARK: - GitHub
@@ -375,7 +394,7 @@ struct InfoView: View {
     }
 
     private var privacyNote: some View {
-        Label("No ads · No analytics · Public GitHub data only", systemImage: "hand.raised.fill")
+        Label("No ads · No analytics · No system profiling", systemImage: "hand.raised.fill")
             .font(.system(size: 9, weight: .medium))
             .foregroundStyle(.tertiary)
             .padding(.bottom, 3)

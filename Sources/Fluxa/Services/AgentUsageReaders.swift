@@ -75,7 +75,7 @@ struct ClaudeUsageReader {
     private static let loginHint = "Run `claude` to sign in."
 
     func fetch() async throws -> [AgentUsageMetric] {
-        guard let credentials = AgentCredentialStore.loadClaude() else {
+        guard let credentials = try AgentCredentialStore.loadClaude() else {
             throw AgentUsageReadError.notLoggedIn(agent: Self.agentName, hint: Self.loginHint)
         }
         guard credentials.canReadUsage else {

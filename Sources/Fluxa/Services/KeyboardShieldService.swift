@@ -53,7 +53,6 @@ final class KeyboardShieldService {
         guard !isActive else { return }
 
         guard AXIsProcessTrusted() else {
-            Self.requestAccessibilityIfNeeded()
             throw ActivationError.accessibilityPermissionRequired
         }
 
@@ -219,6 +218,7 @@ final class KeyboardShieldService {
     // MARK: - Accessibility
 
     static func requestAccessibilityIfNeeded() {
+        guard !AXIsProcessTrusted() else { return }
         let options: NSDictionary = [kAXTrustedCheckOptionPrompt.takeRetainedValue(): true]
         _ = AXIsProcessTrustedWithOptions(options)
     }

@@ -57,6 +57,13 @@ struct PopoverRootView: View {
             }
         }
         // Standalone windows remain coordinated even while Customize replaces the dashboard.
+        .onChange(of: viewModel.isShowingPermissionsSetup) { _, showing in
+            if showing {
+                viewModel.permissions.showsWelcome = false
+                presentWindow(id: PermissionsService.windowID)
+                viewModel.isShowingPermissionsSetup = false
+            }
+        }
         .onChange(of: viewModel.isShowingFocusOnboarding) { _, showing in
             if showing { presentWindow(id: "focus-onboarding") }
         }
