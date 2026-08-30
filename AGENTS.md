@@ -35,11 +35,18 @@ Three agents, one phase each:
 - **Codex** owns `codex-active` — native Swift implementation, algorithm translation,
   memory management.
 - **Antigravity** owns `antigravity-validation` — tests, fuzzing, benchmarks, strict
-  concurrency checks.
+  concurrency checks, then builds and launches the repo-root `Fluxa.app` so the owner can
+  try it by hand. **Never touches `/Applications/Fluxa.app`** — that's the production
+  install; see `docs/agents/roles.md`.
 
 Work only tickets whose `Status:` is the state you own. When you finish, advance the
 `Status:` and `Owner:` lines and append to `## Comments`. When you're blocked on a
 decision the owner must make, set `Status: needs-info` and stop — don't guess.
+
+**Release boundary**: committing, pushing, bumping the build number, packaging, and
+updating the Sparkle feed are never part of resolving a ticket. `ready-for-handoff` means
+"built and running locally for the owner to try," not "shipped." The owner does the
+actual release themselves, by hand, following `HANDOFF.md`, once they're satisfied.
 
 ## Build and test
 

@@ -57,9 +57,8 @@ a `## Comments` entry listing the files touched and anything the spec didn't ant
 **Owns**: `antigravity-validation`
 
 - Unit tests using Swift Testing where the target supports it, XCTest otherwise.
-  **Precondition**: the package has no `testTarget` today and `Tests/FluxaScreenshots/`
-  is empty, so `swift test` does nothing. Ticket `02` stands one up; until it lands, no
-  ticket can leave `antigravity-validation`.
+  `FluxaCoreTests` exists as of ticket `02`; add new test files under `Tests/` as the
+  ticket requires.
 - Edge-case fuzzing: boundary values, malformed input, empty and maximal collections.
   For the sampler tickets specifically: counter wraparound, hardware that reports nothing
   (a desktop Mac has no battery), and devices that disappear mid-sample.
@@ -69,17 +68,45 @@ a `## Comments` entry listing the files touched and anything the spec didn't ant
   `-Xswiftc -strict-concurrency=complete` and report every warning. A ticket does not
   reach `ready-for-handoff` while it introduces new concurrency warnings.
 - Verifies the retain-cycle claim rather than trusting it.
+- **Builds and launches a local copy for the owner to test by hand.** After every check
+  above passes: quit any Fluxa process already running from this repo checkout (match by
+  executable path, e.g. `pgrep -fl "Fluxa.app/Contents/MacOS/Fluxa"` and exclude anything
+  under `/Applications`), run `./build.sh`, then `open Fluxa.app` from the repo root. This
+  is the **only** copy that gets touched.
+  - **Never touch `/Applications/Fluxa.app`.** That is the production install, managed by
+    Sparkle, versioned per the rules in `HANDOFF.md`. `build.sh` ad-hoc signs by default
+    (see the comment above its signing step) — the repo-root bundle is explicitly not a
+    distributable artifact, and must never overwrite or be copied into `/Applications`.
+  - Both copies share one `UserDefaults` domain (`com.giuseppe.fluxa`) because they share
+    a bundle ID — that's expected and is how the owner's existing settings carry over
+    into the test build. It is not a reason to touch the production copy instead.
+  - Note the running pid in `## Comments` so the next agent (or the owner) can find and
+    quit it without guessing.
 
-**Produces**: tests under `Tests/`, benchmark numbers and a validation verdict in the
-ticket's `## Answer` section.
-**Does not**: fix the implementation. A failure sends the ticket back to `codex-active`
-with a reproducible case.
+**Produces**: tests under `Tests/`, benchmark numbers, a validation verdict in the
+ticket's `## Answer` section, and a running local build at the repo-root `Fluxa.app` for
+manual testing.
+**Does not**: fix the implementation — a failure sends the ticket back to `codex-active`
+with a reproducible case. Does not commit, push, or touch anything under
+`/Applications` — see the escalation rule below.
 
-**Hands off** by setting `Status: ready-for-handoff` — or back to `codex-active` on
-failure.
+**Hands off** by setting `Status: ready-for-handoff` and leaving the local build running
+— or back to `codex-active` on failure. `ready-for-handoff` means "built, tested, and
+running locally for the owner to try," not "shipped." Nothing publishes further until the
+owner says so.
 
 ## Escalation
 
 Any agent may set `Status: needs-info` and stop. Do so rather than guessing when a
 decision changes the shape of the result, when the spec conflicts with `HANDOFF.md`, or
 when upstream behaviour can't be determined from the source.
+
+## Release boundary — binding on every agent
+
+Committing, pushing, bumping the build number, packaging a release, or updating the
+Sparkle feed are **never** part of resolving a ticket in this effort, regardless of
+`Status`. `HANDOFF.md` already owns that process end to end (build numbering, DMG+ZIP
+pairing, signing key). A ticket reaching `ready-for-handoff` means the owner has a local
+build to try by hand — nothing more. The owner decides when (and whether) a batch of
+`ready-for-handoff` tickets becomes a real release, and does the release themselves
+following `HANDOFF.md`.

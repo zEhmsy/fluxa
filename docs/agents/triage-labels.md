@@ -15,7 +15,7 @@ The label lives on a `Status:` line near the top of each file in
 | `spec-pending`          | Claude      | Behaviour identified upstream, no spec written yet              |
 | `codex-active`          | Codex       | Spec is complete and approved; Swift implementation in progress |
 | `antigravity-validation`| Antigravity | Code exists; tests, fuzzing, benchmarks and concurrency checks running |
-| `ready-for-handoff`     | human       | Validated end to end; ready for review, merge and `/handoff`    |
+| `ready-for-handoff`     | human       | Validated, built, and running locally for the owner to test by hand |
 | `needs-info`            | human       | Blocked on a decision only the owner can make                   |
 | `wontfix`               | —           | Evaluated and deliberately not ported                           |
 
