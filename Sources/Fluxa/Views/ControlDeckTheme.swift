@@ -133,6 +133,7 @@ struct ControlDeckPalette {
         case .dockAutohide:   return isDark ? Self.rgb(205, 154, 118) : Self.rgb(116, 76, 50)
         case .screenSaver:    return gpu
         case .screenClean:    return cpu
+        case .urlCleaner:     return brandBlue
         case .lockKeyboard:   return critical
         case .focusMode:      return isDark ? Self.rgb(150, 146, 255) : Self.rgb(69, 66, 155)
         case .audioOutput:    return claude

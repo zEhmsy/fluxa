@@ -19,6 +19,7 @@ final class PopoverViewModel {
     private let dockAutohide = DockAutohideService()
     private let screenSaver = ScreenSaverService()
     let screenClean = ScreenCleanService()
+    private let urlCleanerService = URLCleanerService()
     let keyboardShield = KeyboardShieldService()
     private let focusMode = FocusModeService()
     let audioOutput = AudioOutputService()
@@ -240,7 +241,7 @@ final class PopoverViewModel {
 
     // MARK: - Momentary Actions
 
-    /// Triggers one-shot actions (Screen Saver, Screen Clean, Focus Mode).
+    /// Triggers one-shot actions (Screen Saver, Screen Clean, URL Cleaner, Focus Mode).
     func triggerAction(_ id: ActionID, closePopover: (() -> Void)? = nil) async {
         clearError()
         isBusy = true
@@ -261,6 +262,9 @@ final class PopoverViewModel {
                 closePopover?()
                 try await Task.sleep(for: .milliseconds(200))
                 screenClean.activate()
+
+            case .urlCleaner:
+                _ = urlCleanerService.cleanClipboard()
 
             case .lidAngle:
                 isShowingLidAngle = true

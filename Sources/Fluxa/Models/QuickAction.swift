@@ -12,6 +12,7 @@ enum ActionID: String, CaseIterable, Codable, Identifiable {
     case dockAutohide // Dock autohide toggle
     case screenSaver
     case screenClean
+    case urlCleaner // Strips tracking parameters from the clipboard's URL
     case lockKeyboard
     case focusMode    // Opens System Settings → Focus (no public toggle API on macOS 13+)
     case audioOutput  // CoreAudio output device switcher
@@ -122,6 +123,15 @@ enum ActionCatalog {
             activeIcon: nil,
             tint: FluxaTheme.cyan,
             controlStyle: .momentaryButton(label: "Activate")
+        ),
+        QuickAction(
+            id: .urlCleaner,
+            title: "Clean URL",
+            subtitle: "Remove tracking parameters from clipboard",
+            icon: "link",
+            activeIcon: nil,
+            tint: FluxaTheme.blue,
+            controlStyle: .momentaryButton(label: "Clean")
         ),
         QuickAction(
             id: .lockKeyboard,
