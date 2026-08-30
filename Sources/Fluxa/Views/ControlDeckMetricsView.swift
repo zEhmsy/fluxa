@@ -1,4 +1,5 @@
 import SwiftUI
+import FluxaCore
 
 // MARK: - System Metric Pulse
 

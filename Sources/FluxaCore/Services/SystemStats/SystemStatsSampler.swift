@@ -4,14 +4,14 @@ import Foundation
 
 /// One pass over every source. Each field is independently optional: a Mac without GPU counters
 /// still reports CPU and memory, and only the missing readings vanish from the UI.
-struct SystemStatsSample: Sendable {
-    var cpuUsage: Double?
-    var gpuUsage: Double?
-    var memoryUsage: Double?
-    var cpuTemperature: Double?
-    var gpuTemperature: Double?
+package struct SystemStatsSample: Sendable {
+    package var cpuUsage: Double?
+    package var gpuUsage: Double?
+    package var memoryUsage: Double?
+    package var cpuTemperature: Double?
+    package var gpuTemperature: Double?
     /// Whole-SoC temperature, published only by Macs that don't label their sensors per component.
-    var dieTemperature: Double?
+    package var dieTemperature: Double?
 
     static let empty = SystemStatsSample()
 }
@@ -24,15 +24,17 @@ struct SystemStatsSample: Sendable {
 /// previous tick counters) and the thermal reader caches its matched sensors — both must not be
 /// touched concurrently. Isolating them here also keeps the syscalls and the IORegistry walk off the
 /// main thread, so a slow IOKit call can never stutter the menu bar.
-actor SystemStatsSampler {
+package actor SystemStatsSampler {
 
     private var cpu = CPUUsageSampler()
     private let memory = MemorySampler()
     private let gpu = GPUUsageSampler()
     private let thermal = ThermalSensorReader()
 
+    package init() {}
+
     /// Reads every source once. Never throws: an unavailable source is a nil field.
-    func sample() -> SystemStatsSample {
+    package func sample() -> SystemStatsSample {
         let temperatures = thermal.read()
         return SystemStatsSample(
             cpuUsage: cpu.sample(),
@@ -46,7 +48,7 @@ actor SystemStatsSampler {
 
     /// Takes the baseline reading the CPU sampler needs before it can express a percentage, so the
     /// first real sample already has a delta to work from.
-    func prime() {
+    package func prime() {
         _ = cpu.sample()
     }
 }

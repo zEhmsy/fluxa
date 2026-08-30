@@ -7,15 +7,15 @@ import Foundation
 /// Unlike `UsageRefreshInterval` nothing here costs a network request — every reading is a local
 /// syscall or an IORegistry lookup. What the choice actually buys is a trade between catching short
 /// spikes and having a menu bar whose digits sit still long enough to read.
-enum SystemStatsInterval: String, CaseIterable, Identifiable, Codable {
+package enum SystemStatsInterval: String, CaseIterable, Identifiable, Codable {
     case oneSecond
     case twoSeconds
     case fiveSeconds
     case tenSeconds
 
-    var id: String { rawValue }
+    package var id: String { rawValue }
 
-    var seconds: TimeInterval {
+    package var seconds: TimeInterval {
         switch self {
         case .oneSecond:    return 1
         case .twoSeconds:   return 2
@@ -24,7 +24,7 @@ enum SystemStatsInterval: String, CaseIterable, Identifiable, Codable {
         }
     }
 
-    var label: String {
+    package var label: String {
         switch self {
         case .oneSecond:    return "Every second"
         case .twoSeconds:   return "Every 2 seconds"
@@ -34,7 +34,7 @@ enum SystemStatsInterval: String, CaseIterable, Identifiable, Codable {
     }
 
     /// Picker help text — what you gain and what you give up.
-    var detail: String {
+    package var detail: String {
         switch self {
         case .oneSecond:
             return "Catches every spike; the menu bar digits change constantly."
@@ -47,5 +47,5 @@ enum SystemStatsInterval: String, CaseIterable, Identifiable, Codable {
         }
     }
 
-    static let fallback: SystemStatsInterval = .twoSeconds
+    package static let fallback: SystemStatsInterval = .twoSeconds
 }

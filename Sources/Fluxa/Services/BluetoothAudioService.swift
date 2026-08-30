@@ -1,5 +1,6 @@
 import IOBluetooth
 import CoreBluetooth
+import FluxaCore
 
 // MARK: - BluetoothAudioDevice
 

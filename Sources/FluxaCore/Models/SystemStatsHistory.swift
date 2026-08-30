@@ -7,13 +7,18 @@ import Foundation
 /// Values are deliberately sparse. A source that misses one pass does not inherit its previous
 /// reading here: the live strip may hold the last good value for continuity, but a chart should
 /// show a gap rather than manufacture a flat segment that was never measured.
-struct SystemStatsHistorySample: Identifiable, Sendable {
-    let timestamp: Date
+package struct SystemStatsHistorySample: Identifiable, Sendable {
+    package let timestamp: Date
     let values: [SystemMetricID: Double]
 
-    var id: Date { timestamp }
+    package init(timestamp: Date, values: [SystemMetricID: Double]) {
+        self.timestamp = timestamp
+        self.values = values
+    }
 
-    func value(for id: SystemMetricID) -> Double? {
+    package var id: Date { timestamp }
+
+    package func value(for id: SystemMetricID) -> Double? {
         values[id]
     }
 }

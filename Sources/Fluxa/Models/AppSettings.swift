@@ -1,4 +1,5 @@
 import Foundation
+import FluxaCore
 import Observation
 
 // MARK: - AppSettings

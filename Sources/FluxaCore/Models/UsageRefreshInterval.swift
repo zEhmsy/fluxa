@@ -10,7 +10,7 @@ import Foundation
 /// integer, it only spends requests. Three minutes is therefore the floor, five is a comfortable
 /// default (≈1.7 points of movement between reads), and the longer options exist for people who
 /// mostly care about the weekly window, where a point takes about 100 minutes.
-enum UsageRefreshInterval: String, CaseIterable, Identifiable, Codable {
+package enum UsageRefreshInterval: String, CaseIterable, Identifiable, Codable {
     case manual
     case threeMinutes
     case fiveMinutes
@@ -18,10 +18,10 @@ enum UsageRefreshInterval: String, CaseIterable, Identifiable, Codable {
     case thirtyMinutes
     case hourly
 
-    var id: String { rawValue }
+    package var id: String { rawValue }
 
     /// Seconds between background reads; nil means no background reads at all.
-    var seconds: TimeInterval? {
+    package var seconds: TimeInterval? {
         switch self {
         case .manual:         return nil
         case .threeMinutes:   return 180
@@ -32,7 +32,7 @@ enum UsageRefreshInterval: String, CaseIterable, Identifiable, Codable {
         }
     }
 
-    var label: String {
+    package var label: String {
         switch self {
         case .manual:         return "Only when opened"
         case .threeMinutes:   return "Every 3 minutes"
@@ -44,7 +44,7 @@ enum UsageRefreshInterval: String, CaseIterable, Identifiable, Codable {
     }
 
     /// What each choice means in terms of the numbers, shown as the picker's help text.
-    var detail: String {
+    package var detail: String {
         switch self {
         case .manual:
             return "Reads only when you open the popover — the menu bar can lag behind."
@@ -61,5 +61,5 @@ enum UsageRefreshInterval: String, CaseIterable, Identifiable, Codable {
         }
     }
 
-    static let fallback: UsageRefreshInterval = .fiveMinutes
+    package static let fallback: UsageRefreshInterval = .fiveMinutes
 }

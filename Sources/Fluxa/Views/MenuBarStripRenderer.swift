@@ -1,4 +1,5 @@
 import AppKit
+import FluxaCore
 
 // MARK: - MenuBarStripRenderer
 

@@ -1,4 +1,5 @@
 import Foundation
+import FluxaCore
 import IOKit.pwr_mgt
 
 // MARK: - KeepAwakeService

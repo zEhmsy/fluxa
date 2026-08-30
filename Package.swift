@@ -11,9 +11,16 @@ let package = Package(
         .package(url: "https://github.com/sparkle-project/Sparkle", exact: "2.9.4")
     ],
     targets: [
+        .target(
+            name: "FluxaCore",
+            path: "Sources/FluxaCore"
+        ),
         .executableTarget(
             name: "Fluxa",
-            dependencies: [.product(name: "Sparkle", package: "Sparkle")],
+            dependencies: [
+                .product(name: "Sparkle", package: "Sparkle"),
+                "FluxaCore",
+            ],
             path: "Sources/Fluxa",
             exclude: ["Resources/Info.plist"],
             resources: [
@@ -48,6 +55,11 @@ let package = Package(
                     "-Xlinker", "Sources/Fluxa/Resources/Info.plist"
                 ]),
             ]
-        )
+        ),
+        .testTarget(
+            name: "FluxaCoreTests",
+            dependencies: ["FluxaCore"],
+            path: "Tests/FluxaCoreTests"
+        ),
     ]
 )

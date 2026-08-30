@@ -4,7 +4,7 @@ import IOKit
 // MARK: - FluxaError
 
 /// Structured errors for all Fluxa service operations.
-enum FluxaError: LocalizedError {
+package enum FluxaError: LocalizedError {
 
     /// IOKit power management call returned a non-success code.
     case ioKitFailure(IOReturn)
@@ -26,7 +26,7 @@ enum FluxaError: LocalizedError {
 
     // MARK: - LocalizedError
 
-    var errorDescription: String? {
+    package var errorDescription: String? {
         switch self {
         case .ioKitFailure(let code):
             return "Power management failed (IOKit error \(code)). Try restarting the app."

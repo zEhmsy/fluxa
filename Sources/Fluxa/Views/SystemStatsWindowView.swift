@@ -1,4 +1,5 @@
 import Charts
+import FluxaCore
 import SwiftUI
 
 // MARK: - SystemStatsWindowView
