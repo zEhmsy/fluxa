@@ -7,6 +7,29 @@
         <language>en</language>
         <!-- No update is advertised until its signed archive has been published. -->
         <item>
+            <title>2.7.1</title>
+            <pubDate>Sun, 30 Aug 2026 15:31:19 +0200</pubDate>
+            <link>https://github.com/zEhmsy/fluxa/releases/tag/v2.7.1</link>
+            <sparkle:version>15</sparkle:version>
+            <sparkle:shortVersionString>2.7.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description sparkle:format="markdown"><![CDATA[## Fluxa 2.7.1
+
+- New **Clean URL** quick action: strips tracking parameters (`utm_*`, `fbclid`, `gclid`, and more) from the clipboard's URL, with host-specific rules for YouTube, Amazon and X.
+- The system dashboard now reads disk (used percentage, free space, read/write throughput) and network (combined download/upload) alongside CPU, GPU, memory and temperature.
+
+This supersedes 2.7.0 (14), which was never a valid update target: a local build had already
+claimed build number 14 on the developer's Mac before that release was cut, so Sparkle's
+build-number comparison could never offer it. No functional code changed since 2.7.0.
+
+Requires macOS 14 or later and Apple silicon. Preferences, action order and history are unchanged by this update.
+
+Fluxa is ad-hoc signed, not notarized. A changed signing identity may require renewed macOS permissions.
+]]></description>
+            <enclosure url="https://github.com/zEhmsy/fluxa/releases/download/v2.7.1/Fluxa.zip" length="3327224" type="application/octet-stream" sparkle:edSignature="fJK0JNaZQOw6DZckhJp7C+Ig4++sYIu6OQFWz/N8jNtCbV/8KjKuLv1TpjtM/dNksTcOai54djHG1FCCK8DTAA=="/>
+        </item>
+        <item>
             <title>2.7.0</title>
             <pubDate>Sun, 30 Aug 2026 15:11:23 +0200</pubDate>
             <link>https://github.com/zEhmsy/fluxa/releases/tag/v2.7.0</link>
