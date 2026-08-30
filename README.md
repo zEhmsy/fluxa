@@ -38,8 +38,9 @@ Built in **Swift + SwiftUI**, with Apple system frameworks and Sparkle 2 for Dir
 
 <p align="center"><sub>Customize groups preferences into General, Actions, System, Agents and Updates. About fits version details, updates and support into one screen; both stay inside the menu-bar panel.</sub></p>
 
-> Customize, About and Agent Usage screenshots show **2.6.2 (13)** in Cyber Dark — the current
-> release. The other screenshots are unchanged from earlier builds.
+> Customize, About and Agent Usage screenshots show **2.6.2 (13)** in Cyber Dark. The current
+> release is **2.7.0**; the System and Actions tab captures below predate the disk/network
+> readings and URL Cleaner action added in that release.
 
 <details>
 <summary>Explore the Actions, System, Agents and Updates tabs</summary>
@@ -89,7 +90,7 @@ Built in **Swift + SwiftUI**, with Apple system frameworks and Sparkle 2 for Dir
 
 ## ✨ Features
 
-Fifteen quick actions, every one backed by a real system API — no fake toggles.
+Sixteen quick actions, every one backed by a real system API — no fake toggles.
 
 | Action | Type | Description |
 |--------|------|-------------|
@@ -108,6 +109,7 @@ Fifteen quick actions, every one backed by a real system API — no fake toggles
 | 📐 **Lid Angle** | Window | Live MacBook lid angle readout straight from the hinge sensor (Apple Silicon & Intel) |
 | ⚖️ **Trackpad Scale** | Window | Weighs small objects on the Force Touch trackpad's strain gauges |
 | 📊 **Agent Usage** | Strip + Window | Live Claude & Codex quota percentages in the menu bar, with usage charts |
+| 🔗 **Clean URL** | Button | Strips tracking parameters (`utm_*`, `fbclid`, `gclid`…) from the clipboard's URL, with host-specific rules for YouTube, Amazon and X |
 
 ### Beyond the actions
 
@@ -129,14 +131,18 @@ Fluxa can pin live hardware readings in the popover, in the menu bar, or in both
 
 - **CPU, GPU and memory usage** — local system counters shown as percentages
 - **Temperature** — CPU/GPU readings when the Mac labels sensors per component, otherwise one honest whole-die reading
+- **Disk** — used percentage on the boot volume (with the same severity coloring as CPU/GPU/memory), free space, and read/write throughput
+- **Network** — combined download/upload throughput across active Wi-Fi and Ethernet interfaces
 - **Independent destinations** — up to three readings in the popover and four total system/agent readings in the menu bar
 - **Live history window** — click the system strip for separate load and temperature charts covering the latest 30 minutes
 - **In-memory by design** — chart history starts when Fluxa launches and is never written to disk
 - **Configurable sampling** — 1, 2, 5 or 10 seconds; the dashboard uses the same loop and never doubles the sensor work
 
-CPU, GPU and memory share a fixed 0–100% chart. Temperature uses a separate degree axis so neither
-unit is visually compressed. A failed sensor pass creates a gap in the history instead of repeating
-an old value as though it had been measured again.
+CPU, GPU, memory and disk-used-percentage share a fixed 0–100% chart. Temperature uses a separate
+degree axis so neither unit is visually compressed. Disk free space, disk throughput and network
+throughput are unbounded readings — the dashboard shows them as plain numbers rather than forcing
+them into a percentage-shaped meter. A failed sensor pass creates a gap in the history instead of
+repeating an old value as though it had been measured again.
 
 ---
 
@@ -295,17 +301,17 @@ the checked-in TIFF and does not need the renderer.
 
 ### Direct updates
 
-Fluxa **2.6.2** integrates Sparkle **2.9.4**. About includes **Check for Updates…** and
+Fluxa **2.7.0** integrates Sparkle **2.9.4**. About includes **Check for Updates…** and
 Customize keeps automatic-check consent/state under its **Updates** tab. Downloads and installation require confirmation;
 the updater's windows are independent of the menu-bar popover. Updates use an
 [HTTPS feed](https://zehmsy.github.io/fluxa/updates/appcast.xml) and Ed25519-signed archives.
 
 **Upgrading from v2.5.0 or earlier:** install the new DMG manually once. Those versions do not
 include Sparkle. The first updater-enabled release is [v2.6.1](https://github.com/zEhmsy/fluxa/releases/tag/v2.6.1);
-2.6.1 users are offered **2.6.2** through the feed. The owner completed a real build 9 → 10 update
-before the 2.6.1 release; that ZIP preserves the accepted bytes and remains downloadable at its
-original URL. The [product site](https://zehmsy.github.io/fluxa/) now serves the Pages root, with the
-feed unchanged at `/fluxa/updates/appcast.xml`.
+existing installs are offered each subsequent version through the feed. The owner completed a real
+build 9 → 10 update before the 2.6.1 release; that ZIP preserves the accepted bytes and remains
+downloadable at its original URL. The [product site](https://zehmsy.github.io/fluxa/) now serves the
+Pages root, with the feed unchanged at `/fluxa/updates/appcast.xml`.
 
 A separate `Fluxa.zip`, made with `./package-update.sh --output path/to/Fluxa.zip`, contains the
 same signed bundle as the approved `Fluxa.dmg`. Each newly packaged ZIP needs an Ed25519 signature
@@ -368,6 +374,18 @@ system access. Built for power users, by design.
 MVVM with a single `@Observable` ViewModel coordinating focused, concrete services — no unnecessary abstractions.
 
 ```
+Sources/FluxaCore/                   # Pure Swift library, no AppKit/SwiftUI — testable in isolation
+├── Models/
+│   ├── SystemMetric.swift           # System metric identity, kind, value, severity
+│   ├── SystemStatsHistory.swift      # Sparse timestamped samples for charts
+│   ├── SystemStatsInterval.swift     # Local sampling intervals
+│   ├── AgentUsage.swift             # AgentUsageMetric: one agent quota window
+│   └── UsageRefreshInterval.swift   # Agent poll intervals derived from window size
+└── Services/
+    ├── SystemStats/                  # CPU, GPU, memory, thermal, disk and network samplers
+    ├── URLCleaner.swift              # Tracking-parameter stripping rules (pure function)
+    └── FluxaError.swift             # Centralized error types
+
 Sources/Fluxa/
 ├── App/
 │   ├── FluxaApp.swift               # @main, MenuBarExtra + focused Window scenes
@@ -376,11 +394,7 @@ Sources/Fluxa/
 ├── Models/
 │   ├── QuickAction.swift            # ActionID, ControlStyle, tints, ActionCatalog
 │   ├── AppSettings.swift            # @Observable, UserDefaults persistence
-│   ├── AgentUsage.swift             # AgentUsageMetric: one agent quota window
-│   ├── UsageRefreshInterval.swift   # Agent poll intervals derived from window size
-│   ├── SystemMetric.swift           # System metric identity, value and severity
-│   ├── SystemStatsHistory.swift      # Sparse timestamped samples for charts
-│   └── SystemStatsInterval.swift     # Local sampling intervals
+│   └── FluxaVisualStyle.swift       # Classic / Cyber / Cyber Dark
 ├── ViewModels/
 │   └── PopoverViewModel.swift       # Central coordinator, owns all services
 ├── Views/
@@ -395,7 +409,7 @@ Sources/Fluxa/
 │   ├── LidAngleWindowView.swift     # Animated lid-angle goniometer
 │   ├── TrackpadScaleWindowView.swift# Force Touch scale readout
 │   ├── SystemStatsStripView.swift    # Live hardware strip under the header
-│   ├── SystemStatsWindowView.swift   # 30-minute load + temperature charts
+│   ├── SystemStatsWindowView.swift   # 30-minute load, temperature, disk and network readings
 │   ├── AgentUsageStripView.swift    # Quota strip under the popover header
 │   ├── AgentUsageWindowView.swift   # Quota meters + contribution grids
 │   ├── ContributionGridView.swift   # GitHub-style calendar of daily tokens
@@ -417,7 +431,7 @@ Sources/Fluxa/
 │   ├── LidAngleMonitor.swift        # HID sensor (Apple Silicon) + IORegistry (Intel)
 │   ├── TrackpadWeightService.swift  # MultitouchSupport via dlopen, grams from pressure
 │   ├── SystemStatsService.swift      # Live readings + in-memory chart history
-│   ├── SystemStats/                  # CPU, GPU, memory and thermal samplers
+│   ├── URLCleanerService.swift      # Clipboard read/write around FluxaCore's URLCleaner
 │   ├── GitHubProfileService.swift    # Public About-page data, no token required
 │   ├── AgentCredentials.swift       # Read-only Claude/Codex credential lookup
 │   ├── AgentUsageReaders.swift      # Per-agent usage endpoints & mapping
@@ -425,13 +439,14 @@ Sources/Fluxa/
 │   ├── AgentLogScanner.swift        # Daily tokens from session logs (cached)
 │   ├── GlobalShortcutService.swift  # Carbon hotkey
 │   ├── LaunchAtLoginService.swift   # SMAppService
-│   ├── ShellRunner.swift            # Shared Process helper
-│   └── FluxaError.swift             # Centralized error types
+│   └── ShellRunner.swift            # Shared Process helper
 └── Resources/
     ├── fluxa.icns                   # App icon
     ├── menu-icon.pdf                # Menu bar switch mark (from new-icon.svg)
     ├── AgentIcons/                  # Agent marks as vector PDFs + their SVG sources
     └── Info.plist                   # LSUIElement, permissions text, metadata
+
+Tests/FluxaCoreTests/                # Swift Testing, covers FluxaCore only
 ```
 
 ### Design principles
@@ -460,6 +475,8 @@ Sources/Fluxa/
 | Codex history | Child sessions replay a parent's history | Not filtered — measured at 0.08% on one day out of nine |
 | Temperatures | Later SoCs do not label die sensors by component | Show one Die Temperature instead of inventing separate CPU/GPU values |
 | System history | macOS provides live counters, not an app history log | Keep a rolling 30 minutes in memory; history resets on relaunch |
+| Disk throughput | Sums every attached block-storage driver, not just the boot volume | Stated simplification — an external drive's activity is included; isolating the boot volume needs its specific IOMedia provider chain |
+| Network throughput | Only counts `en*` interfaces (Wi-Fi, Ethernet, Thunderbolt Ethernet) | An unrecognized adapter reads as no traffic rather than a wrong number, matching every other sensor's "no fake reading" rule |
 
 ---
 
