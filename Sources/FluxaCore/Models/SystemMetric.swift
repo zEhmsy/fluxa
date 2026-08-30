@@ -21,14 +21,20 @@ package enum SystemMetricID: String, CaseIterable, Identifiable, Codable, Sendab
     package static let temperatures: [SystemMetricID] = [.cpuTemperature, .gpuTemperature, .dieTemperature]
 
     /// What the reading measures — decides both the unit and where the severity bands sit.
-    enum Kind {
+    package enum Kind {
         /// 0…100, shown as "42%".
         case percentage
         /// Degrees Celsius, shown as "58°".
         case temperature
+        /// Bytes per second, e.g. disk or network throughput. Unbounded.
+        case byteRate
+        /// Bytes, absolute, e.g. free disk space. Unbounded.
+        case byteCount
+        /// Seconds, e.g. battery time remaining. Unbounded.
+        case duration
     }
 
-    var kind: Kind {
+    package var kind: Kind {
         switch self {
         case .cpuUsage, .gpuUsage, .memoryUsage:
             return .percentage
@@ -91,6 +97,18 @@ package enum SystemMetricID: String, CaseIterable, Identifiable, Codable, Sendab
     }
 }
 
+package extension SystemMetricID.Kind {
+    /// Whether `fraction` and `severity` describe a meaningful bounded range for this kind.
+    var hasBoundedRange: Bool {
+        switch self {
+        case .percentage, .temperature:
+            return true
+        case .byteRate, .byteCount, .duration:
+            return false
+        }
+    }
+}
+
 // MARK: - SystemMetric
 
 /// One resolved reading. Mirrors `AgentUsageMetric`'s shape — a fraction for the meter and a
@@ -100,7 +118,7 @@ package struct SystemMetric: Identifiable, Hashable, Sendable {
 
     package let id: SystemMetricID
 
-    /// Percent for `.percentage` metrics, degrees Celsius for `.temperature`.
+    /// The resolved value in the unit described by `id.kind`.
     let value: Double
 
     package init(id: SystemMetricID, value: Double) {
@@ -113,6 +131,15 @@ package struct SystemMetric: Identifiable, Hashable, Sendable {
         switch id.kind {
         case .percentage:   return "\(Int(value.rounded()))%"
         case .temperature:  return "\(Int(value.rounded()))°"
+        case .byteRate:
+            return ByteCountFormatter.string(fromByteCount: Int64(value), countStyle: .binary) + "/s"
+        case .byteCount:
+            return ByteCountFormatter.string(fromByteCount: Int64(value), countStyle: .file)
+        case .duration:
+            let formatter = DateComponentsFormatter()
+            formatter.unitsStyle = .abbreviated
+            formatter.allowedUnits = [.hour, .minute]
+            return formatter.string(from: value) ?? ""
         }
     }
 
@@ -124,6 +151,8 @@ package struct SystemMetric: Identifiable, Hashable, Sendable {
             return min(max(value / 100, 0), 1)
         case .temperature:
             return min(max((value - 30) / 70, 0), 1)
+        case .byteRate, .byteCount, .duration:
+            return 0
         }
     }
 
@@ -146,6 +175,8 @@ package struct SystemMetric: Identifiable, Hashable, Sendable {
             case ..<85:  return .warning
             default:     return .critical
             }
+        case .byteRate, .byteCount, .duration:
+            return .normal
         }
     }
 

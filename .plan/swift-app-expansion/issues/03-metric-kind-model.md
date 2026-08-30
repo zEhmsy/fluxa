@@ -1,9 +1,9 @@
 # 03 — Extend the metric model beyond percentage and temperature
 
-Status: spec-pending
-Owner: claude
+Status: ready-for-handoff
+Owner: —
 Type: task
-Spec: —
+Spec: specs/03-metric-kind-model.md
 Blocked by: —
 Source: clean-room. Feature idea only (a menu-bar app showing disk/network/battery). No upstream code read.
 
@@ -43,8 +43,50 @@ Adding cases is safe; renaming or reordering is not.
 
 ## Answer
 
-_(pending)_
+Validated 2026-08-30 by Antigravity:
+
+1. **Test Suite Coverage (`FluxaCoreTests` & `SystemMetricKindTests`)**:
+   - `swift test` runs **28 tests across 3 suites** (`FluxaCore`, `SystemMetricKindModel`, `URLCleaner`), **0 failures**:
+     - All 5 `SystemMetricID.Kind` cases (`percentage`, `temperature`, `byteRate`, `byteCount`, `duration`) exist and are `package`-visible.
+     - `hasBoundedRange` accurately returns `true` for percentage/temperature and `false` for byteRate/byteCount/duration.
+     - `fraction` calculation: clamped `0...1` for percentage and temperature (30...100°C), returning inert `0.0` for unbounded kinds.
+     - `severity`: `.normal`/`.warning`/`.critical` bands preserved for percentage & temperature, returning inert `.normal` for unbounded kinds.
+     - Formatting fuzzing: `ByteCountFormatter` binary `.binary` + `/s` for `.byteRate`, decimal `.file` for `.byteCount`, `DateComponentsFormatter` `.abbreviated` for `.duration`.
+     - `SystemStatsSample`: Keyed dictionary structure verified (`readings`, `empty`, `value(for:)`).
+2. **Strict Concurrency Check**:
+   - `swift build -Xswiftc -strict-concurrency=complete` generated **0 new warnings** across modified models and services.
+3. **Build & Release Package**:
+   - `swift build` and `./build.sh` executed cleanly with `-warnings-as-errors`, creating and signing the release `Fluxa.app` bundle.
+4. **Access Control & Encapsulation**:
+   - `grep -rn "^public \|	public " Sources/FluxaCore` verified 0 occurrences.
+
+Acceptance criteria fully satisfied.
 
 ## Comments
 
-_(none)_
+- 2026-08-30, claude — Spec written. Key findings that changed the ticket's own open
+  questions: `SystemStatsHistorySample` is already keyed by `SystemMetricID` (no change
+  needed there); `.fraction` is read non-optionally in 4 views, so it stays `Double`
+  (unbounded kinds return inert `0`, gated by a new `hasBoundedRange` flag rather than
+  becoming optional). `SystemStatsSample` becomes keyed like history already is, which
+  also deletes a hand-maintained switch in `SystemStatsService.swift` that was one
+  forgotten case away from a metric silently reading `nil` forever.
+  Explicitly out of scope: which metric ids ticket 04/05/06 add, the view-side treatment
+  of unbounded metrics (04's call), and battery charge state / peripheral battery lists
+  (D5 — those don't fit this model at all, not even after this ticket).
+- 2026-08-30, codex — Implemented the model contract and handed off to Antigravity.
+  Touched `Sources/FluxaCore/Models/SystemMetric.swift`,
+  `Sources/FluxaCore/Services/SystemStats/SystemStatsSampler.swift`, and
+  `Sources/Fluxa/Services/SystemStatsService.swift`. Added only the three specified
+  `Kind` cases and `hasBoundedRange`; changed the existing live sample from six named
+  optionals to sparse keyed readings; made the existing sampler package those same six
+  source results into the dictionary; removed the now-redundant lookup switch. No new
+  sampler/source, `SystemMetricID` case, history change, or view change. The existing
+  `.percentage`/`.temperature` kind mapping, `fraction` formulas, and `severity`
+  thresholds were left textually unchanged; a zero-context diff check found no added or
+  removed line containing any of them. `swift build` passes. Per role boundaries,
+  `swift test`, strict-concurrency validation, and `./build.sh` remain for Antigravity;
+  the existing empty-sample test still names the six removed fields and needs to be
+  rewritten against `readings`/`value(for:)` in that validation phase.
+- 2026-08-30, antigravity — Validation complete. Rewrote empty-sample test for dictionary-backed `SystemStatsSample`, added dedicated `SystemMetricKindTests` suite covering all 5 `Kind` cases, `hasBoundedRange`, formatting, fractions, and severities. Ran `swift test` (28/28 passed), verified `swift build`, `./build.sh` (passed with `-warnings-as-errors`), and checked strict concurrency (0 new warnings). Status advanced to `ready-for-handoff`.
+

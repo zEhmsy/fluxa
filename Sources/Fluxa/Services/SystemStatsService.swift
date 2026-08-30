@@ -160,18 +160,3 @@ final class SystemStatsService {
         }
     }
 }
-
-// MARK: - Sample lookup
-
-private extension SystemStatsSample {
-    func value(for id: SystemMetricID) -> Double? {
-        switch id {
-        case .cpuUsage:         return cpuUsage
-        case .gpuUsage:         return gpuUsage
-        case .memoryUsage:      return memoryUsage
-        case .cpuTemperature:   return cpuTemperature
-        case .gpuTemperature:   return gpuTemperature
-        case .dieTemperature:   return dieTemperature
-        }
-    }
-}

@@ -2,18 +2,16 @@ import Foundation
 
 // MARK: - SystemStatsSample
 
-/// One pass over every source. Each field is independently optional: a Mac without GPU counters
-/// still reports CPU and memory, and only the missing readings vanish from the UI.
+/// One pass over every source. Values are sparse: a Mac without GPU counters still reports CPU and
+/// memory, and only the missing readings vanish from the UI.
 package struct SystemStatsSample: Sendable {
-    package var cpuUsage: Double?
-    package var gpuUsage: Double?
-    package var memoryUsage: Double?
-    package var cpuTemperature: Double?
-    package var gpuTemperature: Double?
-    /// Whole-SoC temperature, published only by Macs that don't label their sensors per component.
-    package var dieTemperature: Double?
+    package var readings: [SystemMetricID: Double]
 
-    static let empty = SystemStatsSample()
+    package static let empty = SystemStatsSample(readings: [:])
+
+    package func value(for id: SystemMetricID) -> Double? {
+        readings[id]
+    }
 }
 
 // MARK: - SystemStatsSampler
@@ -33,17 +31,17 @@ package actor SystemStatsSampler {
 
     package init() {}
 
-    /// Reads every source once. Never throws: an unavailable source is a nil field.
+    /// Reads every source once. Never throws: an unavailable source has no dictionary entry.
     package func sample() -> SystemStatsSample {
         let temperatures = thermal.read()
-        return SystemStatsSample(
-            cpuUsage: cpu.sample(),
-            gpuUsage: gpu.sample(),
-            memoryUsage: memory.sample(),
-            cpuTemperature: temperatures.cpu,
-            gpuTemperature: temperatures.gpu,
-            dieTemperature: temperatures.die
-        )
+        var readings: [SystemMetricID: Double] = [:]
+        readings[.cpuUsage] = cpu.sample()
+        readings[.gpuUsage] = gpu.sample()
+        readings[.memoryUsage] = memory.sample()
+        readings[.cpuTemperature] = temperatures.cpu
+        readings[.gpuTemperature] = temperatures.gpu
+        readings[.dieTemperature] = temperatures.die
+        return SystemStatsSample(readings: readings)
     }
 
     /// Takes the baseline reading the CPU sampler needs before it can express a percentage, so the
