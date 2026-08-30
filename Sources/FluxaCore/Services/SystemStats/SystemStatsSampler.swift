@@ -16,7 +16,7 @@ package struct SystemStatsSample: Sendable {
 
 // MARK: - SystemStatsSampler
 
-/// Owns the four sources and runs them off the main actor.
+/// Owns the system-reading sources and runs them off the main actor.
 ///
 /// An actor rather than a plain type because the CPU sampler carries state between calls (the
 /// previous tick counters) and the thermal reader caches its matched sensors — both must not be
@@ -28,6 +28,9 @@ package actor SystemStatsSampler {
     private let memory = MemorySampler()
     private let gpu = GPUUsageSampler()
     private let thermal = ThermalSensorReader()
+    private let diskSpace = DiskSpaceSampler()
+    private var diskThroughput = DiskThroughputSampler()
+    private var network = NetworkThroughputSampler()
 
     package init() {}
 
@@ -41,6 +44,15 @@ package actor SystemStatsSampler {
         readings[.cpuTemperature] = temperatures.cpu
         readings[.gpuTemperature] = temperatures.gpu
         readings[.dieTemperature] = temperatures.die
+        let space = diskSpace.sample()
+        readings[.diskUsedPercentage] = space.usedPercentage
+        readings[.diskFreeSpace] = space.freeBytes
+        let throughput = diskThroughput.sample()
+        readings[.diskReadRate] = throughput.readRate
+        readings[.diskWriteRate] = throughput.writeRate
+        let net = network.sample()
+        readings[.networkDownloadRate] = net.downloadRate
+        readings[.networkUploadRate] = net.uploadRate
         return SystemStatsSample(readings: readings)
     }
 
@@ -48,5 +60,7 @@ package actor SystemStatsSampler {
     /// first real sample already has a delta to work from.
     package func prime() {
         _ = cpu.sample()
+        _ = diskThroughput.sample()
+        _ = network.sample()
     }
 }

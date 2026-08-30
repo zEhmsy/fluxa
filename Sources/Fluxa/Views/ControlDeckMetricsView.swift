@@ -111,23 +111,26 @@ struct ControlDeckMetricPulse: View {
         }
     }
 
+    @ViewBuilder
     private func metricMeter(showsThresholds: Bool) -> some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .leading) {
-                Rectangle().fill(palette.meterTrack)
-                Rectangle()
-                    .fill(tint)
-                    .frame(width: max(1, proxy.size.width * metric.fraction))
-                    .animation(reduceMotion ? nil : .easeOut(duration: 0.25), value: metric.fraction)
+        if metric.id.kind.hasBoundedRange {
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Rectangle().fill(palette.meterTrack)
+                    Rectangle()
+                        .fill(tint)
+                        .frame(width: max(1, proxy.size.width * metric.fraction))
+                        .animation(reduceMotion ? nil : .easeOut(duration: 0.25), value: metric.fraction)
 
-                if showsThresholds {
-                    threshold(at: 0.75, width: proxy.size.width)
-                    threshold(at: 0.90, width: proxy.size.width)
+                    if showsThresholds {
+                        threshold(at: 0.75, width: proxy.size.width)
+                        threshold(at: 0.90, width: proxy.size.width)
+                    }
                 }
             }
+            .frame(height: role == .dominant ? 5 : 3)
+            .accessibilityHidden(true)
         }
-        .frame(height: role == .dominant ? 5 : 3)
-        .accessibilityHidden(true)
     }
 
     private func threshold(at fraction: Double, width: CGFloat) -> some View {

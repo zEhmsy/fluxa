@@ -14,6 +14,12 @@ package enum SystemMetricID: String, CaseIterable, Identifiable, Codable, Sendab
     case cpuTemperature  = "system.cpuTemp"
     case gpuTemperature  = "system.gpuTemp"
     case dieTemperature  = "system.dieTemp"
+    case diskUsedPercentage = "system.diskUsed"
+    case diskFreeSpace      = "system.diskFree"
+    case diskReadRate       = "system.diskRead"
+    case diskWriteRate      = "system.diskWrite"
+    case networkDownloadRate = "system.netDownload"
+    case networkUploadRate   = "system.netUpload"
 
     package var id: String { rawValue }
 
@@ -40,6 +46,12 @@ package enum SystemMetricID: String, CaseIterable, Identifiable, Codable, Sendab
             return .percentage
         case .cpuTemperature, .gpuTemperature, .dieTemperature:
             return .temperature
+        case .diskUsedPercentage:
+            return .percentage
+        case .diskFreeSpace:
+            return .byteCount
+        case .diskReadRate, .diskWriteRate, .networkDownloadRate, .networkUploadRate:
+            return .byteRate
         }
     }
 
@@ -52,6 +64,12 @@ package enum SystemMetricID: String, CaseIterable, Identifiable, Codable, Sendab
         case .cpuTemperature:   return "CPU Temperature"
         case .gpuTemperature:   return "GPU Temperature"
         case .dieTemperature:   return "Die Temperature"
+        case .diskUsedPercentage: return "Disk Used"
+        case .diskFreeSpace:      return "Disk Free"
+        case .diskReadRate:       return "Disk Read"
+        case .diskWriteRate:      return "Disk Write"
+        case .networkDownloadRate: return "Download"
+        case .networkUploadRate:   return "Upload"
         }
     }
 
@@ -65,6 +83,12 @@ package enum SystemMetricID: String, CaseIterable, Identifiable, Codable, Sendab
         case .cpuTemperature:   return "CPU"
         case .gpuTemperature:   return "GPU"
         case .dieTemperature:   return "DIE"
+        case .diskUsedPercentage: return "DSK"
+        case .diskFreeSpace:      return "FRE"
+        case .diskReadRate:       return "R"
+        case .diskWriteRate:      return "W"
+        case .networkDownloadRate: return "DN"
+        case .networkUploadRate:   return "UP"
         }
     }
 
@@ -79,6 +103,16 @@ package enum SystemMetricID: String, CaseIterable, Identifiable, Codable, Sendab
         case .cpuTemperature:   return "thermometer.medium"
         case .gpuTemperature:   return "thermometer.high"
         case .dieTemperature:   return "thermometer.medium"
+        case .diskUsedPercentage, .diskFreeSpace:
+            return "internaldrive"
+        case .diskReadRate:
+            return "arrow.down.circle"
+        case .diskWriteRate:
+            return "arrow.up.circle"
+        case .networkDownloadRate:
+            return "arrow.down"
+        case .networkUploadRate:
+            return "arrow.up"
         }
     }
 
@@ -93,6 +127,8 @@ package enum SystemMetricID: String, CaseIterable, Identifiable, Codable, Sendab
             return "This Mac doesn't label its thermal sensors per component."
         case .dieTemperature:
             return "No usable thermal sensors on this Mac."
+        case .diskUsedPercentage, .diskFreeSpace, .diskReadRate, .diskWriteRate, .networkDownloadRate, .networkUploadRate:
+            return "Not readable on this Mac."
         }
     }
 }

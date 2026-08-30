@@ -31,7 +31,7 @@ struct SystemStatsWindowView: View {
             }
             .padding(14)
         }
-        .frame(width: 640, height: 620)
+        .frame(width: 680, height: 700)
         .fluxaPanelSurface()
         .onAppear {
             stats.setDashboardVisible(true)
@@ -99,7 +99,10 @@ struct SystemStatsWindowView: View {
                 }
             }
         } else {
-            HStack(spacing: 9) {
+            let columns = [
+                GridItem(.adaptive(minimum: 112), spacing: 8)
+            ]
+            LazyVGrid(columns: columns, spacing: 8) {
                 ForEach(stats.metrics) { metric in
                     metricCard(metric)
                 }
@@ -110,41 +113,49 @@ struct SystemStatsWindowView: View {
     private func metricCard(_ metric: SystemMetric) -> some View {
         let color = currentMetricColor(for: metric)
 
-        return VStack(alignment: .leading, spacing: 7) {
-            HStack(spacing: 5) {
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 4) {
                 Image(systemName: metric.id.symbolName)
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(color)
                 Text(metric.id.shortLabel)
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
                 Spacer(minLength: 0)
             }
 
             Text(metric.displayText)
-                .font(.system(size: 21, weight: .semibold, design: .rounded))
+                .font(.system(size: 18, weight: .semibold, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(color)
                 .contentTransition(.numericText())
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
 
-            GeometryReader { proxy in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Color.primary.opacity(0.08))
-                    Capsule()
-                        .fill(color.gradient)
-                        .frame(width: max(2, proxy.size.width * metric.fraction))
-                        .animation(.easeOut(duration: 0.22), value: metric.fraction)
+            if metric.id.kind.hasBoundedRange {
+                GeometryReader { proxy in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(Color.primary.opacity(0.08))
+                        Capsule()
+                            .fill(color.gradient)
+                            .frame(width: max(2, proxy.size.width * metric.fraction))
+                            .animation(.easeOut(duration: 0.22), value: metric.fraction)
+                    }
                 }
+                .frame(height: 4)
+            } else {
+                Spacer().frame(height: 4)
             }
-            .frame(height: 4)
         }
-        .padding(10)
-        .frame(maxWidth: .infinity, minHeight: 79, alignment: .leading)
+        .padding(.horizontal, 9)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, minHeight: 68, alignment: .leading)
         .fluxaModuleChrome(
             fill: isCyber ? palette.module : FluxaTheme.surface,
             border: isCyber ? palette.border : FluxaTheme.border,
-            cornerRadius: 11,
-            cut: 9
+            cornerRadius: 10,
+            cut: 7
         )
         .help(metric.tooltip)
         .accessibilityElement(children: .ignore)
@@ -443,6 +454,8 @@ struct SystemStatsWindowView: View {
         case .cpuTemperature:  return FluxaTheme.cyan
         case .gpuTemperature:  return FluxaTheme.pink
         case .dieTemperature:  return FluxaTheme.teal
+        case .diskUsedPercentage, .diskFreeSpace, .diskReadRate, .diskWriteRate, .networkDownloadRate, .networkUploadRate:
+            return FluxaTheme.blue
         }
     }
 

@@ -12,6 +12,12 @@ struct FluxaCoreTests {
         #expect(SystemMetricID.cpuTemperature.rawValue == "system.cpuTemp")
         #expect(SystemMetricID.gpuTemperature.rawValue == "system.gpuTemp")
         #expect(SystemMetricID.dieTemperature.rawValue == "system.dieTemp")
+        #expect(SystemMetricID.diskUsedPercentage.rawValue == "system.diskUsed")
+        #expect(SystemMetricID.diskFreeSpace.rawValue == "system.diskFree")
+        #expect(SystemMetricID.diskReadRate.rawValue == "system.diskRead")
+        #expect(SystemMetricID.diskWriteRate.rawValue == "system.diskWrite")
+        #expect(SystemMetricID.networkDownloadRate.rawValue == "system.netDownload")
+        #expect(SystemMetricID.networkUploadRate.rawValue == "system.netUpload")
     }
 
     @Test("SystemMetricID kind mappings and metadata are correct")
@@ -22,6 +28,12 @@ struct FluxaCoreTests {
         #expect(SystemMetricID.cpuTemperature.kind == .temperature)
         #expect(SystemMetricID.gpuTemperature.kind == .temperature)
         #expect(SystemMetricID.dieTemperature.kind == .temperature)
+        #expect(SystemMetricID.diskUsedPercentage.kind == .percentage)
+        #expect(SystemMetricID.diskFreeSpace.kind == .byteCount)
+        #expect(SystemMetricID.diskReadRate.kind == .byteRate)
+        #expect(SystemMetricID.diskWriteRate.kind == .byteRate)
+        #expect(SystemMetricID.networkDownloadRate.kind == .byteRate)
+        #expect(SystemMetricID.networkUploadRate.kind == .byteRate)
 
         #expect(SystemMetricID.Kind.percentage.hasBoundedRange == true)
         #expect(SystemMetricID.Kind.temperature.hasBoundedRange == true)

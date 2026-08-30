@@ -97,6 +97,8 @@ struct ControlDeckPalette {
         case .cpuTemperature:  return cpu
         case .gpuTemperature:  return gpu
         case .dieTemperature:  return temperature
+        case .diskUsedPercentage, .diskFreeSpace, .diskReadRate, .diskWriteRate, .networkDownloadRate, .networkUploadRate:
+            return brandBlue
         }
     }
 
