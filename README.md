@@ -39,8 +39,9 @@ Built in **Swift + SwiftUI**, with Apple system frameworks and Sparkle 2 for Dir
 <p align="center"><sub>Customize groups preferences into General, Actions, System, Agents and Updates. About fits version details, updates and support into one screen; both stay inside the menu-bar panel.</sub></p>
 
 > Customize, About and Agent Usage screenshots show **2.6.2 (13)** in Cyber Dark. The current
-> release is **2.7.0**; the System and Actions tab captures below predate the disk/network
-> readings and URL Cleaner action added in that release.
+> release is **2.8.0**; the System and Actions tab captures below predate the disk/network
+> readings and URL Cleaner action added in 2.7.0, and the battery, peripheral battery and
+> threshold alert features added in 2.8.0.
 
 <details>
 <summary>Explore the Actions, System, Agents and Updates tabs</summary>
@@ -133,6 +134,9 @@ Fluxa can pin live hardware readings in the popover, in the menu bar, or in both
 - **Temperature** — CPU/GPU readings when the Mac labels sensors per component, otherwise one honest whole-die reading
 - **Disk** — used percentage on the boot volume (with the same severity coloring as CPU/GPU/memory), free space, and read/write throughput
 - **Network** — combined download/upload throughput across active Wi-Fi and Ethernet interfaces
+- **Battery & power** — charge percentage, time remaining (debounced against jumpy IOKit estimates until three readings agree), and AC/battery power source
+- **Peripheral battery** — charge level for connected Magic Mouse/Keyboard/Trackpad devices, shown as their own panel in the dashboard only while at least one is present
+- **Threshold alerts** — optional notifications when CPU, die temperature or free disk space crosses a configured limit; dwell time and hysteresis keep a brief spike from spamming. Off by default, enabled per metric in Customize → System
 - **Independent destinations** — up to three readings in the popover and four total system/agent readings in the menu bar
 - **Live history window** — click the system strip for separate load and temperature charts covering the latest 30 minutes
 - **In-memory by design** — chart history starts when Fluxa launches and is never written to disk
