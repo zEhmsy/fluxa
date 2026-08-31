@@ -16,10 +16,10 @@
     <string>com.giuseppe.fluxa</string>
 
     <key>CFBundleVersion</key>
-    <string>15</string>
+    <string>16</string>
 
     <key>CFBundleShortVersionString</key>
-    <string>2.7.1</string>
+    <string>2.8.0</string>
 
     <key>CFBundleExecutable</key>
     <string>Fluxa</string>
