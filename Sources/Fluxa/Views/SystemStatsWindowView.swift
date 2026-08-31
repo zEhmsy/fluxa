@@ -26,15 +26,25 @@ struct SystemStatsWindowView: View {
 
             VStack(spacing: 14) {
                 currentReadings
-                percentagePanel
-                temperaturePanel
+                HStack(alignment: .top, spacing: 14) {
+                    percentagePanel
+                    capacityPanel
+                }
+                HStack(alignment: .top, spacing: 14) {
+                    temperaturePanel
+                    networkPanel
+                }
+                PeripheralBatteryPanel(devices: viewModel.peripheralBattery.devices)
             }
             .padding(14)
+            .frame(maxWidth: .infinity)
         }
-        .frame(width: 680, height: 700)
+        .frame(width: 700)
+        .animation(.easeInOut(duration: 0.25), value: viewModel.peripheralBattery.devices)
         .fluxaPanelSurface()
         .onAppear {
             stats.setDashboardVisible(true)
+            viewModel.peripheralBattery.refresh()
         }
         .onDisappear {
             stats.setDashboardVisible(false)
@@ -99,79 +109,67 @@ struct SystemStatsWindowView: View {
                 }
             }
         } else {
-            let columns = [
-                GridItem(.adaptive(minimum: 112), spacing: 8)
-            ]
-            LazyVGrid(columns: columns, spacing: 8) {
-                ForEach(stats.metrics) { metric in
-                    metricCard(metric)
-                }
-            }
-        }
-    }
+            let metrics = stats.metrics
+            let midpoint = (metrics.count + 1) / 2
+            let firstRow = metrics.prefix(midpoint)
+            let secondRow = metrics.dropFirst(midpoint)
 
-    private func metricCard(_ metric: SystemMetric) -> some View {
-        let color = currentMetricColor(for: metric)
-
-        return VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 4) {
-                Image(systemName: metric.id.symbolName)
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(color)
-                Text(metric.id.shortLabel)
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                Spacer(minLength: 0)
-            }
-
-            Text(metric.displayText)
-                .font(.system(size: 18, weight: .semibold, design: .rounded))
-                .monospacedDigit()
-                .foregroundStyle(color)
-                .contentTransition(.numericText())
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-
-            if metric.id.kind.hasBoundedRange {
-                GeometryReader { proxy in
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(Color.primary.opacity(0.08))
-                        Capsule()
-                            .fill(color.gradient)
-                            .frame(width: max(2, proxy.size.width * metric.fraction))
-                            .animation(.easeOut(duration: 0.22), value: metric.fraction)
+            VStack(spacing: 8) {
+                HStack(spacing: 8) {
+                    ForEach(firstRow) { metric in
+                        SystemMetricCard(metric: metric, color: currentMetricColor(for: metric))
                     }
                 }
-                .frame(height: 4)
-            } else {
-                Spacer().frame(height: 4)
+                if !secondRow.isEmpty {
+                    HStack(spacing: 8) {
+                        ForEach(secondRow) { metric in
+                            SystemMetricCard(metric: metric, color: currentMetricColor(for: metric))
+                        }
+                    }
+                }
             }
         }
-        .padding(.horizontal, 9)
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity, minHeight: 68, alignment: .leading)
-        .fluxaModuleChrome(
-            fill: isCyber ? palette.module : FluxaTheme.surface,
-            border: isCyber ? palette.border : FluxaTheme.border,
-            cornerRadius: 10,
-            cut: 7
-        )
-        .help(metric.tooltip)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(metric.id.title)
-        .accessibilityValue(metricAccessibilityValue(metric))
     }
 
     // MARK: - Percentage panel
 
     private var percentagePanel: some View {
-        chartCard(
+        percentageChartCard(
             title: "Load & Memory",
             subtitle: "0–100% · rolling 30 minutes",
-            ids: percentageMetricIDs
-        ) {
-            let points = historyPoints(for: percentageMetricIDs)
+            ids: percentageMetricIDs,
+            placeholder: "Collecting load history…",
+            accessibilityLabel: "Load and memory history"
+        )
+    }
+
+    private var capacityPanel: some View {
+        percentageChartCard(
+            title: "Capacity & Power",
+            subtitle: capacitySubtitle,
+            ids: capacityMetricIDs,
+            placeholder: "Collecting capacity history…",
+            accessibilityLabel: "Disk and battery capacity history"
+        )
+    }
+
+    private var capacitySubtitle: String {
+        guard let isOnACPower = stats.isOnACPower else {
+            return "0–100% · rolling 30 minutes"
+        }
+        let source = isOnACPower ? "AC power" : "On battery"
+        return "\(source) · 0–100% · 30 minutes"
+    }
+
+    private func percentageChartCard(
+        title: String,
+        subtitle: String,
+        ids: [SystemMetricID],
+        placeholder: String,
+        accessibilityLabel: String
+    ) -> some View {
+        chartCard(title: title, subtitle: subtitle, ids: ids) {
+            let points = historyPoints(for: ids)
 
             Chart(points) { point in
                 LineMark(
@@ -208,10 +206,10 @@ struct SystemStatsWindowView: View {
             }
             .chartOverlay { _ in
                 if stats.history.count < 2 {
-                    chartPlaceholder("Collecting load history…")
+                    chartPlaceholder(placeholder)
                 }
             }
-            .accessibilityLabel("Load and memory history")
+            .accessibilityLabel(accessibilityLabel)
         }
     }
 
@@ -287,6 +285,60 @@ struct SystemStatsWindowView: View {
         }
     }
 
+    // MARK: - Network panel
+
+    @ViewBuilder
+    private var networkPanel: some View {
+        let ids = networkMetricIDs
+        let points = historyPoints(for: ids)
+
+        chartCard(
+            title: "Network Activity",
+            subtitle: "Throughput · rolling 30 minutes",
+            ids: ids
+        ) {
+            Chart(points) { point in
+                LineMark(
+                    x: .value("Time", point.timestamp),
+                    y: .value("Rate", point.value),
+                    series: .value("Series", point.seriesID)
+                )
+                .foregroundStyle(seriesColor(for: point.metricID))
+                .lineStyle(StrokeStyle(lineWidth: 1.8, lineCap: .round, lineJoin: .round))
+                .interpolationMethod(.linear)
+
+                if stats.history.count < 2 {
+                    PointMark(
+                        x: .value("Time", point.timestamp),
+                        y: .value("Rate", point.value)
+                    )
+                    .foregroundStyle(seriesColor(for: point.metricID))
+                    .symbolSize(22)
+                }
+            }
+            .chartXScale(domain: chartDomain)
+            .chartYScale(domain: rateDomain(for: points))
+            .chartXAxis { timeAxis }
+            .chartYAxis {
+                AxisMarks(position: .leading, values: .automatic(desiredCount: 3)) { value in
+                    AxisGridLine().foregroundStyle(Color.primary.opacity(0.08))
+                    AxisValueLabel {
+                        if let number = value.as(Double.self) {
+                            Text(formatRate(number))
+                                .foregroundStyle(Color.secondary)
+                        }
+                    }
+                }
+            }
+            .chartOverlay { _ in
+                if stats.history.count < 2 {
+                    chartPlaceholder("Collecting network history…")
+                }
+            }
+            .accessibilityLabel("Network activity history")
+        }
+    }
+
     // MARK: - Shared chart pieces
 
     private func chartCard<Content: View>(
@@ -309,7 +361,7 @@ struct SystemStatsWindowView: View {
                 seriesLegend(ids)
 
                 content()
-                    .frame(height: 136)
+                    .frame(height: 120)
             }
         }
     }
@@ -387,8 +439,16 @@ struct SystemStatsWindowView: View {
         [.cpuUsage, .gpuUsage, .memoryUsage].filter(hasData)
     }
 
+    private var capacityMetricIDs: [SystemMetricID] {
+        [.diskUsedPercentage, .batteryLevel].filter(hasData)
+    }
+
     private var temperatureMetricIDs: [SystemMetricID] {
         SystemMetricID.temperatures.filter(hasData)
+    }
+
+    private var networkMetricIDs: [SystemMetricID] {
+        [.networkDownloadRate, .networkUploadRate].filter(hasData)
     }
 
     private func hasData(for id: SystemMetricID) -> Bool {
@@ -441,6 +501,22 @@ struct SystemStatsWindowView: View {
         return max(0, lower) ... min(125, upper)
     }
 
+    private func rateDomain(for points: [ChartPoint]) -> ClosedRange<Double> {
+        guard let maximum = points.map(\.value).max(), maximum > 0 else {
+            return 0 ... 100_000
+        }
+        let upper = maximum * 1.15
+        return 0 ... max(10_000, upper)
+    }
+
+    private func formatRate(_ bytesPerSecond: Double) -> String {
+        guard bytesPerSecond > 0 else { return "0 B/s" }
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .binary
+        formatter.allowedUnits = [.useBytes, .useKB, .useMB, .useGB]
+        return "\(formatter.string(fromByteCount: Int64(bytesPerSecond)))/s"
+    }
+
     // MARK: - Colors
 
     private func seriesColor(for id: SystemMetricID) -> Color {
@@ -454,8 +530,14 @@ struct SystemStatsWindowView: View {
         case .cpuTemperature:  return FluxaTheme.cyan
         case .gpuTemperature:  return FluxaTheme.pink
         case .dieTemperature:  return FluxaTheme.teal
-        case .diskUsedPercentage, .diskFreeSpace, .diskReadRate, .diskWriteRate, .networkDownloadRate, .networkUploadRate:
+        case .batteryLevel, .batteryTimeRemaining:
+            return FluxaTheme.green
+        case .diskUsedPercentage, .diskFreeSpace:
             return FluxaTheme.blue
+        case .diskReadRate:    return FluxaTheme.cyan
+        case .diskWriteRate:   return FluxaTheme.orange
+        case .networkDownloadRate: return FluxaTheme.blue
+        case .networkUploadRate:   return FluxaTheme.purple
         }
     }
 
@@ -472,11 +554,4 @@ struct SystemStatsWindowView: View {
         }
     }
 
-    private func metricAccessibilityValue(_ metric: SystemMetric) -> String {
-        switch metric.severity {
-        case .normal:   return metric.displayText
-        case .warning:  return "\(metric.displayText), elevated"
-        case .critical: return "\(metric.displayText), critical"
-        }
-    }
 }

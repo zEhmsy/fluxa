@@ -51,6 +51,28 @@ _(append one line per resolved ticket: number, gist, link to the ticket file)_
   Owner chose clean-room: take feature ideas, write everything from scratch, Fluxa stays
   Apache-2.0. → `issues/01-survey-vorssaint-utils.md`
 
+- **06** — Spec written. Charge/time-remaining are `SystemMetricID` cases; power source
+  (AC/battery) is not — exposed as `isOnACPower: Bool?` instead, since it doesn't reduce to
+  a `Double`. Time-remaining publishes a negative sentinel ("Calculating…") until three
+  consecutive IOKit estimates agree within 20%, so the UI never shows a jumpy figure.
+  → `issues/06-battery-and-power.md`, `specs/06-battery-and-power.md`
+
+- **08** — Spec written. New `AlertThreshold` (Codable, JSON in `AppSettings`) plus a
+  separate `AlertEvaluator` fed off a new `SystemStatsService.onSample` hook — evaluation
+  stays out of the sampler itself. 30s dwell + 10% reset-band hysteresis. First feature to
+  use `UNUserNotificationCenter`; permission follows `PermissionsService`'s existing
+  lazy-ask pattern. → `issues/08-threshold-alerts.md`, `specs/08-threshold-alerts.md`
+
+- **07** — Spec written. Not built on `BluetoothAudioService`/`IOBluetoothDevice` — no
+  public battery property there, and AirPods' battery has no public API at all, so AirPods
+  and Bluetooth audio devices are explicitly out of scope. Magic Mouse/Keyboard/Trackpad
+  battery instead reuses `06`'s `IOPSCopyPowerSourcesList` call, generalized to every
+  non-internal source (filtered by transport type, not list position — a correction to an
+  assumption `06` made, applied without touching `06`'s shipped code). Presence hysteresis
+  (2 missed refreshes) instead of `06`'s value hysteresis, since here what's unstable is
+  whether a device is in the list at all. → `issues/07-peripheral-battery.md`,
+  `specs/07-peripheral-battery.md`
+
 ## Fog
 
 Open questions, in rough priority order. Each becomes a ticket when it's sharp enough.

@@ -201,6 +201,20 @@ struct CustomizeView: View {
                     CustomizeSystemStatsSection(settings: settings, stats: viewModel.systemStats)
                 }
             }
+
+            sectionHeader("ALERTS")
+            Text("Notify after a limit holds for 30 seconds. Alerts re-arm only after the reading clears the reset band.")
+                .font(.system(size: 10))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            FluxaToolCard {
+                VStack(spacing: 12) {
+                    CustomizeAlertThresholdsSection(
+                        settings: settings,
+                        permissions: viewModel.permissions
+                    )
+                }
+            }
         }
     }
 

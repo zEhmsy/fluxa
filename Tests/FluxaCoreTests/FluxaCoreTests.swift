@@ -18,6 +18,8 @@ struct FluxaCoreTests {
         #expect(SystemMetricID.diskWriteRate.rawValue == "system.diskWrite")
         #expect(SystemMetricID.networkDownloadRate.rawValue == "system.netDownload")
         #expect(SystemMetricID.networkUploadRate.rawValue == "system.netUpload")
+        #expect(SystemMetricID.batteryLevel.rawValue == "system.batteryLevel")
+        #expect(SystemMetricID.batteryTimeRemaining.rawValue == "system.batteryTime")
     }
 
     @Test("SystemMetricID kind mappings and metadata are correct")
@@ -34,6 +36,8 @@ struct FluxaCoreTests {
         #expect(SystemMetricID.diskWriteRate.kind == .byteRate)
         #expect(SystemMetricID.networkDownloadRate.kind == .byteRate)
         #expect(SystemMetricID.networkUploadRate.kind == .byteRate)
+        #expect(SystemMetricID.batteryLevel.kind == .percentage)
+        #expect(SystemMetricID.batteryTimeRemaining.kind == .duration)
 
         #expect(SystemMetricID.Kind.percentage.hasBoundedRange == true)
         #expect(SystemMetricID.Kind.temperature.hasBoundedRange == true)

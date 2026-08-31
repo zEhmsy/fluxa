@@ -26,12 +26,18 @@ final class SystemStatsService {
     /// True once a pass has completed, so the UI can tell "not sampled yet" from "unavailable".
     private(set) var hasSampled = false
 
+    /// Whether the internal battery is currently connected to AC power; nil when unavailable.
+    private(set) var isOnACPower: Bool?
+
     /// Rolling, in-memory samples for the detail dashboard. Nothing is written to disk: history
     /// begins when Fluxa launches and is capped to the most recent 30 minutes.
     private(set) var history: [SystemStatsHistorySample] = []
 
     /// Timestamp of the latest completed pass, including a pass where an individual source failed.
     private(set) var lastSampledAt: Date?
+
+    /// Lightweight publication hook for policy consumers such as threshold alerting.
+    @ObservationIgnored var onSample: (@MainActor (SystemStatsSample) -> Void)?
 
     static let historyDuration: TimeInterval = 30 * 60
 
@@ -148,8 +154,10 @@ final class SystemStatsService {
         }
 
         metrics = collected
+        isOnACPower = sample.isOnACPower
         lastSampledAt = timestamp
         hasSampled = true
+        onSample?(sample)
 
         guard !measuredValues.isEmpty else { return }
 

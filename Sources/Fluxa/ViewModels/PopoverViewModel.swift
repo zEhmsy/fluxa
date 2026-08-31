@@ -1,5 +1,6 @@
 import Foundation
 import AppKit
+import FluxaCore
 import Observation
 
 // MARK: - PopoverViewModel
@@ -24,12 +25,14 @@ final class PopoverViewModel {
     private let focusMode = FocusModeService()
     let audioOutput = AudioOutputService()
     let bluetoothAudio = BluetoothAudioService()
+    let peripheralBattery = PeripheralBatteryService()
     private let micMute = MicrophoneMuteService()
     let launchAtLogin = LaunchAtLoginService()
     let lidAngleMonitor = LidAngleMonitor()
     let trackpadWeight = TrackpadWeightService()
     let agentUsage = AgentUsageService()
     let systemStats = SystemStatsService()
+    let alertEvaluator = AlertEvaluator(notifier: SystemAlertNotifier())
     let githubProfile = GitHubProfileService()
     let permissions = PermissionsService()
     let updates = UpdateService()
@@ -119,13 +122,24 @@ final class PopoverViewModel {
         )
 
         // Same stance for the system readings: the loop exists from launch, but samples nothing
-        // until at least one metric is on show somewhere.
+        // until at least one metric is on show somewhere or one threshold needs evaluation.
+        let alertEvaluator = self.alertEvaluator
+        systemStats.onSample = { [weak alertEvaluator, settings] sample in
+            alertEvaluator?.evaluate(
+                sample: sample,
+                thresholds: settings.alertThresholds,
+                intervalSeconds: settings.systemStatsInterval.seconds
+            )
+        }
         systemStats.start(
             isEnabled: { [settings] in
                 !settings.systemMetricIDs.isEmpty || !settings.systemMenuBarMetricIDs.isEmpty
+                    || settings.alertThresholds.contains(where: \.isEnabled)
             },
             interval: { [settings] in settings.systemStatsInterval }
         )
+
+        peripheralBattery.start()
 
         // Keep the toggle in sync when a timed Keep Awake expires on its own.
         keepAwake.onAutoDeactivate = { [weak self] in
@@ -323,6 +337,7 @@ final class PopoverViewModel {
         toggleStates[ActionID.micMute.rawValue] = micMute.isMuted
         audioOutput.refresh()
         bluetoothAudio.refresh()
+        peripheralBattery.refresh()
         // Fire-and-forget: throttled internally, and a failure only affects the usage strip.
         agentUsage.refresh()
         // So the system strip shows current numbers the moment the popover opens, rather than
@@ -367,6 +382,7 @@ final class PopoverViewModel {
         trackpadWeight.stop()
         agentUsage.stopAutoRefresh()
         systemStats.stop()
+        peripheralBattery.stop()
     }
 
     // MARK: - Private

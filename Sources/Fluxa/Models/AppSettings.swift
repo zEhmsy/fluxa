@@ -97,6 +97,12 @@ final class AppSettings {
         didSet { UserDefaults.standard.set(systemStatsInterval.rawValue, forKey: Keys.systemStatsInterval) }
     }
 
+    /// Configured system-reading alerts, stored as one JSON array so each threshold remains a
+    /// single value rather than several parallel preference keys.
+    var alertThresholds: [AlertThreshold] {
+        didSet { saveThresholds(alertThresholds) }
+    }
+
     /// Preferred display unit for the trackpad scale readout.
     var trackpadScaleUnit: WeightUnit {
         didSet { UserDefaults.standard.set(trackpadScaleUnit.rawValue, forKey: Keys.trackpadScaleUnit) }
@@ -175,6 +181,13 @@ final class AppSettings {
         systemStatsInterval = defaults.string(forKey: Keys.systemStatsInterval)
             .flatMap(SystemStatsInterval.init(rawValue:)) ?? .fallback
 
+        if let data = defaults.data(forKey: Keys.alertThresholds),
+           let decoded = try? JSONDecoder().decode([AlertThreshold].self, from: data) {
+            alertThresholds = decoded
+        } else {
+            alertThresholds = AlertThreshold.defaults
+        }
+
         // Trackpad scale: the hardware reports grams directly, so only the unit is stored
         trackpadScaleUnit = (defaults.string(forKey: Keys.trackpadScaleUnit))
             .flatMap(WeightUnit.init(rawValue:)) ?? .grams
@@ -197,9 +210,15 @@ final class AppSettings {
         static let systemMetricIDs = "fluxa.systemMetricIDs"
         static let systemMenuBarMetricIDs = "fluxa.systemMenuBarMetricIDs"
         static let systemStatsInterval = "fluxa.systemStatsInterval"
+        static let alertThresholds = "fluxa.alertThresholds"
     }
 
     private func save(_ value: [String], forKey key: String) {
         UserDefaults.standard.set(value, forKey: key)
+    }
+
+    private func saveThresholds(_ value: [AlertThreshold]) {
+        guard let data = try? JSONEncoder().encode(value) else { return }
+        UserDefaults.standard.set(data, forKey: Keys.alertThresholds)
     }
 }

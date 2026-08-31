@@ -20,6 +20,8 @@ package enum SystemMetricID: String, CaseIterable, Identifiable, Codable, Sendab
     case diskWriteRate      = "system.diskWrite"
     case networkDownloadRate = "system.netDownload"
     case networkUploadRate   = "system.netUpload"
+    case batteryLevel         = "system.batteryLevel"
+    case batteryTimeRemaining = "system.batteryTime"
 
     package var id: String { rawValue }
 
@@ -42,7 +44,7 @@ package enum SystemMetricID: String, CaseIterable, Identifiable, Codable, Sendab
 
     package var kind: Kind {
         switch self {
-        case .cpuUsage, .gpuUsage, .memoryUsage:
+        case .cpuUsage, .gpuUsage, .memoryUsage, .batteryLevel:
             return .percentage
         case .cpuTemperature, .gpuTemperature, .dieTemperature:
             return .temperature
@@ -52,6 +54,8 @@ package enum SystemMetricID: String, CaseIterable, Identifiable, Codable, Sendab
             return .byteCount
         case .diskReadRate, .diskWriteRate, .networkDownloadRate, .networkUploadRate:
             return .byteRate
+        case .batteryTimeRemaining:
+            return .duration
         }
     }
 
@@ -70,6 +74,8 @@ package enum SystemMetricID: String, CaseIterable, Identifiable, Codable, Sendab
         case .diskWriteRate:      return "Disk Write"
         case .networkDownloadRate: return "Download"
         case .networkUploadRate:   return "Upload"
+        case .batteryLevel:         return "Battery"
+        case .batteryTimeRemaining: return "Battery Time Remaining"
         }
     }
 
@@ -89,6 +95,8 @@ package enum SystemMetricID: String, CaseIterable, Identifiable, Codable, Sendab
         case .diskWriteRate:      return "W"
         case .networkDownloadRate: return "DN"
         case .networkUploadRate:   return "UP"
+        case .batteryLevel:         return "BAT"
+        case .batteryTimeRemaining: return "TIME"
         }
     }
 
@@ -113,6 +121,8 @@ package enum SystemMetricID: String, CaseIterable, Identifiable, Codable, Sendab
             return "arrow.down"
         case .networkUploadRate:
             return "arrow.up"
+        case .batteryLevel, .batteryTimeRemaining:
+            return "battery.100"
         }
     }
 
@@ -129,6 +139,8 @@ package enum SystemMetricID: String, CaseIterable, Identifiable, Codable, Sendab
             return "No usable thermal sensors on this Mac."
         case .diskUsedPercentage, .diskFreeSpace, .diskReadRate, .diskWriteRate, .networkDownloadRate, .networkUploadRate:
             return "Not readable on this Mac."
+        case .batteryLevel, .batteryTimeRemaining:
+            return "No battery on this Mac."
         }
     }
 }
@@ -172,6 +184,7 @@ package struct SystemMetric: Identifiable, Hashable, Sendable {
         case .byteCount:
             return ByteCountFormatter.string(fromByteCount: Int64(value), countStyle: .file)
         case .duration:
+            guard value >= 0 else { return "Calculating…" }
             let formatter = DateComponentsFormatter()
             formatter.unitsStyle = .abbreviated
             formatter.allowedUnits = [.hour, .minute]

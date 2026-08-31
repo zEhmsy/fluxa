@@ -6,8 +6,14 @@ import Foundation
 /// memory, and only the missing readings vanish from the UI.
 package struct SystemStatsSample: Sendable {
     package var readings: [SystemMetricID: Double]
+    package var isOnACPower: Bool?
 
-    package static let empty = SystemStatsSample(readings: [:])
+    package static let empty = SystemStatsSample(readings: [:], isOnACPower: nil)
+
+    package init(readings: [SystemMetricID: Double], isOnACPower: Bool? = nil) {
+        self.readings = readings
+        self.isOnACPower = isOnACPower
+    }
 
     package func value(for id: SystemMetricID) -> Double? {
         readings[id]
@@ -31,6 +37,7 @@ package actor SystemStatsSampler {
     private let diskSpace = DiskSpaceSampler()
     private var diskThroughput = DiskThroughputSampler()
     private var network = NetworkThroughputSampler()
+    private var battery = BatterySampler()
 
     package init() {}
 
@@ -53,7 +60,10 @@ package actor SystemStatsSampler {
         let net = network.sample()
         readings[.networkDownloadRate] = net.downloadRate
         readings[.networkUploadRate] = net.uploadRate
-        return SystemStatsSample(readings: readings)
+        let batteryReading = battery.sample()
+        readings[.batteryLevel] = batteryReading.level
+        readings[.batteryTimeRemaining] = batteryReading.timeRemaining
+        return SystemStatsSample(readings: readings, isOnACPower: batteryReading.isOnACPower)
     }
 
     /// Takes the baseline reading the CPU sampler needs before it can express a percentage, so the

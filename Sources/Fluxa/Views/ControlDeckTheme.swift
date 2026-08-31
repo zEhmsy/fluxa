@@ -28,6 +28,7 @@ struct ControlDeckPalette {
     let gpu: Color
     let memory: Color
     let temperature: Color
+    let battery: Color
     let claude: Color
     let codex: Color
     let warning: Color
@@ -55,6 +56,7 @@ struct ControlDeckPalette {
         gpu: rgb(190, 132, 255),
         memory: rgb(255, 167, 72),
         temperature: rgb(85, 211, 218),
+        battery: rgb(89, 211, 133),
         claude: rgb(102, 174, 255),
         codex: rgb(84, 218, 166),
         warning: rgb(255, 201, 82),
@@ -79,6 +81,7 @@ struct ControlDeckPalette {
         gpu: rgb(112, 56, 176),
         memory: rgb(167, 70, 0),
         temperature: rgb(0, 112, 120),
+        battery: rgb(20, 120, 68),
         claude: rgb(10, 91, 201),
         codex: rgb(19, 117, 83),
         warning: rgb(132, 84, 0),
@@ -97,8 +100,18 @@ struct ControlDeckPalette {
         case .cpuTemperature:  return cpu
         case .gpuTemperature:  return gpu
         case .dieTemperature:  return temperature
-        case .diskUsedPercentage, .diskFreeSpace, .diskReadRate, .diskWriteRate, .networkDownloadRate, .networkUploadRate:
+        case .batteryLevel, .batteryTimeRemaining:
+            return battery
+        case .diskUsedPercentage, .diskFreeSpace:
             return brandBlue
+        case .diskReadRate:
+            return cpu
+        case .diskWriteRate:
+            return memory
+        case .networkDownloadRate:
+            return brandBlue
+        case .networkUploadRate:
+            return brandViolet
         }
     }
 

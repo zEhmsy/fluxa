@@ -2,6 +2,7 @@ import AppKit
 import ApplicationServices
 import CoreBluetooth
 import Observation
+import UserNotifications
 
 // MARK: - Permission Status
 
@@ -34,6 +35,7 @@ final class PermissionsService: NSObject, CBCentralManagerDelegate {
     private(set) var automation: FluxaPermissionStatus = .unavailable
     private(set) var bluetooth: FluxaPermissionStatus = .notRequested
     private(set) var claude: FluxaPermissionStatus = .notRequested
+    private(set) var notifications: FluxaPermissionStatus = .notRequested
     private(set) var busyPermission: String?
     private(set) var message: String?
     var showsWelcome = false
@@ -138,6 +140,38 @@ final class PermissionsService: NSObject, CBCentralManagerDelegate {
             }
         } catch {
             claude = .denied
+            message = error.localizedDescription
+        }
+    }
+
+    func requestNotifications() async {
+        guard busyPermission == nil else { return }
+        message = nil
+        let center = UNUserNotificationCenter.current()
+        let settings = await center.notificationSettings()
+        switch settings.authorizationStatus {
+        case .authorized, .provisional:
+            notifications = .granted
+            return
+        case .denied:
+            notifications = .denied
+            openSettings("Privacy_Notifications")
+            return
+        default:
+            break
+        }
+
+        busyPermission = "notifications"
+        defer { busyPermission = nil }
+        do {
+            let granted = try await center.requestAuthorization(options: [.alert, .sound])
+            notifications = granted ? .granted : .denied
+            if !granted {
+                message = "Notifications were not enabled. Alerts will stay silent until you allow "
+                    + "them in Privacy & Security → Notifications."
+            }
+        } catch {
+            notifications = .denied
             message = error.localizedDescription
         }
     }
