@@ -2,104 +2,13 @@ import Foundation
 
 // MARK: - AntigravityQuota
 
-/// The pure half of the Antigravity provider: turning what's already on disk and what the quota
-/// endpoint answers into values the rest of the app understands.
+/// The pure half of the Antigravity provider: turning what the quota endpoint answers into values
+/// the rest of the app understands.
 ///
-/// Everything here is a pure function over `String`/`Data`, so the awkward parts — the credential
-/// envelope, and the fact that the endpoint reports quota *remaining* while `AgentUsageMetric`
-/// stores quota *used* — are testable without a Keychain or a network. The I/O lives in
-/// `AntigravityUsageReader`.
+/// Everything here is a pure function over `Data`, so the awkward part — the endpoint reports quota
+/// *remaining* while `AgentUsageMetric` stores quota *used* — is testable without a running
+/// Antigravity. The I/O lives in `AntigravityUsageReader`.
 package enum AntigravityQuota {
-
-    // MARK: - Stored credential
-
-    /// What Antigravity left in the Keychain for the signed-in account.
-    ///
-    /// The access token is short-lived and often already expired by the time Fluxa looks; the
-    /// refresh token is what makes the provider usable at all. Either may be absent — a blob
-    /// carrying only a bearer value still yields a usable read until it expires.
-    package struct StoredCredential: Sendable, Equatable {
-        package let accessToken: String?
-        package let refreshToken: String?
-        package let expiresAt: Date?
-
-        package init(accessToken: String?, refreshToken: String?, expiresAt: Date?) {
-            self.accessToken = accessToken
-            self.refreshToken = refreshToken
-            self.expiresAt = expiresAt
-        }
-
-        /// Whether the access token is worth spending a request on. An unknown expiry is treated as
-        /// usable: the endpoint's 401 is a cheaper way to find out than refusing to try.
-        package func hasUsableAccessToken(now: Date = Date(), buffer: TimeInterval = 60) -> Bool {
-            guard accessToken?.isEmpty == false else { return false }
-            guard let expiresAt else { return true }
-            return expiresAt.timeIntervalSince(now) > buffer
-        }
-    }
-
-    /// Decodes the Keychain value written by the Antigravity app / `agy`.
-    ///
-    /// The value is JSON, usually behind a `go-keyring-base64:` wrapper, with the tokens either at
-    /// the root or under a nested `token` object. Returns nil when the value is structured but
-    /// unreadable — which is reported as "sign in again" rather than silently retried, since a blob
-    /// we can't parse won't start parsing on the next tick.
-    package static func credential(fromKeychainValue raw: String) -> StoredCredential? {
-        guard let text = unwrapped(raw) else { return nil }
-
-        // `.fragmentsAllowed` matters: without it a blob holding a bare JSON string is rejected as
-        // JSON and falls through to the raw-value path, which would keep its surrounding quotes.
-        if let json = try? JSONSerialization.jsonObject(with: Data(text.utf8), options: [.fragmentsAllowed]) {
-            if let object = json as? [String: Any] {
-                return credential(fromObject: object)
-            }
-            // A bare JSON string is the whole access token, with no refresh path.
-            if let token = trimmed(json as? String) {
-                return StoredCredential(accessToken: token, refreshToken: nil, expiresAt: nil)
-            }
-            return nil
-        }
-
-        // Structured material that failed to parse is damaged, not a bearer token. Sending it as one
-        // would turn a clear "sign in again" into a confusing 401.
-        if text.hasPrefix("{") || text.hasPrefix("[") { return nil }
-
-        if text.hasPrefix(bearerPrefix), let token = trimmed(String(text.dropFirst(bearerPrefix.count))) {
-            return StoredCredential(accessToken: token, refreshToken: nil, expiresAt: nil)
-        }
-        return trimmed(text).map { StoredCredential(accessToken: $0, refreshToken: nil, expiresAt: nil) }
-    }
-
-    private static let goKeyringPrefix = "go-keyring-base64:"
-    private static let bearerPrefix = "Bearer "
-
-    /// Strips the `go-keyring-base64:` wrapper when present. A value without it is already plain.
-    private static func unwrapped(_ raw: String) -> String? {
-        guard let text = trimmed(raw) else { return nil }
-        guard text.hasPrefix(goKeyringPrefix) else { return text }
-
-        let encoded = String(text.dropFirst(goKeyringPrefix.count))
-        guard let data = Data(base64Encoded: encoded, options: [.ignoreUnknownCharacters]),
-              let decoded = String(data: data, encoding: .utf8)
-        else { return nil }
-        return trimmed(decoded)
-    }
-
-    private static func credential(fromObject object: [String: Any]) -> StoredCredential? {
-        // The documented shape nests the tokens under `token`; older/manual blobs put them at the
-        // root. Anything else is not a credential we recognise.
-        let source = (object["token"] as? [String: Any]) ?? object
-
-        let access = firstString(source, ["access_token", "accessToken", "token", "id_token", "idToken"])
-        let refresh = firstString(source, ["refresh_token", "refreshToken"])
-        guard access != nil || refresh != nil else { return nil }
-
-        return StoredCredential(
-            accessToken: access,
-            refreshToken: refresh,
-            expiresAt: expiry(firstValue(source, ["expiry", "expires_at", "expiresAt"]))
-        )
-    }
 
     // MARK: - Quota summary
 
@@ -184,13 +93,7 @@ package enum AntigravityQuota {
         return text
     }
 
-    private static func firstValue(_ object: [String: Any], _ keys: [String]) -> Any? {
-        keys.lazy.compactMap { object[$0] }.first
-    }
 
-    private static func firstString(_ object: [String: Any], _ keys: [String]) -> String? {
-        keys.lazy.compactMap { trimmed(object[$0] as? String) }.first
-    }
 
     /// Reads a JSON number that may arrive as a number or as a numeric string.
     private static func number(_ value: Any?) -> Double? {

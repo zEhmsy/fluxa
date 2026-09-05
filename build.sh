@@ -20,6 +20,9 @@ if [[ "$#" -gt 1 ]]; then
 fi
 
 BINARY_NAME="Fluxa"
+# The certificate every published build is signed with. See the signing section below for why a
+# stable identity is required rather than preferred.
+RELEASE_SIGN_IDENTITY="Fluxa Code Signing"
 BUILD_DIR="$(swift build -c release --arch arm64 --show-bin-path)"
 RESOURCES_DIR="Sources/${BINARY_NAME}/Resources"
 python3 packaging/verify-bundle.py "$RESOURCES_DIR/Info.plist" "${VERIFY_OPTIONS[@]}"
@@ -49,19 +52,6 @@ echo "📋 Copying files..."
 cp "${BUILD_DIR}/${BINARY_NAME}" "${BUNDLE_NAME}/Contents/MacOS/${BINARY_NAME}"
 cp "${RESOURCES_DIR}/fluxa.icns" "${BUNDLE_NAME}/Contents/Resources/"
 cp "${RESOURCES_DIR}/Info.plist" "${BUNDLE_NAME}/Contents/"
-# Antigravity's OAuth client, kept out of the repository because it is not ours to publish.
-# Without it the Antigravity meters still read the token Antigravity stored; only the refresh
-# path is lost, so its absence is a warning and not a build failure.
-ANTIGRAVITY_CLIENT="packaging/antigravity-client.json"
-if [[ -f "$ANTIGRAVITY_CLIENT" ]]; then
-    cp "$ANTIGRAVITY_CLIENT" "${BUNDLE_NAME}/Contents/Resources/antigravity-client.json"
-    # The local file is kept 0600; inside the bundle it must match every other resource, or an
-    # install made by another user would leave it unreadable and silently lose token refresh.
-    chmod 644 "${BUNDLE_NAME}/Contents/Resources/antigravity-client.json"
-else
-    echo "⚠️  $ANTIGRAVITY_CLIENT missing — Antigravity token refresh will be unavailable."
-    echo "   Copy ${ANTIGRAVITY_CLIENT}.example and fill it in to enable it."
-fi
 # The DMG references this signed resource so Finder's Show Hidden Files preference
 # cannot expose a loose background file over the installer artwork.
 cp "packaging/dmg-background.tiff" "${BUNDLE_NAME}/Contents/Resources/InstallerBackground.tiff"
@@ -81,10 +71,28 @@ done < <(otool -l "$BUNDLE_NAME/Contents/MacOS/Fluxa" | awk '
     /cmd LC_RPATH/ { getline; getline; sub(/^ *path /, ""); sub(/ \(offset.*$/, ""); print }
 ')
 
-# Ad-hoc by default. Set CODESIGN_IDENTITY to a stable identity (e.g. an Apple Development
-# certificate) so macOS keeps keychain and permission grants across rebuilds — it ties them to the
-# signature, and an ad-hoc one changes on every build.
-SIGN_IDENTITY="${CODESIGN_IDENTITY:--}"
+# A stable signing identity is the default when one is available, and ad-hoc only as a fallback.
+#
+# This is not cosmetic. An ad-hoc signature's designated requirement is the binary's own cdhash, so
+# it changes on every build; macOS ties keychain ACLs and permission grants to that requirement and
+# therefore stops recognising the app after every update, asking each user to authorise Fluxa again.
+# A certificate-backed requirement pins to the certificate instead and survives every rebuild.
+#
+# Apple only issues Developer ID through the paid program, so releases use a locally generated
+# self-signed code-signing certificate. Gatekeeper treats that exactly like ad-hoc — a downloaded
+# build still needs the usual first-run approval — but the grants now persist across updates.
+# Losing the certificate costs every user one final re-authorisation, so it is backed up outside
+# this repository and never committed.
+SIGN_IDENTITY="${CODESIGN_IDENTITY:-}"
+if [[ -z "$SIGN_IDENTITY" ]]; then
+    if security find-identity -v -p codesigning | grep -q "$RELEASE_SIGN_IDENTITY"; then
+        SIGN_IDENTITY="$RELEASE_SIGN_IDENTITY"
+    else
+        echo "⚠️  '$RELEASE_SIGN_IDENTITY' not found in the keychain — falling back to ad-hoc." >&2
+        echo "    Ad-hoc builds re-prompt every user for permissions after each update." >&2
+        SIGN_IDENTITY="-"
+    fi
+fi
 SPARKLE_FRAMEWORK="$BUNDLE_NAME/Contents/Frameworks/Sparkle.framework"
 if [[ "$SIGN_IDENTITY" != "-" ]]; then
     # Explicit certificate builds follow Sparkle's documented inside-out signing order.

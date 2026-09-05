@@ -93,21 +93,27 @@ _(append one line per resolved ticket: number, gist, link to the ticket file)_
   only orders by it. `terminate()` then `forceTerminate()` after a 2s timeout, no raw
   signals. First `.confirmationDialog` anywhere in the app. → `issues/11-kill-process.md`,
   `specs/11-kill-process.md`
-- **15** — Spec written. Antigravity joins the usage strip as a third provider, from the
-  Keychain item (service `gemini`, account `antigravity`) and one JSON endpoint,
-  `cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary`. Four pool meters; the
-  API reports fraction *remaining*, so it is inverted into `percentUsed`. **Not a clean-room
-  ticket**: scoping established Google's interface facts from an existing permissively-licensed
-  integration. Facts about a third party's interface carry no notice obligation, so Fluxa ships
-  no attribution — but the expression must stay Fluxa's own, so the reader follows
-  `ClaudeUsageReader`'s shape and nothing is transcribed (see the ticket's Provenance section).
-  It also **narrows the read-only credential rule**:
-  Antigravity's token must be refreshed via Google OAuth, which is safe here only because
-  Google's refresh grant does not rotate the refresh token — so refreshing never invalidates
-  Antigravity's own login, provided Fluxa never writes back to its Keychain item. Derived
-  tokens are cached in Fluxa's own file, fingerprint-bound to the refresh credential so an
-  account switch cannot replay the previous account's token. Local token history (spend,
-  usage trend) excluded — needs SQLite + protobuf that `AgentLogScanner` has no shape for.
+- **15** — Shipped, then redesigned. Antigravity joins the usage strip as a third provider
+  with four pool meters; the API reports fraction *remaining*, so it is inverted into
+  `percentUsed`. **Not a clean-room ticket**: scoping established Antigravity's interface
+  facts from an existing permissively-licensed integration. Facts about a third party's
+  interface carry no notice obligation, so Fluxa ships no attribution — but the expression
+  must stay Fluxa's own, so the reader follows `ClaudeUsageReader`'s shape and nothing is
+  transcribed (see the ticket's Provenance section).
+  The first version read the Keychain item (service `gemini`) and called
+  `cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary`. It shipped in 2.9.0 and
+  returned no data: that endpoint answers `403 SUBSCRIPTION_REQUIRED` for an individual
+  free-tier account. The provider now asks the `language_server` helper Antigravity itself
+  runs, over loopback, authenticated by the CSRF token on that process's own command line —
+  discovered from the process table, with the port taken from that pid's listening sockets so
+  the token can only reach the process we identified.
+  This **withdraws the narrowed read-only credential rule** the first version introduced:
+  there is no longer any Antigravity credential to read, refresh, cache or consent to, so the
+  Keychain path, the OAuth client, the derived-token cache and the permission card are all
+  gone. Fluxa holds no copy of that login and the request never leaves the machine. The cost
+  is that the meters exist only while Antigravity is running.
+  Local token history (spend, usage trend) excluded — needs SQLite + protobuf that
+  `AgentLogScanner` has no shape for.
   → `issues/15-antigravity-usage.md`, `specs/15-antigravity-usage.md`
 
 ## Fog

@@ -1,12 +1,12 @@
 # 15 — Antigravity usage
 
-Status: ready-for-handoff
-Owner: owner
+Status: antigravity-validation
+Owner: antigravity
 Type: task
 Spec: specs/15-antigravity-usage.md
 Blocked by: —
-Source: Antigravity / Google Cloud Code interface facts — Keychain item, endpoint path, payload
-shape — established while scoping this ticket. No third-party source code copied.
+Source: Antigravity interface facts — the helper's launch flags, its local RPC name and header,
+payload shape — established while scoping this ticket. No third-party source code copied.
 
 ## Question
 
@@ -39,20 +39,16 @@ What this means for whoever works the ticket:
   language server, a Cloud Code quota-summary endpoint, two legacy Cloud Code endpoints) plus a
   local SQLite/protobuf conversation scanner for token history. Spec cuts this to the one
   authoritative source; see D1 and D5.
-- **The read-only exception.** `AgentCredentialStore` is deliberately read-only, because
-  refreshing Claude's or Codex's token would invalidate the copy the owning CLI holds. Antigravity
-  *requires* a refresh: its Keychain access token expires and only a Google OAuth exchange renews
-  it. Resolved in D3 — refresh, never write back — and this is the decision that most needs the
-  owner's eyes.
-- **Keychain consent.** Reading Antigravity's Keychain item raises a macOS prompt exactly as
-  Claude's does, so it needs the same explicit opt-in and the same "never prompt from a timer"
-  guarantee. See D10.
+- **Which source to read.** Originally resolved as "the Cloud Code endpoint, with the Keychain
+  token" — which required an exception to `AgentCredentialStore`'s read-only stance and a consent
+  gate. That answer was wrong in the field and has been replaced: the quota comes from the helper
+  Antigravity itself runs, so there is no credential, no refresh and no consent. See D2–D5, and the
+  2026-09-05 redesign comment below.
 
 ## Notes
 
-- Requires macOS Keychain item service `gemini`, account `antigravity`, written by the Antigravity
-  app or the `agy` CLI. Absent that, the provider reports "not signed in" and no other agent is
-  affected — `AgentUsageService` already isolates per-agent failures.
+- Requires Antigravity to be running. Closed, the provider reports "not running" and no other
+  agent is affected — `AgentUsageService` already isolates per-agent failures.
 - Only newer Antigravity builds serve the quota-summary endpoint. Older ones get a clear
   "update Antigravity" message rather than a fallback; D5 explains why that trade is worth it.
 - The metric marks load by `providerID` at runtime, so `antigravity.pdf` needs no registration.
@@ -191,3 +187,28 @@ Both well within the sub-millisecond refresh budget.
 - 2026-09-05, owner: functional acceptance given on the fixed build — the strip reads Antigravity's
   four pools correctly. Shipped in v2.9.0 (17) together with tickets 09 and 11. Antigravity's
   re-validation of the crash fix was not awaited; the owner accepted the build directly.
+- 2026-09-05, claude: **redesigned and reimplemented.** The shipped 2.9.0 provider never returned
+  data. Diagnosis ruled out the update, the packaging, the consent gate (cdhash matches) and the
+  credential itself (fresh, valid, correctly shaped): the Cloud Code call returns
+  `403 SUBSCRIPTION_REQUIRED`, and `loadCodeAssist` reports the account as `free-tier` with
+  `UNSUPPORTED_CLIENT` and no `cloudaicompanionProject`. That API surface is closed to this client
+  on the individual tier, so no amount of token handling would have fixed it.
+  The provider now reads the same summary from the helper process Antigravity runs, over loopback,
+  authenticated by the CSRF token on that process's own command line. Confirmed end to end against
+  a live Antigravity: all four buckets, with the weekly Gemini pool matching Antigravity's own
+  panel.
+  This deletes more than it adds. Gone: the Keychain item, `loadAntigravity`, the approval key, the
+  permission card, the OAuth refresh grant, the derived-token cache file and its fingerprint
+  binding, the refresh backoff, and `packaging/antigravity-client.json` — a third party's
+  credential that no longer needs to exist, be gitignored, or be backed up. Fluxa now holds no copy
+  of the user's Antigravity login at all and the request never leaves the machine.
+  New: `AntigravityLocalServer` in `FluxaCore` (pure parsing of `ps`/`lsof` output, token
+  validation) with its own suite, and `AgentUsageReadError.notRunning`, because "not running" is
+  neither a login problem nor a passing outage.
+  Two things a validator should push on. The helper is identified by `--app_data_dir antigravity`
+  as well as the executable name, since sibling editors ship the same binary — reading a
+  neighbouring product's session under Antigravity's mark is the failure mode to hunt for. And the
+  CSRF token is validated (charset, length) before it reaches a header; the injection cases are in
+  `AntigravityLocalServerTests`.
+  101 tests in 18 suites green, release build clean under `-warnings-as-errors`. Not yet released:
+  this needs a build past 2.9.0. Back to `Status: antigravity-validation`, `Owner: antigravity`.

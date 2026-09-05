@@ -219,7 +219,7 @@ Grab the **DMG** from the [latest release](https://github.com/zEhmsy/fluxa/relea
 and drag **Fluxa.app** into **Applications**. New packages use the name **Fluxa.dmg**; older releases
 include the version in the filename.
 
-> ⚠️ **Gatekeeper note** — Fluxa is ad-hoc signed, not notarized. If macOS blocks the first
+> ⚠️ **Gatekeeper note** — Fluxa is self-signed, not notarized. If macOS blocks the first
 > opening, verify the download's origin, try opening the installed copy, then use
 > **System Settings → Privacy & Security → Open Anyway**, if offered. Do not disable Gatekeeper
 > or override malware/damaged-app warnings. [Apple's guidance](https://support.apple.com/102445).
@@ -348,14 +348,15 @@ authentication context and require an earlier explicit opt-in for the current si
 denial/cancellation clears that opt-in, preventing retry loops. This preference is not a Keychain grant.
 macOS can still require renewed approval after a signing change, revocation or policy change.
 
-> **Permission prompts during development.** A normal ad-hoc requirement changes when the binary
-> changes. Prefer a stable certificate-backed development identity when available:
+> **Permission prompts during development.** An ad-hoc requirement is the binary's own hash, so it
+> changes on every build and macOS asks for every grant again. Released builds are therefore signed
+> with a stable certificate, which `build.sh` picks up automatically; override it with
 > ```bash
 > CODESIGN_IDENTITY="Apple Development: you@example.com" ./build.sh
 > ```
-> For repeated local-only builds without a certificate, `FLUXA_STABLE_LOCAL_REQUIREMENT=1 ./build.sh`
-> keeps the designated requirement stable. That identifier-only fallback is intentionally opt-in and
-> must not be used for a public release artifact.
+> With no certificate at all, `FLUXA_STABLE_LOCAL_REQUIREMENT=1 ./build.sh` keeps the designated
+> requirement stable for local builds. That identifier-only fallback is intentionally opt-in and must
+> not be used for a public release artifact: any app claiming the same identifier would satisfy it.
 
 ### Focus Mode setup
 

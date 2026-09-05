@@ -2,10 +2,14 @@
 
 Ticket: `issues/15-antigravity-usage.md`
 Author: claude, 2026-09-05
+Revised: claude, 2026-09-05 — D2–D5, D7, D8, D10 replaced. The first version read Google's Cloud
+Code API with the OAuth token Antigravity stored in the login Keychain. That path shipped in 2.9.0
+and returned `403 SUBSCRIPTION_REQUIRED`: `loadCodeAssist` reports the account as `free-tier` with
+`UNSUPPORTED_CLIENT` and no `cloudaicompanionProject`, so that API surface is closed to this client
+on the individual tier. The credential half of the design is therefore removed, not amended.
 
 Add Antigravity as a third provider in the agent usage strip, beside Claude and Codex. Four quota
-meters, read from Google's Cloud Code API with the OAuth token Antigravity already stored in the
-login Keychain.
+meters, read from the helper process Antigravity itself runs.
 
 ## D1 — Scope: quota meters only
 
@@ -19,92 +23,75 @@ larger piece of work than the quota reader itself. `AgentUsageWindowView` alread
 provider with no `dailyTokens` entry — the contribution grid is simply omitted — so the provider
 degrades cleanly. Revisit as its own ticket if wanted.
 
-## D2 — Credentials come from the Keychain, read-only
+## D2 — The source is Antigravity's own helper, not a credential
 
-Generic-password item, service `gemini`, account `antigravity`, written by the Antigravity app or
-the `agy` CLI.
+Antigravity keeps a `language_server` process alive for the whole session and drives its own usage
+panel through it over loopback. That process already holds the signed-in session, so Fluxa asks it
+the same question:
 
-The value is a `go-keyring-base64:`-prefixed base64 wrapper around JSON. Unwrap the prefix, decode,
-then read from the nested `token` object (falling back to the root):
+```
+POST http://127.0.0.1:<port>/exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary
+Content-Type: application/json
+x-codeium-csrf-token: <token>
+{}
+```
 
-| Field | Keys accepted |
-|---|---|
-| access token | `access_token`, `accessToken` |
-| refresh token | `refresh_token`, `refreshToken` |
-| expiry | `expiry`, `expires_at`, `expiresAt` — ISO-8601 |
+This is strictly better than the credential path it replaces, on every axis that matters here:
+Fluxa reads no Keychain item, holds no copy of the user's login, derives, caches and refreshes no
+token, needs no OAuth client, and the request never leaves the machine. There is consequently
+nothing to consent to and nothing to keep in sync with a logout.
 
-Accept a bare JSON string or a raw `Bearer …` value as an access token with no refresh token, so a
-format change degrades to "expires and can't refresh" rather than "provider vanished". Never treat
-malformed structured material (text starting `{` or `[` that failed to parse) as a bearer token.
+The cost is that quota exists only while Antigravity is running (D8).
 
-Add `AgentCredentialStore.loadAntigravity(requestAccess:)` alongside `loadClaude` / `loadCodex`.
-The store's read-only stance holds: **Fluxa never writes to Antigravity's Keychain item.**
+## D3 — Discovering where to ask
 
-## D3 — The refresh exception (the decision that matters)
+Both facts come from the running process, never from a fixed port or a file on disk.
 
-`AgentCredentialStore`'s doc comment explains why it never refreshes: Claude and Codex rotate the
-refresh token on use, so renewing behind their back would invalidate the login the owning CLI
-holds. That reasoning is about *rotation*, not about refresh in principle.
+- `ps -axww -o pid=,command=`. A line is Antigravity's helper when its executable path ends in
+  `/language_server` **and** it carries `--app_data_dir antigravity`. That second condition is not
+  optional: other editors are built on the same helper and run their own copy, and reading a
+  neighbouring product's session would report the wrong numbers under Antigravity's mark.
+- The token is the value after `--csrf_token` on that same line.
+- `lsof -nP -aiTCP -sTCP:LISTEN -p <pid>` for its listening sockets, keeping `127.0.0.1` only.
 
-Google's refresh-token grant does **not** rotate the refresh token. Exchanging it yields a new
-access token and leaves Antigravity's stored credential untouched and still valid. So the
-invariant Fluxa actually cares about — *never break the owning tool's login* — is preserved by
-refreshing, provided we never write back. Narrow the rule accordingly, in the code comment as well
-as here:
+Taking the port from that pid's own sockets — rather than probing a guessed port — is what makes
+the token safe to send: it can only ever reach the process we identified. `lsof`'s exit status is
+ignored, since "nothing found" is reported as a failure and simply means no ports.
 
-> Read-only means Fluxa never modifies another tool's stored credential. Deriving a short-lived
-> access token from a non-rotating refresh token, and caching it somewhere of our own, does not
-> modify it.
+The helper is launched with `--https_server_port 0`, so the port differs every run and the cached
+value must be re-discovered whenever a request stops working.
 
-Mechanics:
+## D4 — Trying the ports, and validating the token
 
-- `POST https://oauth2.googleapis.com/token`, form-encoded,
-  `grant_type=refresh_token` with the installed-application client pair (D4).
-- Cache the derived access token at
-  `~/Library/Application Support/Fluxa/antigravity/auth.json` — **Fluxa's own file**, so a refresh
-  costs one exchange per token lifetime instead of one per refresh cycle.
-- Bind the cache to `SHA256(refreshToken)` stored beside it. On load, require the fingerprint to
-  match the *current* Keychain credential. A logout, an account switch, or a cache file that
-  predates the fingerprint field is a miss, and the file is discarded. This is what stops a
-  previous account's token being replayed after the user signs in as someone else.
-- Treat a token with under 60s of life left as already expired.
-- Classify the refresh outcome three ways, because the user-facing message differs:
-  `4xx` (except 408/429) = sign-in expired; `408`/`429`/`5xx`/transport = temporarily unavailable;
-  `2xx` but undecodable = temporarily unavailable. A dead refresh token must not be reported as a
-  network blip, and a network blip must not tell the user to sign in again.
+The helper holds more than one listening socket and only one of them serves this RPC in the clear.
+Which is which is not stated anywhere, so the working one is found by asking: POST to each in the
+order reported and stop at the first `2xx`. In practice the other answers `400`, which is enough to
+tell "Antigravity is up" from "Antigravity is closed".
 
-## D4 — OAuth client credentials
+The token is validated before use rather than trusted for where it came from: non-empty, at most
+256 characters, and alphanumerics plus `-._~` only. It goes into an HTTP header, and a value
+carrying a newline would let anything able to influence that command line append headers of its
+own.
 
-The refresh grant runs under Google **installed-application** client credentials that ship inside
-every copy of the Antigravity app. Google does not treat such a secret as confidential — it cannot
-be, being distributed to every user — but it is not ours either, and a copy of it in a public
-repository is precisely what gets a client rotated, which would break this provider for everyone.
+Cache the endpoint that answered, in memory only. A refresh cycle then costs one loopback request
+instead of two process spawns, and nothing is written to disk — the token belongs to a process that
+will be gone by the next launch. On any failure, invalidate and re-discover once before giving up:
+that is what covers Antigravity being restarted.
 
-So the values live in `packaging/antigravity-client.json`, ignored by git, and `build.sh` copies
-that file into `Contents/Resources/antigravity-client.json` at packaging time. The reader loads it
-from the bundle. `packaging/antigravity-client.json.example` documents the shape.
+Responses over 1 MiB are refused rather than parsed. The real reply is about 1.3 KB; anything near
+the cap is not the endpoint we think we are talking to.
 
-When the file is absent the provider still reads quota with whatever access token Antigravity
-already stored; only the refresh path is lost, so a source-only build degrades to "sign in again"
-rather than failing. Not a credential of the user's, and never logged.
+## D5 — Rejected: the direct Google call
 
-## D5 — One endpoint, no legacy fallback
+`POST /v1internal:retrieveUserQuotaSummary` on `cloudcode-pa.googleapis.com` is the same host and
+path the helper itself uses, and it is the design this spec originally specified. It is rejected
+because it returns `403 SUBSCRIPTION_REQUIRED` for an individual free-tier account, and because
+even where it worked it would require holding the user's credential to do what the local call does
+with none.
 
-`POST /v1internal:retrieveUserQuotaSummary`, JSON in and out, `Authorization: Bearer <token>`.
-
-Base URLs tried in order — `https://daily-cloudcode-pa.googleapis.com`, then
-`https://cloudcode-pa.googleapis.com`. Both serve the endpoint and this order is known to work in
-the field, so there is no evidence for preferring the other; a `401`/`403` short-circuits (the same
-token would fail on the other base too), while any other non-2xx or transport failure falls through
-to the next base and finally to "unavailable".
-
-Excluded: the local language-server RPC and the two legacy endpoints
-(`fetchAvailableModels` / `retrieveUserQuota`). The language server would need process scanning
-for `language_server`/`agy`, a CSRF token, a port sweep and a loopback session trusting a
-self-signed certificate — a lot of surface whose only gain over the Keychain path is the plan-tier
-label. The legacy endpoints only serve builds too old for the summary, report 5-hour windows
-only, and fabricate "fully used" for models with missing quota data. Both are worth skipping for a
-first version. An older build therefore gets a plain message telling the user to update
+Also excluded, as before: the legacy `fetchAvailableModels` / `retrieveUserQuota` endpoints. They
+only serve builds too old for the summary, report 5-hour windows only, and fabricate "fully used"
+for models with missing quota data. An older build gets a plain message telling the user to update
 Antigravity (D8), which is honest and actionable.
 
 ## D6 — Response shape and metric mapping
@@ -146,91 +133,90 @@ alternative ("3P", "Other models") trades a moment's confusion for permanent jar
 
 ## D7 — Where the code lives
 
-Pure logic in `FluxaCore` so it is testable without a Keychain or a network; I/O in `Sources/Fluxa`
+Pure logic in `FluxaCore` so it is testable without a running Antigravity; I/O in `Sources/Fluxa`
 beside the existing readers.
 
 | File | Contents |
 |---|---|
-| `Sources/FluxaCore/Services/AntigravityQuota.swift` | *new.* Keychain-blob → tokens, and quota-summary JSON → `[AgentUsageMetric]`. No AppKit, no Security, no URLSession. |
-| `Sources/Fluxa/Services/AntigravityUsageReader.swift` | *new.* `fetch()` orchestration: load credential, use or refresh, call Cloud Code, map, classify errors. Owns the derived-token cache file. |
-| `Sources/Fluxa/Services/AgentCredentials.swift` | `loadAntigravity(requestAccess:)`, its own approval key. |
+| `Sources/FluxaCore/Services/AntigravityQuota.swift` | quota-summary JSON → `[AgentUsageMetric]`. No AppKit, no Security, no URLSession. |
+| `Sources/FluxaCore/Services/AntigravityLocalServer.swift` | *new.* `ps` output → pid + token; `lsof` output → loopback ports; token validation. Pure functions over the text the tools print. |
+| `Sources/Fluxa/Services/AntigravityUsageReader.swift` | `fetch()` orchestration: cached endpoint, discovery, the loopback POST, mapping, error classification. Spawns the two tools. |
 | `Sources/Fluxa/Services/AgentUsageService.swift` | third `async let` in `performRefresh()`. |
-| `Sources/Fluxa/Views/ControlDeckTheme.swift` | `agentIdentity(for:)` — add `"antigravity"`. |
-| `Sources/Fluxa/Views/AgentUsageWindowView.swift` | `tint(for:)` — add `"antigravity"`. |
-| `Sources/Fluxa/Services/PermissionsService.swift` | `antigravity` status + `requestAntigravityAccess()`. |
-| `Sources/Fluxa/Views/PermissionsSetupView.swift` | consent row, mirroring Claude's. |
-| `Tests/FluxaCoreTests/AntigravityQuotaTests.swift` | *new.* |
+| `Sources/Fluxa/Views/ControlDeckTheme.swift` | `agentIdentity(for:)` — `"antigravity"`. |
+| `Sources/Fluxa/Views/AgentUsageWindowView.swift` | `tint(for:)` — `"antigravity"`. |
+| `Tests/FluxaCoreTests/AntigravityQuotaTests.swift` | metric mapping. |
+| `Tests/FluxaCoreTests/AntigravityLocalServerTests.swift` | *new.* discovery parsing, against fixtures shaped like real tool output. |
+
+Nothing is added to `AgentCredentials.swift`, `PermissionsService.swift` or `PermissionsSetupView.swift`:
+there is no credential to read and no permission to grant. `build.sh` ships no extra resource.
 
 `FluxaCore` must stay AppKit-free — ticket 09 established that and it is checked.
 
 ## D8 — Errors
 
-Reuse `AgentUsageReadError` where it fits; the strip already omits a provider that failed and
-`AgentUsageService` keeps the other agents' numbers. Messages, all naming the agent:
+Reuse `AgentUsageReadError`; the strip already omits a provider that failed and `AgentUsageService`
+keeps the other agents' numbers. One case is added, because none of the existing ones is honest
+about this provider's main failure mode:
 
 | Condition | Message |
 |---|---|
-| No Keychain item | `Antigravity: not signed in. Open Antigravity or run `agy` to sign in.` |
-| Keychain read failed / denied | `Antigravity: couldn't read credentials from Keychain. Unlock Keychain or sign in again.` |
-| Blob malformed | `Antigravity: stored credentials are unreadable. Sign in again.` |
-| Refresh returned 4xx | `Antigravity: sign-in expired. Open Antigravity or run `agy` to refresh.` |
-| Both bases unavailable | `Antigravity: usage is temporarily unavailable. Try again shortly.` |
+| Helper not found | `Antigravity: not running. Open Antigravity to show its quota.` |
+| Ports found, none served the RPC | `Antigravity: usage is temporarily unavailable. Try again shortly.` |
 | 2xx with no `groups` | `Antigravity: this build doesn't report quota summaries yet. Update Antigravity.` |
 
-Never log or interpolate a token, a refresh token, or the raw Keychain blob into any of these.
+"Not running" is deliberately distinct from a login problem: there is nothing to sign in to and
+nothing to wait for, so neither "sign in again" nor "try again shortly" would be true. Never log or
+interpolate the CSRF token into any of these.
 
 ## D9 — Independent expression
 
-The interface facts in this spec (Keychain item, endpoint, payload shape, bucket ids, OAuth client)
-are facts about Google's service and carry no notice obligation, so Fluxa ships no attribution for
-them. That holds only so long as the **expression** here is Fluxa's own.
+The interface facts in this spec (the RPC name, the header, the launch flags, the payload shape,
+the bucket ids) are facts about how Antigravity's own components talk to each other and carry no
+notice obligation, so Fluxa ships no attribution for them. That holds only so long as the
+**expression** here is Fluxa's own.
 
 Concretely, this file is the contract: implement from it and from the readers already in
 `Sources/Fluxa/Services/`, not from any other implementation of the same integration. The
-decomposition below (D7) deliberately follows `ClaudeUsageReader` + `AgentCredentialStore` —
-pure parsing in `FluxaCore`, one reader struct doing I/O — rather than a provider/client/mapper
-split. Error taxonomy reuses `AgentUsageReadError`. Comments explain Fluxa's reasoning.
+decomposition (D7) deliberately follows `ClaudeUsageReader` — pure parsing in `FluxaCore`, one
+reader struct doing I/O — rather than a provider/client/mapper split. Error taxonomy reuses
+`AgentUsageReadError`. Comments explain Fluxa's reasoning.
 
-## D10 — Consent, and never prompting from a timer
+## D10 — No consent gate
 
-Reading the Keychain item raises a macOS authorisation dialog. `AgentCredentialStore` already
-solved this for Claude and the same shape applies, with a **separate** approval key so consenting
-to one agent never implies the other:
+The first version needed one: reading a Keychain item raises a macOS authorisation dialog, so the
+background refresh loop had to be prevented from prompting. Reading a local process's quota raises
+no dialog and exposes no credential, so the gate, its approval key and its setup card are all
+removed rather than left in place doing nothing — a permission card that asks for Keychain access
+the app no longer uses is worse than none.
 
-- Ordinary refreshes pass `requestAccess: false` and use a non-interactive `LAContext`; without a
-  recorded approval they throw `approvalNeeded` before touching the Keychain.
-- Only the setup button passes `requestAccess: true`.
-- The approval is keyed to the current code-signing requirement, so a re-signed or ad-hoc build
-  cannot inherit consent and start prompting from the background loop.
-- A denied read clears the approval and does not retry in a prompt loop.
-
-`AgentUsageService.startAutoRefresh` already makes no request at all when no agent is pinned, so
-an install that ignores this feature is never prompted.
+Spawning `ps` and `lsof` requires an unsandboxed app, which Fluxa already is (`ShellRunner`).
 
 ## Concurrency
 
-`AntigravityQuota` is pure and `Sendable`. The reader is a `struct` doing `async` work off the main
-actor, matching `ClaudeUsageReader`; only `AgentUsageService` is `@MainActor`. The derived-token
-cache is written from the reader's task — keep the read/modify/write inside a single `actor` or
-behind the existing `AgentCredentialStore.readLock` so two concurrent refreshes can't interleave a
-half-written file. Must compile clean under `-strict-concurrency=complete` for the new files.
+`AntigravityQuota` and `AntigravityLocalServer` are pure and `Sendable`. The reader is a `struct`
+doing `async` work off the main actor, matching `ClaudeUsageReader`; only `AgentUsageService` is
+`@MainActor`. The endpoint cache is an `actor`, so overlapping refreshes can't race on it.
+Discovery blocks on two child processes, so it runs in a detached task rather than on the
+cooperative pool the rest of the app shares. Must compile clean under
+`-strict-concurrency=complete` for the new files.
 
 ## Acceptance
 
-1. With Antigravity signed in and consent granted, up to four meters appear under the Antigravity
-   mark, pinnable in Customize and rendered in the menu bar strip.
-2. Percentages are *used*, not remaining — a nearly-untouched pool reads low, not high.
-3. With Antigravity closed, the meters still refresh (Keychain + Cloud Code path).
-4. An expired access token refreshes once, is cached, and the next refresh cycle performs no
-   second OAuth exchange.
-5. After signing out and back in as a different account, no cached token from the previous account
-   is ever used.
-6. Antigravity's own Keychain item is byte-identical before and after a full refresh cycle.
-7. Without consent, no Keychain prompt appears from the background refresh loop.
-8. Each failure in D8 produces its own message in Customize; Claude and Codex meters are
-   unaffected by any Antigravity failure.
-9. `swift test` passes, covering: fraction inversion and rounding; clamping of out-of-range and
+1. With Antigravity running, up to four meters appear under the Antigravity mark, pinnable in
+   Customize and rendered in the menu bar strip.
+2. Percentages are *used*, not remaining — a nearly-untouched pool reads low, not high, and matches
+   what Antigravity's own usage panel shows.
+3. With Antigravity closed, the provider reports "not running" and Claude and Codex are unaffected.
+4. Quitting and relaunching Antigravity — which changes the port and the token — recovers on the
+   next refresh cycle with no user action.
+5. No Keychain prompt appears at any point, and Fluxa's Keychain access list gains no entry.
+6. A steady state costs one loopback request per refresh: the process table is scanned only after a
+   request fails.
+7. Each failure produces its own message in Customize; Claude and Codex meters are unaffected by
+   any Antigravity failure.
+8. `swift test` passes, covering: fraction inversion and rounding; clamping of out-of-range and
    non-finite fractions; unknown/duplicate/malformed buckets; both envelope shapes; missing
-   `groups`; `go-keyring-base64` unwrapping; nested vs root token objects; expiry parsing.
-10. `FluxaCore` still imports no AppKit. New files compile clean under strict concurrency.
-11. `./build.sh` succeeds with `-warnings-as-errors`.
+   `groups`; helper identification against sibling products and impostor paths; token validation
+   including header-injection attempts; port parsing including non-loopback and out-of-range.
+9. `FluxaCore` still imports no AppKit. New files compile clean under strict concurrency.
+10. `./build.sh` succeeds with `-warnings-as-errors`.

@@ -30,8 +30,9 @@ FLUXA — FIRST LAUNCH
 IMPORTANT
 Gatekeeper approval is separate from Accessibility, Automation, Bluetooth
 and Keychain access. The setup guide cannot run until macOS allows the app
-to open. Fluxa is ad-hoc signed, not notarized: a new signing identity,
-revoked permissions or macOS policy changes can require approval again.
+to open. Fluxa is self-signed, not notarized. From 2.9.1 onward the signing
+identity is stable, so permissions granted once carry over to later updates;
+revoked permissions or macOS policy changes can still require approval again.
 Permission grants cannot be guaranteed to last forever.
 
 Apple's guidance: https://support.apple.com/102445

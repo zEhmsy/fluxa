@@ -125,15 +125,8 @@ struct PermissionsSetupView: View {
                 settingsAction: nil,
                 requestsDisabled: !isInstalled || (permissions.busyPermission != nil && permissions.busyPermission != "claude")
             )
-            PermissionSetupCard(
-                title: "Antigravity credentials", icon: "key", feature: "Optional · Agent Usage",
-                detail: "Reads the login saved by Antigravity to show its quota. Fluxa never writes to that "
-                    + "Keychain item; renewing a token leaves Antigravity's own login untouched.",
-                status: antigravityStatus, busy: permissions.busyPermission == "antigravity",
-                actionTitle: "Connect Antigravity…", action: requestAntigravity,
-                settingsAction: nil,
-                requestsDisabled: !isInstalled || (permissions.busyPermission != nil && permissions.busyPermission != "antigravity")
-            )
+            // Antigravity needs no card: its quota comes from the helper Antigravity itself runs,
+            // so there is no credential to read and no permission to grant.
 
             FluxaToolCard {
                 VStack(alignment: .leading, spacing: 10) {
@@ -233,17 +226,6 @@ struct PermissionsSetupView: View {
         return permissions.claude
     }
 
-    private var antigravityStatus: FluxaPermissionStatus {
-        if viewModel.agentUsage.agentErrors["Antigravity"] != nil, permissions.antigravity == .granted {
-            return .unavailable
-        }
-        if viewModel.agentUsage.agentErrors["Antigravity"] == nil,
-           viewModel.agentUsage.metrics.contains(where: { $0.providerID == "antigravity" }) {
-            return .granted
-        }
-        return permissions.antigravity
-    }
-
     private func requestAutomation() {
         Task { await permissions.requestAutomation() }
     }
@@ -251,13 +233,6 @@ struct PermissionsSetupView: View {
     private func requestClaude() {
         Task {
             await permissions.requestClaudeAccess()
-            viewModel.agentUsage.refresh(force: true)
-        }
-    }
-
-    private func requestAntigravity() {
-        Task {
-            await permissions.requestAntigravityAccess()
             viewModel.agentUsage.refresh(force: true)
         }
     }

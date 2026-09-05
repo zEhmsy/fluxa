@@ -243,47 +243,7 @@ enum AgentCredentialStore {
         )
     }
 
-    // MARK: - Antigravity
-
-    /// Written by the Antigravity app / `agy`. Note the service is `gemini`, not `antigravity` —
-    /// the account is what distinguishes it.
-    private static let antigravityKeychainService = "gemini"
-    private static let antigravityKeychainAccount = "antigravity"
-    /// Deliberately separate from Claude's key: consenting to read one agent's credential must
-    /// never imply consent for the other.
-    private static let antigravityApprovalKey = "fluxa.antigravityCredentialApprovedRequirement"
-
-    /// Same contract as `loadClaude`: only the setup button may initiate first access, ordinary
-    /// refreshes require a recorded approval and never raise a dialog.
-    ///
-    /// Unlike Claude and Codex this credential is *derived from* rather than merely read — see
-    /// `AntigravityUsageReader` for the refresh, which still never writes back to this item.
-    static func loadAntigravity(requestAccess: Bool = false) throws -> AntigravityQuota.StoredCredential? {
-        readLock.lock()
-        defer { readLock.unlock() }
-
-        if !requestAccess {
-            guard hasApproval(antigravityApprovalKey) else {
-                throw AccessError.approvalNeeded(agent: "Antigravity")
-            }
-        }
-
-        guard let data = try readGenericPassword(
-            service: antigravityKeychainService,
-            account: antigravityKeychainAccount,
-            requestAccess: requestAccess,
-            agent: "Antigravity",
-            approvalKey: antigravityApprovalKey
-        ) else { return nil }
-
-        if requestAccess { recordApproval(antigravityApprovalKey) }
-
-        guard let raw = String(data: data, encoding: .utf8) else {
-            throw AccessError.unreadable(agent: "Antigravity")
-        }
-        guard let credential = AntigravityQuota.credential(fromKeychainValue: raw) else {
-            throw AccessError.unreadable(agent: "Antigravity")
-        }
-        return credential
-    }
+    // Antigravity has no entry here on purpose. Its quota comes from the helper process Antigravity
+    // itself runs, which already holds the session — so Fluxa never reads, copies or renews that
+    // login. See `AntigravityUsageReader`.
 }

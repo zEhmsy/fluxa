@@ -14,6 +14,12 @@ enum AgentUsageReadError: LocalizedError {
     case temporarilyUnavailable(agent: String)
     /// The agent answered, but this build of it can't serve what we asked for.
     case unsupported(agent: String, hint: String)
+    /// The agent reports usage only while it is open, and it isn't. Distinct from a login problem:
+    /// there is nothing to sign in to, and nothing to wait for.
+    case notRunning(agent: String, hint: String)
+    /// The provider asked to be left alone for a while. Carries its own wait so the message can say
+    /// when the meters come back instead of leaving the user to guess.
+    case rateLimited(agent: String, retryAfter: TimeInterval?)
 
     var errorDescription: String? {
         switch self {
@@ -31,7 +37,51 @@ enum AgentUsageReadError: LocalizedError {
             return "\(agent): usage is temporarily unavailable. Try again shortly."
         case .unsupported(let agent, let hint):
             return "\(agent): \(hint)"
+        case .notRunning(let agent, let hint):
+            return "\(agent): not running. \(hint)"
+        case .rateLimited(let agent, let retryAfter):
+            guard let retryAfter, retryAfter >= 60 else {
+                return "\(agent): rate limited. Usage returns shortly."
+            }
+            let minutes = Int((retryAfter / 60).rounded(.up))
+            return "\(agent): rate limited. Usage returns in about \(minutes) min."
         }
+    }
+}
+
+// MARK: - AgentRequestBackoff
+
+/// Remembers, per agent, when a provider said it may be asked again.
+///
+/// Without this a 429 costs a request on every refresh cycle for as long as the limit lasts, which
+/// is exactly the behaviour the header exists to prevent. An `actor` because the three readers run
+/// concurrently and share it.
+private actor AgentRequestBackoff {
+    static let shared = AgentRequestBackoff()
+
+    /// Used when a 429 arrives with no usable `Retry-After`. Chosen to match the service's own
+    /// opportunistic refresh floor, so a rate-limited agent costs at most one request per cycle.
+    static let defaultWait: TimeInterval = 180
+
+    private var readyAt: [String: Date] = [:]
+
+    /// Seconds still to wait, or nil when the agent may be asked now.
+    func remaining(for agent: String) -> TimeInterval? {
+        guard let date = readyAt[agent] else { return nil }
+        let remaining = date.timeIntervalSinceNow
+        guard remaining > 0 else {
+            readyAt[agent] = nil
+            return nil
+        }
+        return remaining
+    }
+
+    func hold(_ agent: String, for seconds: TimeInterval) {
+        readyAt[agent] = Date().addingTimeInterval(seconds)
+    }
+
+    func clear(_ agent: String) {
+        readyAt[agent] = nil
     }
 }
 
@@ -46,6 +96,11 @@ private enum AgentHTTP {
         agent: String,
         timeout: TimeInterval = 10
     ) async throws -> (json: [String: Any], headers: [AnyHashable: Any]) {
+        // Honour an earlier 429 before spending a request: the provider already answered this one.
+        if let remaining = await AgentRequestBackoff.shared.remaining(for: agent) {
+            throw AgentUsageReadError.rateLimited(agent: agent, retryAfter: remaining)
+        }
+
         var request = URLRequest(url: url, timeoutInterval: timeout)
         request.httpMethod = "GET"
         for (key, value) in headers { request.setValue(value, forHTTPHeaderField: key) }
@@ -54,13 +109,26 @@ private enum AgentHTTP {
         guard let http = response as? HTTPURLResponse else {
             throw AgentUsageReadError.invalidResponse(agent: agent)
         }
+        if http.statusCode == 429 {
+            let wait = AgentRetryAfter.seconds(from: retryAfterHeader(http))
+                ?? AgentRequestBackoff.defaultWait
+            await AgentRequestBackoff.shared.hold(agent, for: wait)
+            throw AgentUsageReadError.rateLimited(agent: agent, retryAfter: wait)
+        }
         guard (200..<300).contains(http.statusCode) else {
             throw AgentUsageReadError.requestFailed(agent: agent, status: http.statusCode)
         }
         guard let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
             throw AgentUsageReadError.invalidResponse(agent: agent)
         }
+        await AgentRequestBackoff.shared.clear(agent)
         return (json, http.allHeaderFields)
+    }
+
+    private static func retryAfterHeader(_ response: HTTPURLResponse) -> String? {
+        response.allHeaderFields.first {
+            ($0.key as? String)?.lowercased() == "retry-after"
+        }?.value as? String
     }
 
     /// Reads a JSON number that may arrive as a number or a numeric string.

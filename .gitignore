@@ -26,10 +26,6 @@ CLAUDE.md
 ROADMAP.md
 HANDOFF.md
 
-# Antigravity's OAuth client — a third party's credential, copied into the bundle by build.sh.
-# Keep it out of the repo: a public copy is what gets such a client rotated. See the .example.
-packaging/antigravity-client.json
-
 # Release artifacts (built locally and attached to GitHub releases, never versioned)
 *.tar.gz
 *.dmg

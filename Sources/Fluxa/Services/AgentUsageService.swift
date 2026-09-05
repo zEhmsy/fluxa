@@ -4,15 +4,14 @@ import Observation
 
 // MARK: - AgentUsageService
 
-/// Collects AI coding agents' quota usage by reading each provider's own usage endpoint with the
-/// credentials its CLI already stored on this Mac.
+/// Collects AI coding agents' quota usage from whatever each provider already runs on this Mac.
 ///
-/// Claude's OAuth blob lives in the login keychain (`Claude Code-credentials`, or
-/// `~/.claude/.credentials.json` where the CLI writes a file); Codex's lives in
-/// `~/.codex/auth.json`; Antigravity's is a keychain item under service `gemini`. No agent's stored
-/// credential is ever written back to — see `AgentCredentialStore` for why that stance is
-/// deliberate, and `AntigravityUsageReader` for why deriving a token from Antigravity's refresh
-/// credential doesn't breach it.
+/// Claude and Codex are read from the credential their CLI stored — Claude's OAuth blob in the
+/// login keychain (`Claude Code-credentials`, or `~/.claude/.credentials.json` where the CLI writes
+/// a file), Codex's in `~/.codex/auth.json` — and neither is ever written back to; see
+/// `AgentCredentialStore` for why that stance is deliberate. Antigravity needs no credential at
+/// all: its numbers come from the helper process Antigravity itself runs, which already holds the
+/// session. See `AntigravityUsageReader`.
 ///
 /// Each agent is fetched independently: one failing (or not being installed) leaves the others
 /// showing their numbers, and the strip simply omits what it doesn't have.

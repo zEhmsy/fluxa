@@ -100,10 +100,10 @@ vendor architectures and helpers. Fluxa is arm64 only; the upstream framework/he
 their universal slices. The app has `@executable_path/../Frameworks` in its runtime search paths.
 The development Xcode toolchain rpath is removed from **Fluxa's executable**, before signing.
 
-Default ad-hoc builds preserve all Sparkle signatures byte-for-byte. An explicit
-`CODESIGN_IDENTITY` uses Sparkle's documented inside-out signing order, preserving Downloader
-entitlements, then signs the outer app. There is no recursive `--deep` signing. This certificate
-branch has not been exercised and is not a notarization workflow. See
+Ad-hoc builds preserve all Sparkle signatures byte-for-byte. A certificate identity — which is the
+default for releases since 2.9.1 (18) — uses Sparkle's documented inside-out signing order,
+preserving Downloader entitlements, then signs the outer app. There is no recursive `--deep`
+signing. This is not a notarization workflow. See
 [Sparkle helper signing](https://sparkle-project.org/documentation/sandboxing/#code-signing).
 
 `packaging/verify-bundle.py` checks signatures, the app architecture and OS/build metadata,
@@ -113,8 +113,14 @@ and symlink target. These are static artifact checks, not launch or upgrade test
 
 `FLUXA_STABLE_LOCAL_REQUIREMENT=1` is for local builds only. Both distribution packagers reject
 the weaker identifier-only signing requirement. Never reset TCC, remove quarantine or disable
-Gatekeeper to make a build/update work. Changed public ad-hoc signatures may require renewed
-OS permissions and explicit Claude reconnection; preferences are not OS grants.
+Gatekeeper to make a build/update work.
+
+Releases before 2.9.1 (18) were ad-hoc signed, so their designated requirement was the binary's own
+cdhash and every update presented itself to macOS as a different app — which is why each one asked
+users for keychain and Accessibility access again. The release identity is now a stable self-signed
+certificate, so those grants carry across updates. The 2.9.1 update is the last that re-asks, since
+it is itself the identity change. Gatekeeper is unaffected either way: a self-signed certificate is
+not Apple-trusted, so first launch of a download still needs explicit approval.
 
 ## Preparing an authorized release
 
