@@ -13,10 +13,12 @@ enum ActionID: String, CaseIterable, Codable, Identifiable {
     case screenSaver
     case screenClean
     case urlCleaner // Strips tracking parameters from the clipboard's URL
+    case colorPicker // NSColorSampler pixel picker → hex to clipboard
     case lockKeyboard
     case focusMode    // Opens System Settings → Focus (no public toggle API on macOS 13+)
     case audioOutput  // CoreAudio output device switcher
     case bluetoothAudio // IOBluetooth quick-connect for AirPods/headphones
+    case killProcess // Quit a user-facing GUI app, escalating to force-quit after confirmation
     case micMute      // CoreAudio input volume control (mute/unmute default input device)
     case lidAngle     // IORegistry lid angle monitor (MacBook only)
     case trackpadScale // Force Touch trackpad used as a scale for small objects
@@ -134,6 +136,15 @@ enum ActionCatalog {
             controlStyle: .momentaryButton(label: "Clean")
         ),
         QuickAction(
+            id: .colorPicker,
+            title: "Color Picker",
+            subtitle: "Sample a pixel, copy its hex code",
+            icon: "eyedropper",
+            activeIcon: nil,
+            tint: FluxaTheme.mint,
+            controlStyle: .momentaryButton(label: "Pick")
+        ),
+        QuickAction(
             id: .lockKeyboard,
             title: "Lock Keyboard",
             subtitle: "Blocks keys until switched off",
@@ -173,6 +184,15 @@ enum ActionCatalog {
             icon: "airpods",
             activeIcon: nil,
             tint: FluxaTheme.cyan,
+            controlStyle: .menu
+        ),
+        QuickAction(
+            id: .killProcess,
+            title: "Quit App",
+            subtitle: "Force-quit a running app",
+            icon: "xmark.circle",
+            activeIcon: nil,
+            tint: FluxaTheme.red,
             controlStyle: .menu
         ),
         QuickAction(

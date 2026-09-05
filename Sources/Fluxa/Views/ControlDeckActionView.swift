@@ -14,6 +14,7 @@ struct ControlDeckActionView: View {
     @Environment(AppSettings.self) private var settings
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isHovering = false
+    @State private var pendingKill: RunningProcessInfo?
 
     private var tint: Color { palette.actionColor(for: action.id) }
     private var isLoading: Bool { viewModel.busyActionID == action.id }
@@ -79,17 +80,30 @@ struct ControlDeckActionView: View {
 
     private var labels: some View {
         VStack(alignment: .leading, spacing: 1) {
-            Text(action.title)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(isUnavailable ? palette.secondaryText : palette.primaryText)
-                .lineLimit(1)
-
-            if settings.showSubtitles {
-                Text(statusCaption)
+            if let pending = pendingKill, action.id == .killProcess {
+                Text("Quit \(pending.name)?")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(palette.critical)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                Text("CONFIRM QUIT")
                     .font(.system(size: 9, weight: .medium, design: .monospaced))
                     .tracking(0.25)
-                    .foregroundStyle(statusColor)
+                    .foregroundStyle(palette.critical)
                     .lineLimit(1)
+            } else {
+                Text(action.title)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(isUnavailable ? palette.secondaryText : palette.primaryText)
+                    .lineLimit(1)
+
+                if settings.showSubtitles {
+                    Text(statusCaption)
+                        .font(.system(size: 9, weight: .medium, design: .monospaced))
+                        .tracking(0.25)
+                        .foregroundStyle(statusColor)
+                        .lineLimit(1)
+                }
             }
         }
         .layoutPriority(1)
@@ -97,36 +111,57 @@ struct ControlDeckActionView: View {
 
     @ViewBuilder
     private var trailingControl: some View {
-        switch action.controlStyle {
-        case .toggle:
-            toggleControl
+        if let pending = pendingKill, action.id == .killProcess {
+            HStack(spacing: 5) {
+                Button("Quit") {
+                    withAnimation(.easeInOut(duration: 0.12)) {
+                        confirmTermination(of: pending)
+                    }
+                }
+                .buttonStyle(ControlDeckCutButtonStyle(tint: palette.critical, palette: palette, reduceMotion: reduceMotion))
 
-        case .timedToggle:
-            HStack(spacing: 7) {
-                timerMenu
+                Button("Cancel") {
+                    withAnimation(.easeInOut(duration: 0.12)) {
+                        pendingKill = nil
+                    }
+                }
+                .buttonStyle(ControlDeckCutButtonStyle(tint: palette.secondaryText, palette: palette, reduceMotion: reduceMotion))
+            }
+            .fixedSize(horizontal: true, vertical: false)
+        } else {
+            switch action.controlStyle {
+            case .toggle:
                 toggleControl
-            }
 
-        case .momentaryButton(let label):
-            Button(label) {
-                Task { await viewModel.triggerAction(action.id, closePopover: closePopover) }
-            }
-            .buttonStyle(ControlDeckCutButtonStyle(tint: tint, palette: palette, reduceMotion: reduceMotion))
-            .disabled(viewModel.isBusy)
+            case .timedToggle:
+                HStack(spacing: 7) {
+                    timerMenu
+                    toggleControl
+                }
 
-        case .menu:
-            if action.id == .bluetoothAudio {
-                bluetoothDeviceMenu
-            } else {
-                audioDeviceMenu
-            }
+            case .momentaryButton(let label):
+                Button(label) {
+                    Task { await viewModel.triggerAction(action.id, closePopover: closePopover) }
+                }
+                .buttonStyle(ControlDeckCutButtonStyle(tint: tint, palette: palette, reduceMotion: reduceMotion))
+                .disabled(viewModel.isBusy)
 
-        case .unavailable(let reason):
-            Image(systemName: "minus")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(palette.tertiaryText)
-                .help(reason)
-                .accessibilityLabel(reason)
+            case .menu:
+                if action.id == .bluetoothAudio {
+                    bluetoothDeviceMenu
+                } else if action.id == .killProcess {
+                    processKillerMenu
+                } else {
+                    audioDeviceMenu
+                }
+
+            case .unavailable(let reason):
+                Image(systemName: "minus")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(palette.tertiaryText)
+                    .help(reason)
+                    .accessibilityLabel(reason)
+            }
         }
     }
 
@@ -219,6 +254,31 @@ struct ControlDeckActionView: View {
         .fixedSize()
         .disabled(viewModel.audioOutput.outputDevices.isEmpty || viewModel.isBusy)
         .accessibilityLabel("Choose audio output")
+    }
+
+    private var processKillerMenu: some View {
+        Menu {
+            ForEach(viewModel.processKiller.runningProcesses) { process in
+                Button(process.name) {
+                    withAnimation(.easeInOut(duration: 0.12)) {
+                        pendingKill = process
+                    }
+                }
+            }
+        } label: {
+            menuGlyph("chevron.up.chevron.down")
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .tint(tint)
+        .fixedSize()
+        .disabled(viewModel.processKiller.runningProcesses.isEmpty || viewModel.isBusy)
+        .accessibilityLabel("Choose an app to quit")
+    }
+
+    private func confirmTermination(of process: RunningProcessInfo) {
+        pendingKill = nil
+        viewModel.processKiller.terminate(process)
     }
 
     private func menuGlyph(_ systemName: String) -> some View {

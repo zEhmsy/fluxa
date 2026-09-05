@@ -21,10 +21,12 @@ final class PopoverViewModel {
     private let screenSaver = ScreenSaverService()
     let screenClean = ScreenCleanService()
     private let urlCleanerService = URLCleanerService()
+    private let colorPickerService = ColorPickerService()
     let keyboardShield = KeyboardShieldService()
     private let focusMode = FocusModeService()
     let audioOutput = AudioOutputService()
     let bluetoothAudio = BluetoothAudioService()
+    let processKiller = ProcessKillerService()
     let peripheralBattery = PeripheralBatteryService()
     private let micMute = MicrophoneMuteService()
     let launchAtLogin = LaunchAtLoginService()
@@ -255,7 +257,7 @@ final class PopoverViewModel {
 
     // MARK: - Momentary Actions
 
-    /// Triggers one-shot actions (Screen Saver, Screen Clean, URL Cleaner, Focus Mode).
+    /// Triggers one-shot actions such as Screen Saver, Screen Clean, URL Cleaner, and Color Picker.
     func triggerAction(_ id: ActionID, closePopover: (() -> Void)? = nil) async {
         clearError()
         isBusy = true
@@ -279,6 +281,11 @@ final class PopoverViewModel {
 
             case .urlCleaner:
                 _ = urlCleanerService.cleanClipboard()
+
+            case .colorPicker:
+                closePopover?()
+                try await Task.sleep(for: .milliseconds(200))
+                _ = await colorPickerService.pickColor()
 
             case .lidAngle:
                 isShowingLidAngle = true
@@ -337,6 +344,7 @@ final class PopoverViewModel {
         toggleStates[ActionID.micMute.rawValue] = micMute.isMuted
         audioOutput.refresh()
         bluetoothAudio.refresh()
+        processKiller.refresh()
         peripheralBattery.refresh()
         // Fire-and-forget: throttled internally, and a failure only affects the usage strip.
         agentUsage.refresh()

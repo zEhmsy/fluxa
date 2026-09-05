@@ -18,6 +18,7 @@ struct ActionRowView: View {
     var closePopover: (() -> Void)?
 
     @State private var isHovering = false
+    @State private var pendingKill: RunningProcessInfo?
 
     // MARK: - Body
 
@@ -46,6 +47,9 @@ struct ActionRowView: View {
     /// For toggles: returns activeIcon when on, icon when off.
     /// For other control styles: always returns the base icon.
     private var resolvedIcon: String {
+        if action.id == .killProcess && pendingKill != nil {
+            return "exclamationmark.triangle.fill"
+        }
         if isTogglable, isToggleOn, let active = action.activeIcon {
             return active
         }
@@ -75,18 +79,30 @@ struct ActionRowView: View {
 
     private var labelsView: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(action.title)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.primary)
+            if let pending = pendingKill, action.id == .killProcess {
+                Text("Quit \(pending.name)?")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(FluxaTheme.red)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                Text("Force-quit if not exiting in 2s")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            } else {
+                Text(action.title)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.primary)
 
-            if settings.showSubtitles {
-                // Dynamic subtitle takes precedence over catalog subtitle
-                let subtitle = viewModel.dynamicSubtitle(for: action.id) ?? action.subtitle
-                if let subtitle {
-                    Text(subtitle)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
+                if settings.showSubtitles {
+                    // Dynamic subtitle takes precedence over catalog subtitle
+                    let subtitle = viewModel.dynamicSubtitle(for: action.id) ?? action.subtitle
+                    if let subtitle {
+                        Text(subtitle)
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
                 }
             }
         }
@@ -96,35 +112,56 @@ struct ActionRowView: View {
 
     @ViewBuilder
     private var trailingControl: some View {
-        switch action.controlStyle {
-        case .toggle:
-            toggleControl
+        if let pending = pendingKill, action.id == .killProcess {
+            HStack(spacing: 6) {
+                Button("Quit") {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        confirmTermination(of: pending)
+                    }
+                }
+                .buttonStyle(FluxaButtonStyle(tint: FluxaTheme.red))
 
-        case .timedToggle:
-            HStack(spacing: 8) {
-                timerMenu
+                Button("Cancel") {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        pendingKill = nil
+                    }
+                }
+                .buttonStyle(FluxaButtonStyle(tint: .secondary))
+            }
+            .fixedSize(horizontal: true, vertical: false)
+        } else {
+            switch action.controlStyle {
+            case .toggle:
                 toggleControl
-            }
 
-        case .momentaryButton(let label):
-            Button(label) {
-                Task { await viewModel.triggerAction(action.id, closePopover: closePopover) }
-            }
-            .buttonStyle(FluxaButtonStyle(tint: action.tint))
-            .disabled(viewModel.isBusy)
+            case .timedToggle:
+                HStack(spacing: 8) {
+                    timerMenu
+                    toggleControl
+                }
 
-        case .menu:
-            if action.id == .bluetoothAudio {
-                bluetoothDeviceMenu
-            } else {
-                audioDeviceMenu
-            }
+            case .momentaryButton(let label):
+                Button(label) {
+                    Task { await viewModel.triggerAction(action.id, closePopover: closePopover) }
+                }
+                .buttonStyle(FluxaButtonStyle(tint: action.tint))
+                .disabled(viewModel.isBusy)
 
-        case .unavailable(let reason):
-            Image(systemName: "minus.circle")
-                .font(.system(size: 14))
-                .foregroundStyle(.tertiary)
-                .help(reason)
+            case .menu:
+                if action.id == .bluetoothAudio {
+                    bluetoothDeviceMenu
+                } else if action.id == .killProcess {
+                    processKillerMenu
+                } else {
+                    audioDeviceMenu
+                }
+
+            case .unavailable(let reason):
+                Image(systemName: "minus.circle")
+                    .font(.system(size: 14))
+                    .foregroundStyle(.tertiary)
+                    .help(reason)
+            }
         }
     }
 
@@ -242,6 +279,40 @@ struct ActionRowView: View {
         .fixedSize()
         .disabled(viewModel.audioOutput.outputDevices.isEmpty)
         .accessibilityLabel("Choose audio output")
+    }
+
+    /// Inline Menu listing regular GUI applications; selection is confirmed before termination.
+    private var processKillerMenu: some View {
+        Menu {
+            ForEach(viewModel.processKiller.runningProcesses) { process in
+                Button(process.name) {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        pendingKill = process
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(FluxaTheme.accent)
+            }
+            .frame(width: 24, height: 22)
+            .background(FluxaTheme.elevatedSurface, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .stroke(FluxaTheme.border, lineWidth: 1)
+            }
+        }
+        .menuStyle(.borderlessButton)
+        .fixedSize()
+        .disabled(viewModel.processKiller.runningProcesses.isEmpty || viewModel.isBusy)
+        .accessibilityLabel("Choose an app to quit")
+    }
+
+    private func confirmTermination(of process: RunningProcessInfo) {
+        pendingKill = nil
+        viewModel.processKiller.terminate(process)
     }
 
     // MARK: - Styling
