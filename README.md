@@ -109,7 +109,7 @@ Sixteen quick actions, every one backed by a real system API — no fake toggles
 | 🎤 **Microphone Mute** | Toggle | Mutes/unmutes the default input device via CoreAudio |
 | 📐 **Lid Angle** | Window | Live MacBook lid angle readout straight from the hinge sensor (Apple Silicon & Intel) |
 | ⚖️ **Trackpad Scale** | Window | Weighs small objects on the Force Touch trackpad's strain gauges |
-| 📊 **Agent Usage** | Strip + Window | Live Claude & Codex quota percentages in the menu bar, with usage charts |
+| 📊 **Agent Usage** | Strip + Window | Live Claude, Codex & Antigravity quota percentages in the menu bar, with usage charts |
 | 🔗 **Clean URL** | Button | Strips tracking parameters (`utm_*`, `fbclid`, `gclid`…) from the clipboard's URL, with host-specific rules for YouTube, Amazon and X |
 
 ### Beyond the actions
@@ -173,8 +173,11 @@ Two different sources, because they answer different questions.
 |-------|----------|-------------|
 | Claude | `GET api.anthropic.com/api/oauth/usage` | `~/.claude/.credentials.json`, else the `Claude Code-credentials` keychain item |
 | Codex | `GET chatgpt.com/backend-api/wham/usage` | `~/.codex/auth.json` |
+| Antigravity | `POST cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary` | the `gemini` keychain item |
 
-**Fluxa never refreshes or rewrites those credentials.** Both providers rotate the refresh token when it's used, so renewing one here would invalidate the token Claude Code or Codex is holding — breaking the very login being read. An expired token is reported as expired; running the agent once mints a fresh one.
+**Fluxa never rewrites an agent's stored credential.** For Claude and Codex it never refreshes one either: both rotate the refresh token when it's used, so renewing one here would invalidate the token Claude Code or Codex is holding — breaking the very login being read. An expired token is reported as expired; running the agent once mints a fresh one.
+
+Antigravity is the one case where Fluxa does refresh, because its stored access token is short-lived enough to be useless otherwise. Google's refresh grant doesn't rotate the refresh token, so the exchange leaves Antigravity's login untouched and still valid. The derived access token is kept in a file of Fluxa's own; the keychain item is only ever read.
 
 **Historical charts** come from the agents' own session logs (`~/.claude/projects/**/*.jsonl`, `~/.codex/sessions/**/*.jsonl`), which already hold exact per-turn token counts going back weeks. That's why the grid is populated the first time you open it instead of slowly filling from the day you enable it.
 
@@ -437,8 +440,9 @@ Sources/Fluxa/
 │   ├── SystemStatsService.swift      # Live readings + in-memory chart history
 │   ├── URLCleanerService.swift      # Clipboard read/write around FluxaCore's URLCleaner
 │   ├── GitHubProfileService.swift    # Public About-page data, no token required
-│   ├── AgentCredentials.swift       # Read-only Claude/Codex credential lookup
+│   ├── AgentCredentials.swift       # Read-only Claude/Codex/Antigravity credential lookup
 │   ├── AgentUsageReaders.swift      # Per-agent usage endpoints & mapping
+│   ├── AntigravityUsageReader.swift # Cloud Code quota endpoint + OAuth token cache
 │   ├── AgentUsageService.swift      # Orchestration, polling, selection
 │   ├── AgentLogScanner.swift        # Daily tokens from session logs (cached)
 │   ├── GlobalShortcutService.swift  # Carbon hotkey

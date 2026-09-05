@@ -73,6 +73,43 @@ _(append one line per resolved ticket: number, gist, link to the ticket file)_
   whether a device is in the list at all. → `issues/07-peripheral-battery.md`,
   `specs/07-peripheral-battery.md`
 
+- **09** — Spec written. `NSColorSampler` gives the whole picker interaction for free (no
+  Screen Recording permission, no hand-rolled loupe) — confirmed as the only sane approach
+  per the ticket's own note. Hex `#RRGGBB` only, no format setting: there's no existing
+  per-action settings surface to hang one on for a single-tap action with no window.
+  Sampled color always converts to sRGB before formatting so the hex matches what every
+  other tool (browser inspector, design tools) would show for the same pixel; a failed
+  conversion or an Esc cancellation both decline silently. Amended (D6) after owner testing
+  the shipped build: a silent clipboard copy wasn't enough feedback, so a successful pick
+  now shows a small transient click-through HUD (swatch + hex) instead of a system
+  notification, which would need a permission prompt for a one-shot action.
+  → `issues/09-color-picker.md`, `specs/09-color-picker.md`
+
+- **11** — Spec written. `NSWorkspace.runningApplications` (`.regular` policy) is the list,
+  same as the ticket proposed, plus Fluxa excluding itself from its own kill list.
+  `CPUUsageSampler` (06) turned out to be machine-wide only, not reusable per-process, so
+  sort order instead uses a single `proc_pid_rusage` sample (cumulative CPU time) taken
+  fresh per popover open — a deliberate simplification since nothing displays the number,
+  only orders by it. `terminate()` then `forceTerminate()` after a 2s timeout, no raw
+  signals. First `.confirmationDialog` anywhere in the app. → `issues/11-kill-process.md`,
+  `specs/11-kill-process.md`
+- **15** — Spec written. Antigravity joins the usage strip as a third provider, from the
+  Keychain item (service `gemini`, account `antigravity`) and one JSON endpoint,
+  `cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary`. Four pool meters; the
+  API reports fraction *remaining*, so it is inverted into `percentUsed`. **Not a clean-room
+  ticket**: scoping established Google's interface facts from an existing permissively-licensed
+  integration. Facts about a third party's interface carry no notice obligation, so Fluxa ships
+  no attribution — but the expression must stay Fluxa's own, so the reader follows
+  `ClaudeUsageReader`'s shape and nothing is transcribed (see the ticket's Provenance section).
+  It also **narrows the read-only credential rule**:
+  Antigravity's token must be refreshed via Google OAuth, which is safe here only because
+  Google's refresh grant does not rotate the refresh token — so refreshing never invalidates
+  Antigravity's own login, provided Fluxa never writes back to its Keychain item. Derived
+  tokens are cached in Fluxa's own file, fingerprint-bound to the refresh credential so an
+  account switch cannot replay the previous account's token. Local token history (spend,
+  usage trend) excluded — needs SQLite + protobuf that `AgentLogScanner` has no shape for.
+  → `issues/15-antigravity-usage.md`, `specs/15-antigravity-usage.md`
+
 ## Fog
 
 Open questions, in rough priority order. Each becomes a ticket when it's sharp enough.
@@ -83,6 +120,12 @@ Open questions, in rough priority order. Each becomes a ticket when it's sharp e
   and four other tickets sit behind it. If its design is wrong, 04–08 all rework.
 - How should the package be restructured so it is testable at all — test the executable
   directly, or extract a library target? **→ ticket 02**
+- ~~14 — per-app volume mixer feasibility?~~ **Resolved, `wontfix`.** Checked the actual
+  CoreAudio SDK headers: the `Process` class has no volume property, `ProcessMute` only
+  mutes the current process, and the macOS 14.2 process-tap API is capture-only, no write
+  path. No public per-process volume control exists on macOS at all — a mixer is only
+  possible via a virtual audio driver, which is out of scope for this app (same grounds as
+  the fan-control rejection). See `issues/14-per-app-volume-mixer.md`.
 - What is Fluxa's current concurrency posture — how many `@MainActor` types, how much
   shared mutable state — and how far is it from compiling under strict concurrency?
 - ~~Upstream crypto security properties?~~ **Moot — there is no crypto component upstream.**

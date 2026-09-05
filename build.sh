@@ -55,6 +55,9 @@ cp "${RESOURCES_DIR}/Info.plist" "${BUNDLE_NAME}/Contents/"
 ANTIGRAVITY_CLIENT="packaging/antigravity-client.json"
 if [[ -f "$ANTIGRAVITY_CLIENT" ]]; then
     cp "$ANTIGRAVITY_CLIENT" "${BUNDLE_NAME}/Contents/Resources/antigravity-client.json"
+    # The local file is kept 0600; inside the bundle it must match every other resource, or an
+    # install made by another user would leave it unreadable and silently lose token refresh.
+    chmod 644 "${BUNDLE_NAME}/Contents/Resources/antigravity-client.json"
 else
     echo "⚠️  $ANTIGRAVITY_CLIENT missing — Antigravity token refresh will be unavailable."
     echo "   Copy ${ANTIGRAVITY_CLIENT}.example and fill it in to enable it."
