@@ -109,7 +109,15 @@ tailwind.config = {
   .step { opacity:.32; transition:opacity .4s ease; }
   .step.is-active { opacity:1; }
   .step.is-active .rail { background:linear-gradient(180deg,#2F80ED,#6C5CE7); }
-  pre code.hljs { background:transparent!important; padding:0!important; font-size:12.5px; line-height:1.6; }
+  pre {
+    white-space: pre-wrap !important;
+    word-break: break-word !important;
+    overflow-x: hidden !important;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  pre::-webkit-scrollbar { display: none; }
+  pre code.hljs { background:transparent!important; padding:0!important; font-size:12.5px; line-height:1.6; white-space: pre-wrap !important; }
   .tab-pill { padding:.2rem .6rem; border-radius:.4rem; font-size:11px; color:rgba(255,255,255,.4);
               transition:background .35s ease, color .35s ease; white-space:nowrap; }
   .tab-pill.is-on { background:linear-gradient(120deg,#2F80ED,#6C5CE7); color:#fff; }
@@ -250,14 +258,14 @@ tailwind.config = {
         <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">MenuBarExtra</span>
         <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">@MainActor</span>
       </div>
-      <pre class="mt-6 p-4 rounded-xl bg-black/45 border border-edge overflow-x-auto"><code class="language-swift">// Services/KeepAwakeService.swift
+      <pre class="mt-6 p-4 rounded-xl bg-black/45 border border-edge overflow-hidden"><code class="language-swift">// Services/KeepAwakeService.swift
 let result = IOPMAssertionCreateWithName(
     kIOPMAssertionTypeNoDisplaySleep as CFString,
     IOPMAssertionLevel(kIOPMAssertionLevelOn),
-    "Fluxa Keep Awake — user requested" as CFString,
+    "Fluxa Keep Awake" as CFString,
     &assertionID
 )
-guard result == kIOReturnSuccess else { assertionID = 0; throw … }</code></pre>
+guard result == kIOReturnSuccess else { throw … }</code></pre>
     </section>
 
     <!-- 1 -->
@@ -277,10 +285,13 @@ guard result == kIOReturnSuccess else { assertionID = 0; throw … }</code></pre
         <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">Battery &amp; Alerts</span>
         <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">1–10 s sampling</span>
       </div>
-      <pre class="mt-6 p-4 rounded-xl bg-black/45 border border-edge overflow-x-auto"><code class="language-swift">// Services/SystemStatsService.swift — rolling window, in memory only
+      <pre class="mt-6 p-4 rounded-xl bg-black/45 border border-edge overflow-hidden"><code class="language-swift">// Services/SystemStatsService.swift — in memory only
 static let historyDuration: TimeInterval = 30 * 60
 
-history.append(SystemStatsHistorySample(timestamp: timestamp, values: measuredValues))
+history.append(SystemStatsHistorySample(
+    timestamp: timestamp,
+    values: measuredValues
+))
 let cutoff = timestamp.addingTimeInterval(-Self.historyDuration)
 if let firstRetained = history.firstIndex(where: { $0.timestamp >= cutoff }),
    firstRetained > 0 {
@@ -303,7 +314,7 @@ if let firstRetained = history.firstIndex(where: { $0.timestamp >= cutoff }),
         <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">Protobuf &amp; SQLite</span>
         <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">Retry-After aware</span>
       </div>
-      <pre class="mt-6 p-4 rounded-xl bg-black/45 border border-edge overflow-x-auto"><code class="language-swift">// Services/AgentUsageReaders.swift — rate-limit resilient, zero credentials stored
+      <pre class="mt-6 p-4 rounded-xl bg-black/45 border border-edge overflow-hidden"><code class="language-swift">// Services/AgentUsageReaders.swift — 0 credentials stored
 if let retryAfter = AgentRetryAfter.parse(response: httpResponse) {
     throw AgentUsageReadError.rateLimited(retryAfter: retryAfter)
 }
@@ -326,10 +337,10 @@ let (json, _) = try await AgentHTTP.getJSON(url: Self.usageURL, …)</code></pre
         <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">CADisplayLink</span>
         <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">Apple Silicon + Intel</span>
       </div>
-      <pre class="mt-6 p-4 rounded-xl bg-black/45 border border-edge overflow-x-auto"><code class="language-swift">// Services/LidAngleMonitor.swift
-/// 1. Apple Silicon: HID device (usage page 0x20 Sensor, usage 0x8A).
-///    Feature report 1 returns [reportID, lo, hi] — lo|hi<<8 = degrees.
-/// 2. Intel: the `LidAngle` IORegistry property (~16384 = 180°).
+      <pre class="mt-6 p-4 rounded-xl bg-black/45 border border-edge overflow-hidden"><code class="language-swift">// Services/LidAngleMonitor.swift
+/// 1. Apple Silicon: HID sensor (usage 0x8A).
+///    Feature report: [reportID, lo, hi] -> lo|hi<<8 = degrees.
+/// 2. Intel: `LidAngle` IORegistry property (~16384 = 180°).
 init() {
     if openHIDSensor() { isAvailable = true }
     else { … }
@@ -353,10 +364,12 @@ init() {
         <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">MultitouchSupport</span>
         <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">UnsafeRawPointer</span>
       </div>
-      <pre class="mt-6 p-4 rounded-xl bg-black/45 border border-edge overflow-x-auto"><code class="language-swift">// Services/TrackpadWeightService.swift
-// off 8  double timestamp   |   off 52  float pressure (GRAMS)
-let pressure = record.loadUnaligned(fromByteOffset: offsetPressure,
-                                    as: Float.self)
+      <pre class="mt-6 p-4 rounded-xl bg-black/45 border border-edge overflow-hidden"><code class="language-swift">// Services/TrackpadWeightService.swift
+// off 8: timestamp | off 52: float pressure (GRAMS)
+let pressure = record.loadUnaligned(
+    fromByteOffset: offsetPressure,
+    as: Float.self
+)
 guard total.isFinite, pressure.isFinite,
       (0...20_000).contains(pressure) else { continue }</code></pre>
     </section>
@@ -393,7 +406,7 @@ guard total.isFinite, pressure.isFinite,
         Every action gets a tinted icon tile and a switch in its own colour. Drag to reorder, turn one off to
         hide it from the dashboard; the layout survives relaunches through <code class="text-[13px] text-white/80">UserDefaults</code>.
       </p>
-      <pre class="mt-5 p-4 rounded-xl bg-black/45 border border-edge overflow-x-auto"><code class="language-swift">// Models/AppSettings.swift — one @Observable source of truth
+      <pre class="mt-5 p-4 rounded-xl bg-black/45 border border-edge overflow-hidden"><code class="language-swift">// Models/AppSettings.swift — @Observable source of truth
 @Observable
 final class AppSettings {
     var actionOrder: [ActionID] = ActionCatalog.defaultOrder
@@ -429,10 +442,10 @@ final class AppSettings {
         a 5-hour session window spends 100 points over 300 minutes, so one percentage point takes three minutes.
         Polling faster can't return a different integer — it only spends requests. Rate limits back off gracefully with standard Retry-After headers.
       </p>
-      <pre class="mt-5 p-4 rounded-xl bg-black/45 border border-edge overflow-x-auto"><code class="language-swift">// Models/UsageRefreshInterval.swift
+      <pre class="mt-5 p-4 rounded-xl bg-black/45 border border-edge overflow-hidden"><code class="language-swift">// Models/UsageRefreshInterval.swift
 // "About 1.7% of a session window between reads."
-case everyFiveMinutes   // ≈1.7%   ← default
-case everyThreeMinutes  // the fastest that can show a new number</code></pre>
+case everyFiveMinutes   // ≈1.7% (default)
+case everyThreeMinutes  // min. 1% change interval</code></pre>
     </section>
 
     <!-- 9 -->
@@ -551,7 +564,7 @@ case everyThreeMinutes  // the fastest that can show a new number</code></pre>
     <p class="mt-4 text-white/60">Download the DMG and drag <span class="font-mono text-white/85">Fluxa.app</span> into Applications.</p>
     <div class="mt-8 text-left p-5 rounded-xl bg-ink/85 backdrop-blur-sm border border-white/10 shadow-xl shadow-black/40">
       <p class="text-[11px] uppercase tracking-widest text-white/45 mb-3">Or build from source</p>
-      <pre class="overflow-x-auto"><code class="language-bash">git clone https://github.com/zEhmsy/fluxa.git
+      <pre class="overflow-hidden"><code class="language-bash">git clone https://github.com/zEhmsy/fluxa.git
 cd fluxa
 ./build.sh
 cp -r Fluxa.app /Applications/</code></pre>
