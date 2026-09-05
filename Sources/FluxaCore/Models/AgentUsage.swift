@@ -52,10 +52,18 @@ package struct AgentUsageMetric: Identifiable, Hashable {
         }
     }
 
+    /// A reset further out than this is not a quota window, it's a bad timestamp. Capping the
+    /// interval keeps `Int(_:)` below its trapping range no matter what an endpoint sends, and the
+    /// note it produces ("resets in 3650d 0h") reads as obviously wrong rather than crashing.
+    private static let maximumResetInterval: TimeInterval = 3650 * 24 * 60 * 60
     /// Compact reset note for the tooltip ("resets in 2h 45m"), or nil when unknown or already past.
     package func resetNote(now: Date = Date()) -> String? {
         guard let resetsAt, resetsAt > now else { return nil }
-        let seconds = Int(resetsAt.timeIntervalSince(now))
+        // Clamped in `Double` space, before the conversion: `Int(_: Double)` traps outside `Int`'s
+        // range, so an absurd `resetsAt` — which every provider's parser can produce from an epoch
+        // number it was handed — would otherwise crash the app from a tooltip.
+        let interval = min(resetsAt.timeIntervalSince(now), Self.maximumResetInterval)
+        let seconds = Int(interval)
         let hours = seconds / 3600
         let minutes = (seconds % 3600) / 60
         if hours >= 24 { return "resets in \(hours / 24)d \(hours % 24)h" }

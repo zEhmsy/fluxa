@@ -35,6 +35,7 @@ final class PermissionsService: NSObject, CBCentralManagerDelegate {
     private(set) var automation: FluxaPermissionStatus = .unavailable
     private(set) var bluetooth: FluxaPermissionStatus = .notRequested
     private(set) var claude: FluxaPermissionStatus = .notRequested
+    private(set) var antigravity: FluxaPermissionStatus = .notRequested
     private(set) var notifications: FluxaPermissionStatus = .notRequested
     private(set) var busyPermission: String?
     private(set) var message: String?
@@ -140,6 +141,28 @@ final class PermissionsService: NSObject, CBCentralManagerDelegate {
             }
         } catch {
             claude = .denied
+            message = error.localizedDescription
+        }
+    }
+
+    /// Separate from `requestClaudeAccess` on purpose: each agent's keychain item gets its own
+    /// consent, so allowing one never silently authorizes reading the other.
+    func requestAntigravityAccess() async {
+        guard busyPermission == nil else { return }
+        message = nil
+        busyPermission = "antigravity"
+        defer { busyPermission = nil }
+        do {
+            let available = try await Task.detached(priority: .userInitiated) {
+                try AgentCredentialStore.loadAntigravity(requestAccess: true) != nil
+            }.value
+            antigravity = available ? .granted : .unavailable
+            if !available {
+                message = "No Antigravity credentials were found. Sign in with Antigravity, then try again. "
+                    + "Fluxa reads that keychain item and never writes to it."
+            }
+        } catch {
+            antigravity = .denied
             message = error.localizedDescription
         }
     }

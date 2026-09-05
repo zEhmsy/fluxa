@@ -153,7 +153,7 @@ final class AppSettings {
         focusModeEnabled = defaults.bool(forKey: Keys.focusModeEnabled)
 
         // Usage strip: default to Claude's session window on first run. It resolves to nothing —
-        // and the strip stays hidden — on a Mac without OpenUsage or without Claude configured,
+        // and the strip stays hidden — on a Mac with no Claude login to read,
         // so the default can't add height to a popover that has no data to put there.
         let pinnedUsageIDs = defaults.array(forKey: Keys.usageMetricIDs) as? [String] ?? ["claude.session"]
         usageMetricIDs = pinnedUsageIDs

@@ -1,0 +1,4 @@
+{
+  "client_id": "<Antigravity's Google installed-application OAuth client id>",
+  "client_secret": "<the matching client secret>"
+}

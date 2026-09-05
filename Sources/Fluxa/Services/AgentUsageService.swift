@@ -9,8 +9,10 @@ import Observation
 ///
 /// Claude's OAuth blob lives in the login keychain (`Claude Code-credentials`, or
 /// `~/.claude/.credentials.json` where the CLI writes a file); Codex's lives in
-/// `~/.codex/auth.json`. Nothing is refreshed or written back — see `AgentCredentialStore` for why
-/// that read-only stance is deliberate.
+/// `~/.codex/auth.json`; Antigravity's is a keychain item under service `gemini`. No agent's stored
+/// credential is ever written back to — see `AgentCredentialStore` for why that stance is
+/// deliberate, and `AntigravityUsageReader` for why deriving a token from Antigravity's refresh
+/// credential doesn't breach it.
 ///
 /// Each agent is fetched independently: one failing (or not being installed) leaves the others
 /// showing their numbers, and the strip simply omits what it doesn't have.
@@ -154,12 +156,13 @@ final class AgentUsageService {
         isRefreshing = true
         defer { isRefreshing = false }
 
-        // Both agents in parallel: neither depends on the other, and a slow endpoint shouldn't
-        // hold up the one that answered.
+        // All agents in parallel: none depends on the others, and a slow endpoint shouldn't hold up
+        // the ones that answered.
         async let claude = Self.read(agent: ClaudeUsageReader.agentName) { try await ClaudeUsageReader().fetch() }
         async let codex = Self.read(agent: CodexUsageReader.agentName) { try await CodexUsageReader().fetch() }
+        async let antigravity = Self.read(agent: AntigravityUsageReader.agentName) { try await AntigravityUsageReader().fetch() }
 
-        let results = await [claude, codex]
+        let results = await [claude, codex, antigravity]
 
         var collected: [AgentUsageMetric] = []
         var errors: [String: String] = [:]

@@ -1,4 +1,5 @@
 import Foundation
+import FluxaCore
 import Security
 import LocalAuthentication
 
@@ -48,22 +49,90 @@ struct CodexCredentials {
 enum AgentCredentialStore {
 
     enum AccessError: LocalizedError {
-        case approvalNeeded
-        case notAllowed
+        case approvalNeeded(agent: String)
+        case notAllowed(agent: String)
+        /// The item was read, but what came out isn't a credential we can parse. Distinct from
+        /// "absent": retrying won't help, so the message asks for a fresh sign-in.
+        case unreadable(agent: String)
 
         var errorDescription: String? {
             switch self {
-            case .approvalNeeded:
-                "Claude: enable credential access in Customize → Permissions & First Run."
-            case .notAllowed:
-                "Claude credential access was not allowed. Retry from Permissions & First Run; "
+            case .approvalNeeded(let agent):
+                "\(agent): enable credential access in Customize → Permissions & First Run."
+            case .notAllowed(let agent):
+                "\(agent) credential access was not allowed. Retry from Permissions & First Run; "
                     + "choose Always Allow only if you trust this copy of Fluxa."
+            case .unreadable(let agent):
+                "\(agent): stored credentials are unreadable. Sign in again."
             }
         }
     }
 
+    /// Reads one generic-password item.
+    ///
+    /// Returns nil when there is simply no such item, and throws when macOS refused the read — a
+    /// refusal also clears the recorded approval, so the next attempt goes back through the setup
+    /// button instead of prompting from a timer.
+    private static func readGenericPassword(
+        service: String,
+        account: String?,
+        requestAccess: Bool,
+        agent: String,
+        approvalKey: String
+    ) throws -> Data? {
+        let context = LAContext()
+        context.interactionNotAllowed = !requestAccess
+
+        var query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+            kSecReturnData as String: true,
+            kSecUseAuthenticationContext as String: context,
+        ]
+        if let account { query[kSecAttrAccount as String] = account }
+
+        var item: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &item)
+        if status == errSecItemNotFound { return nil }
+        guard status == errSecSuccess else {
+            // Only an actual refusal revokes the recorded approval. `errSecInteractionNotAllowed` is
+            // the expected answer whenever a noninteractive read would have needed a prompt — a
+            // locked screen, a locked login keychain — and treating that as a denial would make an
+            // idle Mac quietly discard consent the user has to grant again by hand.
+            if Self.deniedStatuses.contains(status) {
+                UserDefaults.standard.removeObject(forKey: approvalKey)
+            }
+            throw AccessError.notAllowed(agent: agent)
+        }
+        return item as? Data
+    }
+
+    /// Statuses that mean the user, or the ACL, said no — as opposed to "not right now".
+    private static let deniedStatuses: Set<OSStatus> = [
+        errSecUserCanceled, errSecAuthFailed, errSecInteractionRequired,
+    ]
+
+    /// Whether this build already has the user's consent to read `approvalKey`'s item.
+    ///
+    /// Consent is bound to the current code-signing requirement, so a re-signed or ad-hoc build
+    /// cannot inherit it and start raising dialogs from the background refresh loop.
+    private static func hasApproval(_ approvalKey: String) -> Bool {
+        guard let requirement = currentSigningRequirement() else { return false }
+        return UserDefaults.standard.string(forKey: approvalKey) == requirement
+    }
+
+    private static func recordApproval(_ approvalKey: String) {
+        guard let requirement = currentSigningRequirement() else { return }
+        UserDefaults.standard.set(requirement, forKey: approvalKey)
+    }
+
     // This is permission to ATTEMPT a read, never proof that macOS granted access. Associate the
     // opt-in with the actual signing requirement so a new ad-hoc build cannot prompt from a timer.
+    //
+    // It is anti-accident, not anti-tamper: the value lives in UserDefaults, so anything already
+    // running as this user could write the current requirement into it. The Keychain ACL, which
+    // that cannot forge, remains the boundary that actually protects the credential.
     private static let approvalKey = "fluxa.claudeCredentialApprovedRequirement"
     private static let readLock = NSLock()
 
@@ -86,16 +155,14 @@ enum AgentCredentialStore {
         if let file = readClaudeFile() {
             json = file
         } else {
-            let requirement = currentSigningRequirement()
             if !requestAccess {
-                guard let requirement,
-                      UserDefaults.standard.string(forKey: approvalKey) == requirement else {
-                    throw AccessError.approvalNeeded
+                guard hasApproval(approvalKey) else {
+                    throw AccessError.approvalNeeded(agent: "Claude")
                 }
             }
             json = try readClaudeKeychain(requestAccess: requestAccess)
-            if requestAccess, json != nil, let requirement {
-                UserDefaults.standard.set(requirement, forKey: approvalKey)
+            if requestAccess, json != nil {
+                recordApproval(approvalKey)
             }
         }
         guard let json,
@@ -123,28 +190,18 @@ enum AgentCredentialStore {
     /// Reads the generic-password item, first for the current user's account and then by service
     /// alone — Claude Code has used both shapes.
     private static func readClaudeKeychain(requestAccess: Bool) throws -> [String: Any]? {
-        let context = LAContext()
-        context.interactionNotAllowed = !requestAccess
         for account in [NSUserName(), nil] {
-            var query: [String: Any] = [
-                kSecClass as String: kSecClassGenericPassword,
-                kSecAttrService as String: claudeKeychainService,
-                kSecMatchLimit as String: kSecMatchLimitOne,
-                kSecReturnData as String: true,
-                kSecUseAuthenticationContext as String: context,
-            ]
-            if let account { query[kSecAttrAccount as String] = account }
+            // A refusal throws straight out of the loop rather than trying the next account shape:
+            // falling back after a denial/cancel can duplicate the dialog.
+            guard let data = try readGenericPassword(
+                service: claudeKeychainService,
+                account: account,
+                requestAccess: requestAccess,
+                agent: "Claude",
+                approvalKey: approvalKey
+            ) else { continue }
 
-            var item: CFTypeRef?
-            let status = SecItemCopyMatching(query as CFDictionary, &item)
-            if status == errSecItemNotFound { continue }
-            guard status == errSecSuccess else {
-                UserDefaults.standard.removeObject(forKey: approvalKey)
-                // Do not fall back to a second query after denial/cancel: it can duplicate a dialog.
-                throw AccessError.notAllowed
-            }
-            guard let data = item as? Data,
-                  let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+            guard let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
             else { continue }
             return json
         }
@@ -184,5 +241,49 @@ enum AgentCredentialStore {
             accessToken: token,
             accountID: tokens["account_id"] as? String
         )
+    }
+
+    // MARK: - Antigravity
+
+    /// Written by the Antigravity app / `agy`. Note the service is `gemini`, not `antigravity` —
+    /// the account is what distinguishes it.
+    private static let antigravityKeychainService = "gemini"
+    private static let antigravityKeychainAccount = "antigravity"
+    /// Deliberately separate from Claude's key: consenting to read one agent's credential must
+    /// never imply consent for the other.
+    private static let antigravityApprovalKey = "fluxa.antigravityCredentialApprovedRequirement"
+
+    /// Same contract as `loadClaude`: only the setup button may initiate first access, ordinary
+    /// refreshes require a recorded approval and never raise a dialog.
+    ///
+    /// Unlike Claude and Codex this credential is *derived from* rather than merely read — see
+    /// `AntigravityUsageReader` for the refresh, which still never writes back to this item.
+    static func loadAntigravity(requestAccess: Bool = false) throws -> AntigravityQuota.StoredCredential? {
+        readLock.lock()
+        defer { readLock.unlock() }
+
+        if !requestAccess {
+            guard hasApproval(antigravityApprovalKey) else {
+                throw AccessError.approvalNeeded(agent: "Antigravity")
+            }
+        }
+
+        guard let data = try readGenericPassword(
+            service: antigravityKeychainService,
+            account: antigravityKeychainAccount,
+            requestAccess: requestAccess,
+            agent: "Antigravity",
+            approvalKey: antigravityApprovalKey
+        ) else { return nil }
+
+        if requestAccess { recordApproval(antigravityApprovalKey) }
+
+        guard let raw = String(data: data, encoding: .utf8) else {
+            throw AccessError.unreadable(agent: "Antigravity")
+        }
+        guard let credential = AntigravityQuota.credential(fromKeychainValue: raw) else {
+            throw AccessError.unreadable(agent: "Antigravity")
+        }
+        return credential
     }
 }

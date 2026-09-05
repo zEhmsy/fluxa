@@ -31,6 +31,7 @@ struct ControlDeckPalette {
     let battery: Color
     let claude: Color
     let codex: Color
+    let antigravity: Color
     let warning: Color
     let critical: Color
 
@@ -59,6 +60,7 @@ struct ControlDeckPalette {
         battery: rgb(89, 211, 133),
         claude: rgb(102, 174, 255),
         codex: rgb(84, 218, 166),
+        antigravity: rgb(240, 142, 200),
         warning: rgb(255, 201, 82),
         critical: rgb(255, 112, 107)
     )
@@ -84,6 +86,7 @@ struct ControlDeckPalette {
         battery: rgb(20, 120, 68),
         claude: rgb(10, 91, 201),
         codex: rgb(19, 117, 83),
+        antigravity: rgb(163, 42, 116),
         warning: rgb(132, 84, 0),
         critical: rgb(185, 48, 45)
     )
@@ -125,9 +128,10 @@ struct ControlDeckPalette {
 
     func agentIdentity(for providerID: String) -> Color {
         switch providerID {
-        case "claude": return claude
-        case "codex":  return codex
-        default:       return brandBlue
+        case "claude":      return claude
+        case "codex":       return codex
+        case "antigravity": return antigravity
+        default:            return brandBlue
         }
     }
 
@@ -149,10 +153,12 @@ struct ControlDeckPalette {
         case .screenSaver:    return gpu
         case .screenClean:    return cpu
         case .urlCleaner:     return brandBlue
+        case .colorPicker:    return isDark ? Self.rgb(84, 218, 166) : Self.rgb(19, 117, 83)
         case .lockKeyboard:   return critical
         case .focusMode:      return isDark ? Self.rgb(150, 146, 255) : Self.rgb(69, 66, 155)
         case .audioOutput:    return claude
         case .bluetoothAudio: return cpu
+        case .killProcess:    return critical
         case .micMute:        return isDark ? Self.rgb(255, 126, 192) : Self.rgb(171, 49, 115)
         case .lidAngle:       return isDark ? Self.rgb(89, 211, 133) : Self.rgb(20, 120, 68)
         case .trackpadScale:  return warning

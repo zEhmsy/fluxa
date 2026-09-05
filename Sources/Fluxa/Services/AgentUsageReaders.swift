@@ -9,6 +9,11 @@ enum AgentUsageReadError: LocalizedError {
     case missingScope(agent: String)
     case requestFailed(agent: String, status: Int)
     case invalidResponse(agent: String)
+    /// Network or server trouble, as distinct from anything wrong with the login. Kept separate so
+    /// a passing outage never tells the user to sign in again.
+    case temporarilyUnavailable(agent: String)
+    /// The agent answered, but this build of it can't serve what we asked for.
+    case unsupported(agent: String, hint: String)
 
     var errorDescription: String? {
         switch self {
@@ -22,6 +27,10 @@ enum AgentUsageReadError: LocalizedError {
             return "\(agent): request failed (HTTP \(status))."
         case .invalidResponse(let agent):
             return "\(agent): unexpected response."
+        case .temporarilyUnavailable(let agent):
+            return "\(agent): usage is temporarily unavailable. Try again shortly."
+        case .unsupported(let agent, let hint):
+            return "\(agent): \(hint)"
         }
     }
 }

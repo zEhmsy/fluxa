@@ -211,9 +211,10 @@ struct AgentUsageWindowView: View {
             return palette.agentIdentity(for: providerID)
         }
         switch providerID {
-        case "claude": return .orange
-        case "codex":  return .green
-        default:       return .blue
+        case "claude":      return .orange
+        case "codex":       return .green
+        case "antigravity": return .pink
+        default:            return .blue
         }
     }
 }

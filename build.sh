@@ -49,6 +49,16 @@ echo "📋 Copying files..."
 cp "${BUILD_DIR}/${BINARY_NAME}" "${BUNDLE_NAME}/Contents/MacOS/${BINARY_NAME}"
 cp "${RESOURCES_DIR}/fluxa.icns" "${BUNDLE_NAME}/Contents/Resources/"
 cp "${RESOURCES_DIR}/Info.plist" "${BUNDLE_NAME}/Contents/"
+# Antigravity's OAuth client, kept out of the repository because it is not ours to publish.
+# Without it the Antigravity meters still read the token Antigravity stored; only the refresh
+# path is lost, so its absence is a warning and not a build failure.
+ANTIGRAVITY_CLIENT="packaging/antigravity-client.json"
+if [[ -f "$ANTIGRAVITY_CLIENT" ]]; then
+    cp "$ANTIGRAVITY_CLIENT" "${BUNDLE_NAME}/Contents/Resources/antigravity-client.json"
+else
+    echo "⚠️  $ANTIGRAVITY_CLIENT missing — Antigravity token refresh will be unavailable."
+    echo "   Copy ${ANTIGRAVITY_CLIENT}.example and fill it in to enable it."
+fi
 # The DMG references this signed resource so Finder's Show Hidden Files preference
 # cannot expose a loose background file over the installer artwork.
 cp "packaging/dmg-background.tiff" "${BUNDLE_NAME}/Contents/Resources/InstallerBackground.tiff"
