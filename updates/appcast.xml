@@ -7,6 +7,25 @@
         <language>en</language>
         <!-- No update is advertised until its signed archive has been published. -->
         <item>
+            <title>2.9.1</title>
+            <pubDate>Sat, 05 Sep 2026 10:52:24 +0200</pubDate>
+            <link>https://github.com/zEhmsy/fluxa/releases/tag/v2.9.1</link>
+            <sparkle:version>18</sparkle:version>
+            <sparkle:shortVersionString>2.9.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<h2>Fluxa 2.9.1</h2>
+<p><strong>This update asks for your permissions one last time.</strong> Until now every Fluxa build was signed with a throwaway identity that changed on each release, so macOS treated each update as an unknown app and asked again for keychain and Accessibility access. Fluxa is now signed with a stable identity, so after granting them once more they will persist across all future updates.</p>
+<ul>
+<li>Antigravity usage now works. The previous release read Google's Cloud Code API, which refuses individual free-tier accounts; quota is now read from the helper process Antigravity already runs on this Mac. Fluxa reads no credential, stores no token, and the request never leaves your machine. The meters appear only while Antigravity is open.</li>
+<li>Rate limits are handled properly. When a provider asks Fluxa to back off, it now says when the meters return instead of showing a bare HTTP error, and stops re-requesting until then.</li>
+</ul>
+<p>Requires macOS 14 or later and Apple silicon. Preferences, action order and history are unchanged by this update.</p>
+<p>Fluxa is signed with a self-signed certificate and is not notarized, so first launch after a fresh download still needs the usual right-click &gt; Open.</p>
+]]></description>
+            <enclosure url="https://github.com/zEhmsy/fluxa/releases/download/v2.9.1/Fluxa.zip" length="3499657" type="application/octet-stream" sparkle:edSignature="LOB04/QY2u28LoXBsCfDXNM7jN29ex8qljijp95VyqYKVCTKjsgEzxgilnyAK7DGLnAvYYbfhx65qvEhL3zjAw=="/>
+        </item>
+        <item>
             <title>2.9.0</title>
             <pubDate>Sat, 05 Sep 2026 02:27:34 +0200</pubDate>
             <sparkle:version>17</sparkle:version>
