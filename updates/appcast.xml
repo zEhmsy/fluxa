@@ -7,6 +7,15 @@
         <language>en</language>
         <!-- No update is advertised until its signed archive has been published. -->
         <item>
+            <title>2.9.0</title>
+            <pubDate>Sat, 05 Sep 2026 02:27:34 +0200</pubDate>
+            <sparkle:version>17</sparkle:version>
+            <sparkle:shortVersionString>2.9.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <enclosure url="https://github.com/zEhmsy/fluxa/releases/download/v2.9.0/Fluxa.zip" length="3499474" type="application/octet-stream" sparkle:edSignature="gB50Rd8yM7RhqanCEvzVmkOGHkOJ5RfCCPscFTF7Bf2s5ZhdEmoJ+yihzLAjcAle2u1qEwTqjwiFEbkNMUPrAA=="/>
+        </item>
+        <item>
             <title>2.8.0</title>
             <pubDate>Mon, 31 Aug 2026 13:14:42 +0200</pubDate>
             <link>https://github.com/zEhmsy/fluxa/releases/tag/v2.8.0</link>
