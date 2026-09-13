@@ -25,6 +25,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         shortcut.register()
         viewModel.updates.start()
+
+        if let idx = CommandLine.arguments.firstIndex(of: "--capture-screenshots") {
+            let outDir = CommandLine.arguments.indices.contains(idx + 1)
+                ? CommandLine.arguments[idx + 1]
+                : "docs/images"
+            ScreenshotHarness.run(with: viewModel, settings: settings, outputDir: outDir)
+            return
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {

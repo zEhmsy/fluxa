@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 // MARK: - CustomizeView
@@ -9,7 +10,7 @@ struct CustomizeView: View {
     static let panelWidth: CGFloat = 480
     private static let actionRowHeight: CGFloat = 32
 
-    private enum SettingsTab: String, CaseIterable, Identifiable {
+    enum SettingsTab: String, CaseIterable, Identifiable {
         case general = "General"
         case actions = "Actions"
         case system = "System"
@@ -22,9 +23,15 @@ struct CustomizeView: View {
     @Environment(AppSettings.self) private var settings
     @Environment(PopoverViewModel.self) private var viewModel
 
-    @State private var selectedTab: SettingsTab = .general
+    @State private var selectedTab: SettingsTab
+    @State private var tabContentHeight: CGFloat = 0
 
     let onDone: () -> Void
+
+    init(selectedTab: SettingsTab = .general, onDone: @escaping () -> Void) {
+        self._selectedTab = State(initialValue: selectedTab)
+        self.onDone = onDone
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -49,8 +56,21 @@ struct CustomizeView: View {
                 .pickerStyle(.segmented)
                 .accessibilityLabel("Settings section")
 
-                tabContent
-                    .frame(maxWidth: .infinity, minHeight: 300, alignment: .top)
+                // The panel sizes itself to its content, and the System tab carries both the stats
+                // list and the alert thresholds, which together outgrow a laptop screen. The tab
+                // scrolls inside whatever height the screen can hold rather than running off the
+                // bottom, and shorter tabs keep sizing themselves as before.
+                ScrollView(.vertical) {
+                    tabContent
+                        .frame(maxWidth: .infinity, alignment: .top)
+                        .background(
+                            GeometryReader { proxy in
+                                Color.clear.preference(key: TabContentHeightKey.self, value: proxy.size.height)
+                            }
+                        )
+                }
+                .frame(height: min(max(tabContentHeight, 300), Self.maximumTabHeight))
+                .onPreferenceChange(TabContentHeightKey.self) { tabContentHeight = $0 }
             }
             .padding(12)
         }
@@ -62,6 +82,14 @@ struct CustomizeView: View {
             viewModel.agentUsage.refresh()
             viewModel.systemStats.refreshNow()
         }
+    }
+
+    /// What the screen leaves for the tab once the header, the tab picker and the panel's own
+    /// padding have taken their share. Read per layout pass because the popover can open on a
+    /// different display than the one it opened on last time.
+    private static var maximumTabHeight: CGFloat {
+        let visibleHeight = NSScreen.main?.visibleFrame.height ?? 800
+        return max(300, visibleHeight - 200)
     }
 
     @ViewBuilder
@@ -351,5 +379,17 @@ private struct CustomizeRowView: View {
         }
         .padding(.vertical, 2)
         .fluxaListRowSurface()
+    }
+}
+
+// MARK: - TabContentHeightKey
+
+/// Carries the laid-out height of the selected tab up to the scroll view that hosts it, so the
+/// panel can stay content-sized until the content is taller than the screen.
+private struct TabContentHeightKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }

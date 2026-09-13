@@ -37,7 +37,7 @@ enum MenuBarStripRenderer {
     /// Standard menu bar icon box.
     static let height: CGFloat = 18
 
-    private static let font = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .medium)
+    nonisolated(unsafe) private static let font = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .medium)
     /// Gap between two readings.
     private static let segmentGap: CGFloat = 7
     /// Leading-glyph size — a touch smaller than the Fluxa mark so the readings stay the loudest thing.

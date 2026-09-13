@@ -153,21 +153,31 @@ struct ControlDeckDashboardView: View {
                         isPulsing: systemPulse
                     )
 
-                    HStack(spacing: 8) {
-                        if let dominantMetric {
-                            ControlDeckMetricPulse(metric: dominantMetric, role: .dominant, palette: palette)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 88)
-                        }
-
-                        if !satelliteMetrics.isEmpty {
-                            VStack(spacing: 8) {
-                                ForEach(satelliteMetrics) { metric in
-                                    ControlDeckMetricPulse(metric: metric, role: .satellite, palette: palette)
-                                }
+                    Group {
+                        if orderedSystemMetrics.count == AppSettings.maxSystemMetrics {
+                            MetricChipGrid(items: orderedSystemMetrics) { metric in
+                                ControlDeckMetricPulse(metric: metric, role: .satellite, palette: palette)
                             }
                             .frame(maxWidth: .infinity)
                             .frame(height: 88)
+                        } else {
+                            HStack(spacing: 8) {
+                                if let dominantMetric {
+                                    ControlDeckMetricPulse(metric: dominantMetric, role: .dominant, palette: palette)
+                                        .frame(maxWidth: .infinity)
+                                        .frame(height: 88)
+                                }
+
+                                if !satelliteMetrics.isEmpty {
+                                    VStack(spacing: 8) {
+                                        ForEach(satelliteMetrics) { metric in
+                                            ControlDeckMetricPulse(metric: metric, role: .satellite, palette: palette)
+                                        }
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 88)
+                                }
+                            }
                         }
                     }
                     .padding(.top, 2)
@@ -207,14 +217,16 @@ struct ControlDeckDashboardView: View {
                         isPulsing: agentPulse
                     )
 
-                    HStack(spacing: 8) {
-                        ForEach(agentMetrics) { metric in
-                            ControlDeckAgentPulse(
-                                metric: metric,
-                                displayName: agentDisplayName(for: metric),
-                                palette: palette
-                            )
-                        }
+                    // Three agents abreast leave each chip about a third of the strip, which is not
+                    // enough for a provider name and a percentage: both truncate to an ellipsis and
+                    // the row stops saying which agent is which. Wrapping at two per row is what the
+                    // System section above already does, and what the classic strip has always done.
+                    MetricChipGrid(items: agentMetrics) { metric in
+                        ControlDeckAgentPulse(
+                            metric: metric,
+                            displayName: agentDisplayName(for: metric),
+                            palette: palette
+                        )
                     }
                     .padding(.top, 2)
                     .padding(.trailing, 12)

@@ -334,13 +334,13 @@ struct CodexUsageReader {
 /// seconds and sometimes don't, and `ISO8601DateFormatter` only accepts the exact shape it's
 /// configured for.
 enum AgentDate {
-    private static let withFractional: ISO8601DateFormatter = {
+    nonisolated(unsafe) private static let withFractional: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return formatter
     }()
 
-    private static let plain: ISO8601DateFormatter = {
+    nonisolated(unsafe) private static let plain: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime]
         return formatter

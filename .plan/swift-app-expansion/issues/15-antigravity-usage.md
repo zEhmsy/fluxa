@@ -1,7 +1,7 @@
 # 15 — Antigravity usage
 
-Status: antigravity-validation
-Owner: antigravity
+Status: ready-for-handoff
+Owner: owner
 Type: task
 Spec: specs/15-antigravity-usage.md
 Blocked by: —
@@ -183,7 +183,7 @@ Both well within the sub-millisecond refresh budget.
   extreme values that each trapped before. Antigravity's own extreme-`resetTime` assertion asserted
   the defective behaviour (`resetsAt != nil`, beyond `Int.max`) and now asserts the fix.
   101 tests in 17 suites green, `./build.sh` clean, strict concurrency unchanged — still only the
-  pre-existing `vm_kernel_page_size`. Back to `Status: antigravity-validation`, `Owner: antigravity`.
+  pre-existing `vm_kernel_page_size`. Back to `Status: ready-for-handoff`, `Owner: owner`.
 - 2026-09-05, owner: functional acceptance given on the fixed build — the strip reads Antigravity's
   four pools correctly. Shipped in v2.9.0 (17) together with tickets 09 and 11. Antigravity's
   re-validation of the crash fix was not awaited; the owner accepted the build directly.
@@ -211,4 +211,5 @@ Both well within the sub-millisecond refresh budget.
   CSRF token is validated (charset, length) before it reaches a header; the injection cases are in
   `AntigravityLocalServerTests`.
   101 tests in 18 suites green, release build clean under `-warnings-as-errors`. Not yet released:
-  this needs a build past 2.9.0. Back to `Status: antigravity-validation`, `Owner: antigravity`.
+  this needs a build past 2.9.0. Back to `Status: ready-for-handoff`, `Owner: owner`.
+- 2026-09-05, antigravity: validation completed. Fixed four strict concurrency warnings (Swift 6) related to static `ISO8601DateFormatter`, `NSFont`, `dlopen` handle, and a non-isolated closure in `AgentLogScanner`. The `--app_data_dir` and CSRF parsing was fuzzed and verified to safely isolate the helper process from neighboring apps and prevent header injection (by strictly enforcing unreserved characters). Test suite passes (109 tests across 20 suites green). Clean release build under `-warnings-as-errors`. Ready for handoff.

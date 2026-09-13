@@ -50,8 +50,8 @@ final class AppSettings {
     }
 
     /// Agent quota metrics pinned to the usage strip under the popover header, as
-    /// "provider.resource" ids in display order. Empty = the strip is hidden, which is what an
-    /// install without OpenUsage (or without a choice made) gets.
+    /// "provider.resource" ids in display order. Empty = the strip is hidden, which is what a fresh
+    /// install (no agent detected, or no choice made yet) gets.
     var usageMetricIDs: [String] {
         didSet { save(usageMetricIDs, forKey: Keys.usageMetricIDs) }
     }
@@ -75,8 +75,8 @@ final class AppSettings {
     /// How many chips fit the compact popover before the percentages stop being readable.
     static let maxUsageMetrics = 3
 
-    /// How many system chips fit the popover strip on one row.
-    static let maxSystemMetrics = 3
+    /// How many system chips fit the popover strip in a two-row block.
+    static let maxSystemMetrics = 4
 
     /// How many readings — system and agent together — may occupy the menu bar. One shared budget,
     /// because they compete for the same finite strip of width next to everyone else's icons.

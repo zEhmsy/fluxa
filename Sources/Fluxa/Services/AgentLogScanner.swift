@@ -1,16 +1,19 @@
+import FluxaCore
 import Foundation
+import SQLite3
 
 // MARK: - AgentLogScanner
 
-/// Builds each agent's daily token history by reading the session logs the agents write themselves
-/// (`~/.claude/projects/**/*.jsonl`, `~/.codex/sessions/**/*.jsonl`).
+/// Builds each agent's daily token history from local session data: Claude/Codex JSONL logs and
+/// Antigravity conversation databases.
 ///
 /// This is where the usage charts get their data. The quota endpoints only report a current
 /// percentage, so a chart fed from live polling would start empty and stay thin for days — while
 /// the logs already hold weeks of exact per-turn token counts.
 ///
-/// The aggregation was verified against the same days OpenUsage reports: every past day matches to
-/// the token for Claude, and 8 of 9 for Codex (see `scanCodexFile` for the one known gap).
+/// The aggregation was cross-checked against an independently computed set of daily totals for the
+/// same days: every past day matches to the token for Claude, and 8 of 9 for Codex (see
+/// `scanCodexFile` for the one known gap).
 ///
 /// An `actor` because it owns a mutable on-disk cache and does all its work off the main thread.
 actor AgentLogScanner {
@@ -20,13 +23,15 @@ actor AgentLogScanner {
 
     // MARK: - Cache
 
-    /// One scanned file. Logs are append-only, so a file whose size and modification date are
-    /// unchanged cannot have new usage in it — its totals are reused without reading a byte. Only
-    /// the sessions being written right now are ever re-read.
+    /// One scanned file. JSONL logs use their size and modification date; Antigravity databases
+    /// additionally include the WAL signature because their main file may remain unchanged during
+    /// a live conversation.
     private struct CachedFile: Codable {
         var size: Int64
         var modified: Date
         var byDay: [String: Int]
+        var companionSize: Int64? = nil
+        var companionModified: Date? = nil
     }
 
     private var cache: [String: CachedFile] = [:]
@@ -43,7 +48,7 @@ actor AgentLogScanner {
 
     // MARK: - Public API
 
-    /// Scans both agents' logs and returns their daily token totals.
+    /// Scans all agents' local usage data and returns their daily token totals.
     func scan() -> DailyTotals {
         loadCacheIfNeeded()
 
@@ -58,6 +63,9 @@ actor AgentLogScanner {
             marker: #""token_count""#,
             parse: Self.scanCodexFile
         )
+        totals["antigravity"] = scanAntigravityDatabases()
+        cache = cache.filter { FileManager.default.fileExists(atPath: $0.key) }
+
         saveCache()
         return totals
     }
@@ -67,14 +75,11 @@ actor AgentLogScanner {
     private func scanFiles(
         at urls: [URL],
         marker: String,
-        parse: (Data) -> [String: Int]
+        parse: @Sendable (Data) -> [String: Int]
     ) -> [String: Int] {
         var totals: [String: Int] = [:]
-        var liveKeys: Set<String> = []
-
         for url in urls {
             let key = url.path
-            liveKeys.insert(key)
 
             let attributes = try? FileManager.default.attributesOfItem(atPath: key)
             let size = (attributes?[.size] as? NSNumber)?.int64Value ?? 0
@@ -100,8 +105,6 @@ actor AgentLogScanner {
             }
         }
 
-        // Drop entries for logs that have since been deleted or rotated away.
-        cache = cache.filter { liveKeys.contains($0.key) || !$0.key.hasPrefix("/Users") }
         return totals
     }
 
@@ -109,7 +112,7 @@ actor AgentLogScanner {
     /// fields are summed because that's the figure the agents' own tooling reports. A repeated
     /// `message.id` is the same turn replayed into the log (resumed sessions, sidechains) and is
     /// counted once.
-    private static func scanClaudeFile(_ data: Data) -> [String: Int] {
+    @Sendable private static func scanClaudeFile(_ data: Data) -> [String: Int] {
         var byDay: [String: Int] = [:]
         var seen: Set<String> = []
 
@@ -137,10 +140,10 @@ actor AgentLogScanner {
     /// is a re-emitted stale snapshot, not new work, and is skipped — without that rule the totals
     /// run 0.2–1.8% high.
     ///
-    /// Known gap: a child session replays its parent's history with rewritten timestamps, which
-    /// OpenUsage additionally filters by watching for the first live `task_started`. That's not
+    /// Known gap: a child session replays its parent's history with rewritten timestamps. Filtering
+    /// those out needs a second rule — watch for the first live `task_started` — which is not
     /// reproduced here; on the sampled history it accounted for 0.08% on one day out of nine.
-    private static func scanCodexFile(_ data: Data) -> [String: Int] {
+    @Sendable private static func scanCodexFile(_ data: Data) -> [String: Int] {
         var byDay: [String: Int] = [:]
         var previousTotal: Int?
 
@@ -166,6 +169,194 @@ actor AgentLogScanner {
             byDay[day, default: 0] += tokens
         }
         return byDay
+    }
+
+    // MARK: - Antigravity SQLite
+
+    private static let maximumAntigravityDatabaseBytes: Int64 = 256 * 1_024 * 1_024
+
+    private func scanAntigravityDatabases() -> [String: Int] {
+        let databases = logFiles(in: "~/.gemini/antigravity/conversations", extension: "db")
+        guard let scratchRoot = prepareAntigravityScratchDirectory() else { return [:] }
+
+        var totals: [String: Int] = [:]
+        for databaseURL in databases {
+            autoreleasepool {
+                let key = databaseURL.path
+                let databaseSignature = fileSignature(at: databaseURL)
+                let walSignature = fileSignature(at: URL(fileURLWithPath: key + "-wal"))
+
+                if let cached = cache[key],
+                   cached.size == databaseSignature.size,
+                   cached.modified == databaseSignature.modified,
+                   (cached.companionSize ?? 0) == walSignature.size,
+                   (cached.companionModified ?? .distantPast) == walSignature.modified {
+                    merge(cached.byDay, into: &totals)
+                    return
+                }
+
+                let combinedSize = databaseSignature.size.addingReportingOverflow(walSignature.size)
+                guard !combinedSize.overflow,
+                      databaseSignature.size > 0,
+                      combinedSize.partialValue <= Self.maximumAntigravityDatabaseBytes,
+                      let copyURL = copyAntigravityDatabase(databaseURL, into: scratchRoot)
+                else {
+                    cache[key] = CachedFile(
+                        size: databaseSignature.size,
+                        modified: databaseSignature.modified,
+                        byDay: [:],
+                        companionSize: walSignature.size,
+                        companionModified: walSignature.modified
+                    )
+                    return
+                }
+
+                let byDay = Self.readAntigravityDatabase(at: copyURL)
+                cache[key] = CachedFile(
+                    size: databaseSignature.size,
+                    modified: databaseSignature.modified,
+                    byDay: byDay,
+                    companionSize: walSignature.size,
+                    companionModified: walSignature.modified
+                )
+                merge(byDay, into: &totals)
+            }
+        }
+
+        return totals
+    }
+
+    private func prepareAntigravityScratchDirectory() -> URL? {
+        let base = FileManager.default
+            .urls(for: .applicationSupportDirectory, in: .userDomainMask)
+            .first ?? URL(fileURLWithPath: NSTemporaryDirectory())
+        let directory = base
+            .appendingPathComponent("Fluxa", isDirectory: true)
+            .appendingPathComponent("antigravity-scan", isDirectory: true)
+
+        do {
+            try FileManager.default.createDirectory(
+                at: directory,
+                withIntermediateDirectories: true,
+                attributes: [.posixPermissions: 0o700]
+            )
+            try FileManager.default.setAttributes(
+                [.posixPermissions: 0o700],
+                ofItemAtPath: directory.path
+            )
+            for item in try FileManager.default.contentsOfDirectory(
+                at: directory,
+                includingPropertiesForKeys: nil
+            ) {
+                try FileManager.default.removeItem(at: item)
+            }
+            return directory
+        } catch {
+            return nil
+        }
+    }
+
+    private func copyAntigravityDatabase(_ source: URL, into scratchRoot: URL) -> URL? {
+        let workDirectory = scratchRoot.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let copyURL = workDirectory.appendingPathComponent("conversation.db")
+
+        do {
+            try FileManager.default.createDirectory(
+                at: workDirectory,
+                withIntermediateDirectories: false,
+                attributes: [.posixPermissions: 0o700]
+            )
+            try FileManager.default.copyItem(at: source, to: copyURL)
+
+            for suffix in ["-wal", "-shm"] {
+                let companion = URL(fileURLWithPath: source.path + suffix)
+                guard FileManager.default.fileExists(atPath: companion.path) else { continue }
+                try FileManager.default.copyItem(
+                    at: companion,
+                    to: URL(fileURLWithPath: copyURL.path + suffix)
+                )
+            }
+
+            return copyURL
+        } catch {
+            try? FileManager.default.removeItem(at: workDirectory)
+            return nil
+        }
+    }
+
+    private func fileSignature(at url: URL) -> (size: Int64, modified: Date) {
+        let attributes = try? FileManager.default.attributesOfItem(atPath: url.path)
+        return (
+            (attributes?[.size] as? NSNumber)?.int64Value ?? 0,
+            attributes?[.modificationDate] as? Date ?? .distantPast
+        )
+    }
+
+    private static func readAntigravityDatabase(at url: URL) -> [String: Int] {
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+
+        var database: OpaquePointer?
+        guard sqlite3_open_v2(
+            url.path,
+            &database,
+            SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX,
+            nil
+        ) == SQLITE_OK, let database else {
+            if database != nil { sqlite3_close(database) }
+            return [:]
+        }
+        defer { sqlite3_close(database) }
+
+        let sql = "SELECT g.idx, g.data, s.metadata FROM gen_metadata g JOIN steps s ON s.idx = g.idx"
+        var statement: OpaquePointer?
+        guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK,
+              let statement
+        else { return [:] }
+        defer { sqlite3_finalize(statement) }
+
+        let earliestSaneTimestamp: UInt64 = 1_577_836_800
+        let latestSaneTimestamp = UInt64(Date().addingTimeInterval(86_400).timeIntervalSince1970)
+        var byDay: [String: Int] = [:]
+
+        while sqlite3_step(statement) == SQLITE_ROW {
+            guard let tokenData = sqliteData(from: statement, column: 1),
+                  let timestampData = sqliteData(from: statement, column: 2),
+                  let seconds = ProtobufScan.value(at: [1, 1], in: timestampData),
+                  seconds >= earliestSaneTimestamp,
+                  seconds <= latestSaneTimestamp,
+                  let tokens = antigravityTokenTotal(in: tokenData)
+            else { continue }
+
+            let date = Date(timeIntervalSince1970: TimeInterval(seconds))
+            let day = localDay(from: date)
+            let addition = byDay[day, default: 0].addingReportingOverflow(tokens)
+            guard !addition.overflow else { continue }
+            byDay[day] = addition.partialValue
+        }
+
+        return byDay
+    }
+
+    private static func sqliteData(from statement: OpaquePointer, column: Int32) -> Data? {
+        let count = Int(sqlite3_column_bytes(statement, column))
+        guard count > 0, let bytes = sqlite3_column_blob(statement, column) else { return nil }
+        return Data(bytes: bytes, count: count)
+    }
+
+    private static func antigravityTokenTotal(in data: Data) -> Int? {
+        var foundValue = false
+        var total: UInt64 = 0
+
+        for field in [1, 2, 3, 5] {
+            guard let value = ProtobufScan.value(at: [1, 4, field], in: data) else { continue }
+            foundValue = true
+            let addition = total.addingReportingOverflow(value)
+            guard !addition.overflow else { return nil }
+            total = addition.partialValue
+        }
+
+        guard foundValue, total > 0, total <= UInt64(Int.max) else { return nil }
+        return Int(total)
     }
 
     // MARK: - Line parsing
@@ -195,7 +386,11 @@ actor AgentLogScanner {
     /// the first version disagree with the agents' own daily figures.
     private static func localDay(fromISO text: String) -> String? {
         guard let date = AgentDate.parse(text) else { return nil }
-        return dayFormatter.string(from: date)
+        return localDay(from: date)
+    }
+
+    private static func localDay(from date: Date) -> String {
+        dayFormatter.string(from: date)
     }
 
     private static let dayFormatter: DateFormatter = {
@@ -220,7 +415,9 @@ actor AgentLogScanner {
 
     private func merge(_ byDay: [String: Int], into totals: inout [String: Int]) {
         for (day, tokens) in byDay {
-            totals[day, default: 0] += tokens
+            let addition = totals[day, default: 0].addingReportingOverflow(tokens)
+            guard !addition.overflow else { continue }
+            totals[day] = addition.partialValue
         }
     }
 

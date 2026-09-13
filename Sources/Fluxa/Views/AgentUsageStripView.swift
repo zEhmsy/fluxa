@@ -35,10 +35,8 @@ struct AgentUsageStripView: View {
                 viewModel.isShowingAgentUsage = true
                 closePopover?()
             } label: {
-                HStack(spacing: 10) {
-                    ForEach(metrics) { metric in
-                        chip(for: metric)
-                    }
+                MetricChipGrid(items: metrics) { metric in
+                    chip(for: metric)
                 }
                 .padding(.horizontal, 11)
                 .padding(.vertical, 9)

@@ -80,7 +80,7 @@ private enum MultitouchBridge {
     private typealias FnDevice = @convention(c) (UnsafeMutableRawPointer?) -> Void
     private typealias FnRegister = @convention(c) (UnsafeMutableRawPointer?, FrameCallback) -> Void
 
-    private static let handle: UnsafeMutableRawPointer? = dlopen(
+    nonisolated(unsafe) private static let handle: UnsafeMutableRawPointer? = dlopen(
         "/System/Library/PrivateFrameworks/MultitouchSupport.framework/MultitouchSupport",
         RTLD_LAZY
     )

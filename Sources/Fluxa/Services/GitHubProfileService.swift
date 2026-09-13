@@ -66,6 +66,30 @@ final class GitHubProfileService {
 
     private var loadedAt: Date?
 
+    func seedSampleDataForScreenshots() {
+        self.profile = GitHubProfile(
+            login: "zEhmsy",
+            name: "Giuseppe Turturro",
+            bio: "Building thoughtful macOS utilities & Swift open-source.",
+            avatarURL: URL(string: "https://avatars.githubusercontent.com/u/1029384")!,
+            htmlURL: URL(string: "https://github.com/zEhmsy")!,
+            followers: 42,
+            publicRepos: 18,
+            location: "Italy"
+        )
+        self.repository = GitHubRepository(
+            name: "fluxa",
+            description: "Essential macOS system controls, live hardware stats, and agent usage.",
+            htmlURL: URL(string: "https://github.com/zEhmsy/fluxa")!,
+            stargazersCount: 88,
+            forksCount: 12,
+            openIssuesCount: 3,
+            language: "Swift"
+        )
+        self.errorMessage = nil
+        self.loadedAt = Date()
+    }
+
     /// Reuses a successful read for 15 minutes. About may be opened repeatedly from the menu-bar
     /// panel, and public GitHub API calls should not be spent on data that changes slowly.
     func load(force: Bool = false) async {

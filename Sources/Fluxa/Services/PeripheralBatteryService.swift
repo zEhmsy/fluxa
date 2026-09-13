@@ -62,6 +62,13 @@ final class PeripheralBatteryService {
         }
     }
 
+    func seedSampleDataForScreenshots() {
+        self.devices = [
+            PeripheralBatteryReading(id: "keyboard", name: "Magic Keyboard", level: 85, isCharging: false),
+            PeripheralBatteryReading(id: "mouse", name: "Magic Mouse", level: 68, isCharging: false)
+        ]
+    }
+
     /// Starts the fixed background cadence. The caller performs the initial/on-open refresh.
     func start() {
         guard loopTask == nil else { return }

@@ -15,13 +15,17 @@ meters, read from the helper process Antigravity itself runs.
 
 Four `AgentUsageMetric` values and nothing else.
 
-Excluded, deliberately: local token history (Antigravity's "spend" / "usage trend"). Those numbers
-exist only as generation-accounting protobuf records inside
-`~/.gemini/antigravity-cli/conversations/*.db`. Fluxa's `AgentLogScanner` reads JSONL session
-logs and has no SQLite or protobuf machinery; adding both to serve one provider's charts is a
-larger piece of work than the quota reader itself. `AgentUsageWindowView` already tolerates a
-provider with no `dailyTokens` entry — the contribution grid is simply omitted — so the provider
-degrades cleanly. Revisit as its own ticket if wanted.
+Excluded, deliberately: local activity history (Antigravity's "spend" / "usage trend"). Those
+records live only as protobuf blobs inside SQLite databases under
+`~/.gemini/antigravity/conversations/*.db`. Fluxa's `AgentLogScanner` reads JSONL session logs and
+has no SQLite or protobuf machinery; adding both to serve one provider's charts is a larger piece of
+work than the quota reader itself. `AgentUsageWindowView` already tolerates a provider with no
+`dailyTokens` entry — the contribution grid is simply omitted — so the provider degrades cleanly.
+
+Revisited as ticket 17, which carries the verified data contract. Note the path above corrects an
+earlier guess in this spec (`~/.gemini/antigravity-cli/conversations/`), which does not exist: the
+helper is launched with a *relative* `--app_data_dir antigravity`, so the base had to be resolved
+from the running process rather than assumed.
 
 ## D2 — The source is Antigravity's own helper, not a credential
 

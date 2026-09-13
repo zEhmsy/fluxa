@@ -52,6 +52,8 @@ final class AgentUsageService {
     /// shorter spacing would spend requests to redraw the same number.
     private static let minimumRefreshInterval: TimeInterval = 180
 
+    private(set) var isSeededForScreenshots = false
+
     /// How often the background loop wakes to check whether a refresh is due. Short so a change of
     /// interval in Customize takes effect promptly; the wake itself does no I/O.
     private static let tickInterval: Duration = .seconds(30)
@@ -66,6 +68,7 @@ final class AgentUsageService {
     /// Refreshes usage in the background. Cheap to call on every popover open: it returns
     /// immediately when the last read is still fresh, and coalesces concurrent calls.
     func refresh(force: Bool = false) {
+        guard !isSeededForScreenshots else { return }
         if !force, let lastRefreshedAt,
            Date().timeIntervalSince(lastRefreshedAt) < Self.minimumRefreshInterval {
             return
@@ -111,6 +114,7 @@ final class AgentUsageService {
     /// it runs when the usage window opens rather than on every quota refresh. Cheap after the first
     /// pass — unchanged log files are served from cache.
     func scanLogs() {
+        guard !isSeededForScreenshots else { return }
         guard scanTask == nil else { return }
         isScanningLogs = dailyTokens.isEmpty
         scanTask = Task { [weak self, logScanner] in
@@ -136,6 +140,48 @@ final class AgentUsageService {
             }
             return converted
         }
+    }
+
+    func seedSampleDataForScreenshots() {
+        self.isSeededForScreenshots = true
+        let calendar = Calendar.current
+        let now = Date()
+        self.metrics = [
+            AgentUsageMetric(id: "claude.session", providerID: "claude", providerName: "Claude", label: "Session", percentUsed: 42, resetsAt: now.addingTimeInterval(3 * 3600 + 18 * 60)),
+            AgentUsageMetric(id: "claude.sonnet", providerID: "claude", providerName: "Claude", label: "Sonnet", percentUsed: 18, resetsAt: now.addingTimeInterval(4 * 86400 + 12 * 3600)),
+            AgentUsageMetric(id: "codex.weekly", providerID: "codex", providerName: "Codex", label: "Weekly", percentUsed: 65, resetsAt: now.addingTimeInterval(2 * 86400 + 8 * 3600)),
+            AgentUsageMetric(id: "codex.session", providerID: "codex", providerName: "Codex", label: "5h Limit", percentUsed: 32, resetsAt: now.addingTimeInterval(4 * 3600 + 5 * 60)),
+            AgentUsageMetric(id: "antigravity.session", providerID: "antigravity", providerName: "Antigravity", label: "Session", percentUsed: 28, resetsAt: now.addingTimeInterval(1 * 3600 + 45 * 60))
+        ]
+        self.lastRefreshedAt = now
+        self.isRefreshing = false
+        self.isScanningLogs = false
+
+        var claudeDays: [Date: Int] = [:]
+        var codexDays: [Date: Int] = [:]
+        var antigravityDays: [Date: Int] = [:]
+        for dayOffset in 0..<180 {
+            if let date = calendar.date(byAdding: .day, value: -dayOffset, to: now) {
+                let startOfDay = calendar.startOfDay(for: date)
+                let cSeed = (dayOffset * 37 + 13) % 100
+                if cSeed > 20 {
+                    claudeDays[startOfDay] = cSeed * 1200 + 5000
+                }
+                let xSeed = (dayOffset * 43 + 29) % 100
+                if xSeed > 25 {
+                    codexDays[startOfDay] = xSeed * 950 + 3000
+                }
+                let aSeed = (dayOffset * 51 + 7) % 100
+                if aSeed > 15 {
+                    antigravityDays[startOfDay] = aSeed * 1500 + 8000
+                }
+            }
+        }
+        self.dailyTokens = [
+            "claude": claudeDays,
+            "codex": codexDays,
+            "antigravity": antigravityDays
+        ]
     }
 
     /// The metrics matching the user's selection, in the order they were selected — so the strip

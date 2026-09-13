@@ -113,8 +113,58 @@ _(append one line per resolved ticket: number, gist, link to the ticket file)_
   gone. Fluxa holds no copy of that login and the request never leaves the machine. The cost
   is that the meters exist only while Antigravity is running.
   Local token history (spend, usage trend) excluded — needs SQLite + protobuf that
-  `AgentLogScanner` has no shape for.
+  `AgentLogScanner` has no shape for. **Exclusion lifted by ticket 17.**
   → `issues/15-antigravity-usage.md`, `specs/15-antigravity-usage.md`
+
+- **16** — Spec written. Both popover strips wrap at two chips per row, via one shared
+  `MetricChipGrid` used by `AgentUsageStripView` and `SystemStatsStripView` so the two
+  stay the siblings they were designed as. Three chips render 2 + 1 with the odd chip
+  full-width; four render 2 + 2, which is what the owner asked for. One and two chips keep
+  today's single row and today's popover height exactly, so the second row is a cost only
+  for users who choose it. `maxSystemMetrics` 3 → 4; `maxUsageMetrics` deliberately stays
+  3, since Antigravity alone exposes four pools and a cap of four would allow a strip with
+  no Claude in it. Implemented; owner testing then found the spec had missed a surface — the Cyber
+  appearance draws its readings through `ControlDeckDashboardView`, not the strip, and was still
+  dropping the fourth — so the same grid now backs the four-metric case there too.
+  → `issues/16-strip-two-column-layout.md`, `specs/16-strip-two-column-layout.md`
+
+- **17** — Spec written, reversing 15's exclusion of local history. Data contract verified
+  against a live install rather than assumed: `~/.gemini/antigravity/conversations/*.db`
+  (15's `antigravity-cli` path never existed — the helper's `--app_data_dir` is relative,
+  so the base had to come from the running process), `gen_metadata` joined to `steps` on
+  `idx`, timestamp at protobuf path `1.1` of the step, four token leaves under `1.4`
+  summed the way `scanClaudeFile` sums Claude's four. The finding that decides the design:
+  these databases are **WAL mode and held open**, so a read-only open fails with
+  `SQLITE_CANTOPEN` on exactly the conversation the user is working in — the reader copies
+  db + `-wal` + `-shm` to scratch and opens the copy, and the file cache keys on the
+  `-wal`'s mtime too or it serves stale totals forever. A minimal `ProtobufScan` lands in
+  `FluxaCore` so it is testable; SQLite stays in the executable target.
+  → `issues/17-antigravity-activity-history.md`, `specs/17-antigravity-activity-history.md`
+
+- **18** — Reopened with a spec after the first fix failed on the owner's machine. The
+  persisted `NSStatusItem Visible… = 0` is written *by Fluxa on every launch*, so it was the
+  symptom; and the item does exist, contrary to a window-list probe that cannot see menu bar
+  items at all (macOS attributes every one of them to Control Center — use the Accessibility
+  API). What the log shows is the item being re-inserted every ~10.5 s, matching
+  `SystemStatsService`'s sampler: twenty `NSStatusItemChangeVisibilityAction` events in three
+  minutes, against zero for two control `MenuBarExtra` apps. Cause: `menuBarIcon` and
+  `menuBarSegments` are computed on the `App` struct, so their observable reads register a
+  dependency on `FluxaApp.body` and every sample rebuilds the whole scene graph. The rule the
+  spec imposes: `FluxaApp.body` reads no property of an observable object — which also catches
+  the seven `settings.visualStyle` reads in the scene modifiers. `isInserted: .constant(true)`
+  is kept, on its own merits rather than as the fix.
+  Closed 2026-09-13, and that cause is wrong too: build 19 stopped the churn and the icon stayed
+  missing. The real pair was a main-thread deadlock at launch — `PeripheralBatterySampler` calling
+  `IOBluetoothDevice.pairedDevices()` with no Bluetooth grant, which never returns, so no status
+  item is ever created — and, outside Fluxa entirely, Control Center's `trackedApplications`
+  allow-list, where eight other apps claimed `com.giuseppe.fluxa` in their `menuItemLocations` and
+  two of them were `isAllowed = False`. Control Center applied the other app's denial. That is why
+  no reinstall, no preferences deletion and no System Settings toggle ever helped: the mapping is in
+  another app's group container, TCC-protected, and unreachable from the toggle. The lesson worth
+  keeping is diagnostic, not architectural — three successive root causes were confirmed by
+  measurement and two were still wrong, because each explained the evidence without being tested
+  against a control that isolated it.
+  → `issues/18-menubar-item-cannot-return.md`, `specs/18-menubar-item-cannot-return.md`
 
 ## Fog
 

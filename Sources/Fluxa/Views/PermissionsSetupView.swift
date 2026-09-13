@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 // MARK: - PermissionsSetupView
@@ -56,6 +57,9 @@ struct PermissionsSetupView: View {
         .task { await permissions.refresh() }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             Task { await permissions.refresh() }
+            // Coming back from launching Antigravity is the moment its card can stop saying the
+            // app isn't running.
+            viewModel.agentUsage.refresh()
         }
         .onDisappear {
             settings.hasPresentedPermissionsSetup = true
@@ -125,8 +129,7 @@ struct PermissionsSetupView: View {
                 settingsAction: nil,
                 requestsDisabled: !isInstalled || (permissions.busyPermission != nil && permissions.busyPermission != "claude")
             )
-            // Antigravity needs no card: its quota comes from the helper Antigravity itself runs,
-            // so there is no credential to read and no permission to grant.
+            antigravityCard
 
             FluxaToolCard {
                 VStack(alignment: .leading, spacing: 10) {
@@ -148,6 +151,59 @@ struct PermissionsSetupView: View {
             installationCard
             gatekeeperCard
         }
+    }
+
+    /// Antigravity has no permission to grant and no credential to read: its quota comes from the
+    /// helper Antigravity itself runs. The card exists anyway, because a provider that is listed
+    /// everywhere else and absent from this guide reads as a permission somebody forgot to add,
+    /// when the only thing that makes the numbers appear is having Antigravity open.
+    private var antigravityCard: some View {
+        let isReporting = viewModel.agentUsage.metrics.contains { $0.providerID == "antigravity" }
+
+        return FluxaToolCard {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: "bolt.horizontal.circle")
+                        .font(.system(size: 16))
+                        .frame(width: 22)
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Antigravity").font(.system(size: 13, weight: .semibold))
+                        Text("Optional · Agent Usage").font(.system(size: 11)).foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    FluxaStatusBadge(
+                        text: isReporting ? "Reporting" : "Antigravity not running",
+                        color: isReporting ? FluxaTheme.green : FluxaTheme.orange
+                    )
+                }
+                Text("Nothing to allow here. Fluxa asks the helper Antigravity already runs, so no login is read and "
+                    + "the request never leaves this Mac. The numbers exist only while Antigravity is open, and go "
+                    + "away when you quit it.")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                if !isReporting {
+                    if let application = Self.antigravityApplicationURL {
+                        Button("Open Antigravity") { NSWorkspace.shared.open(application) }
+                            .buttonStyle(FluxaPrimaryButtonStyle())
+                    } else {
+                        Text("Antigravity isn't installed on this Mac.")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    /// The stable release and the IDE build install side by side under different names; whichever is
+    /// present is the one whose helper serves the quota.
+    private static var antigravityApplicationURL: URL? {
+        ["/Applications/Antigravity.app", "/Applications/Antigravity IDE.app"]
+            .map(URL.init(fileURLWithPath:))
+            .first { FileManager.default.fileExists(atPath: $0.path) }
     }
 
     private var installationCard: some View {

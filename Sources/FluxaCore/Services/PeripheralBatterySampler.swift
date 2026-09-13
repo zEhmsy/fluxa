@@ -1,6 +1,7 @@
 import Foundation
 import IOKit.ps
 import IOBluetooth
+import CoreBluetooth
 
 // MARK: - PeripheralBatteryReading
 
@@ -59,6 +60,13 @@ package struct PeripheralBatterySampler {
         }
 
         // 2. IOBluetooth paired & connected devices (AirPods, Bluetooth headphones / headsets)
+        //
+        // Gated exactly like BluetoothAudioService.refresh(): without an existing grant, the first
+        // `pairedDevices()` call spins up IOBluetooth's CoreBluetooth coordinator, whose
+        // initialiser blocks on a semaphore that is never signalled. Called from the launch path
+        // that deadlocks the main thread, so the status item is never created.
+        guard BluetoothAuthorizationCache.isAllowed else { return Array(results.values) }
+
         if let paired = IOBluetoothDevice.pairedDevices() as? [IOBluetoothDevice] {
             for dev in paired where dev.isConnected() {
                 let name = dev.nameOrAddress ?? "Bluetooth Device"
@@ -119,5 +127,46 @@ package struct PeripheralBatterySampler {
         }
 
         return Array(results.values)
+    }
+}
+
+// MARK: - BluetoothAuthorizationCache
+
+/// Remembers the Bluetooth authorization answer for a moment, because asking is expensive.
+///
+/// `CBManager.authorization` is an XPC round trip to `bluetoothd`: measured at 8.6 ms per call on an
+/// M-series Mac, against 0.026 ms for the entire IOKit power-source traversal it guards. Asking once
+/// per sample would make the guard cost three hundred times the work it protects.
+///
+/// The window is deliberately shorter than the sampling interval, so the cache changes how often the
+/// question is asked without changing the answer anyone acts on. A permission the user has just
+/// granted shows up on the next reading rather than after a relaunch, and one they have revoked
+/// stops us calling into IOBluetooth just as quickly — which is the case that matters, since that
+/// call is what blocks forever without a grant.
+private enum BluetoothAuthorizationCache {
+
+    private static let lifetime: TimeInterval = 3
+
+    private static let lock = NSLock()
+    nonisolated(unsafe) private static var authorization: CBManagerAuthorization?
+    nonisolated(unsafe) private static var readAt: TimeInterval = 0
+
+    /// Sampling runs on whichever thread the caller is on, so the two fields move together under a
+    /// lock rather than racing a stale timestamp against a fresh value.
+    static var isAllowed: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+
+        // Uptime rather than wall clock: it cannot jump backwards when the clock is corrected, which
+        // would otherwise pin a stale answer in place.
+        let now = ProcessInfo.processInfo.systemUptime
+        if let authorization, now - readAt < lifetime {
+            return authorization == .allowedAlways
+        }
+
+        let fresh = CBManager.authorization
+        authorization = fresh
+        readAt = now
+        return fresh == .allowedAlways
     }
 }

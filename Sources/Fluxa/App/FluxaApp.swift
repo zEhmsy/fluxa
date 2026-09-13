@@ -32,17 +32,17 @@ struct FluxaApp: App {
     // MARK: - Scene
 
     var body: some Scene {
-        MenuBarExtra {
+        MenuBarExtra(isInserted: .constant(true)) {
             PopoverRootView()
                 .environment(viewModel)
                 .environment(settings)
-                .environment(\.fluxaVisualStyle, settings.visualStyle)
+                .fluxaVisualStyle(from: settings)
                 .onAppear {
                     viewModel.refreshStates()
                 }
         } label: {
             FluxaLaunchLabel(settings: settings, viewModel: viewModel) {
-                menuBarIcon
+                MenuBarStripLabel(settings: settings, viewModel: viewModel)
             }
         }
         .menuBarExtraStyle(.window)
@@ -51,7 +51,7 @@ struct FluxaApp: App {
             PermissionsSetupView()
                 .environment(viewModel)
                 .environment(settings)
-                .environment(\.fluxaVisualStyle, settings.visualStyle)
+                .fluxaVisualStyle(from: settings)
                 .registersFluxaWindow(id: PermissionsService.windowID)
         }
         .windowResizability(.contentSize)
@@ -63,7 +63,7 @@ struct FluxaApp: App {
         Window("Focus Mode Setup", id: "focus-onboarding") {
             FocusOnboardingView()
                 .environment(viewModel)
-                .environment(\.fluxaVisualStyle, settings.visualStyle)
+                .fluxaVisualStyle(from: settings)
                 .registersFluxaWindow(id: "focus-onboarding")
         }
         .windowResizability(.contentSize)
@@ -73,7 +73,7 @@ struct FluxaApp: App {
         Window("Lid Angle", id: "lid-angle") {
             LidAngleWindowView()
                 .environment(viewModel)
-                .environment(\.fluxaVisualStyle, settings.visualStyle)
+                .fluxaVisualStyle(from: settings)
                 .registersFluxaWindow(id: "lid-angle")
         }
         .windowResizability(.contentSize)
@@ -84,7 +84,7 @@ struct FluxaApp: App {
             TrackpadScaleWindowView()
                 .environment(viewModel)
                 .environment(settings)
-                .environment(\.fluxaVisualStyle, settings.visualStyle)
+                .fluxaVisualStyle(from: settings)
                 .registersFluxaWindow(id: "trackpad-scale")
         }
         .windowResizability(.contentSize)
@@ -95,7 +95,7 @@ struct FluxaApp: App {
             SystemStatsWindowView()
                 .environment(viewModel)
                 .environment(settings)
-                .environment(\.fluxaVisualStyle, settings.visualStyle)
+                .fluxaVisualStyle(from: settings)
                 .registersFluxaWindow(id: "system-stats")
         }
         .windowResizability(.contentSize)
@@ -106,34 +106,13 @@ struct FluxaApp: App {
             AgentUsageWindowView()
                 .environment(viewModel)
                 .environment(settings)
-                .environment(\.fluxaVisualStyle, settings.visualStyle)
+                .fluxaVisualStyle(from: settings)
                 .registersFluxaWindow(id: "agent-usage")
         }
         .windowResizability(.contentSize)
         .defaultPosition(.center)
     }
 
-    // MARK: - Menu Bar Icon
-
-    /// A reading for each metric the user sent to the menu bar in Customize. When the list is empty,
-    /// the Fluxa mark is used as a compact fallback. Reading the observable services here is what
-    /// makes the strip refresh itself: a new value re-renders the label and status item.
-    @ViewBuilder
-    private var menuBarIcon: some View {
-        if let image = MenuBarStripRenderer.image(segments: menuBarSegments) {
-            Image(nsImage: image)
-        } else {
-            Image(systemName: "bolt.circle.fill")
-        }
-    }
-
-    private var menuBarSegments: [MenuBarStripRenderer.Segment] {
-        MenuBarStripRenderer.combinedSegments(
-            system: viewModel.systemStats.selectedMetrics(ids: settings.systemMenuBarMetricIDs),
-            agents: viewModel.agentUsage.selectedMetrics(ids: settings.usageMenuBarMetricIDs),
-            limit: AppSettings.maxMenuBarMetrics
-        )
-    }
 }
 
 /// The menu-bar label exists at launch, unlike the lazily created popover content. Use its task

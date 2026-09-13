@@ -73,9 +73,12 @@ final class SystemStatsService {
         loopTask = nil
     }
 
+    private(set) var isSeededForScreenshots = false
+
     /// Takes one reading now, regardless of the loop. Called when the popover opens so the strip
     /// isn't blank for up to a full interval.
     func refreshNow() {
+        guard !isSeededForScreenshots else { return }
         Task { [weak self] in
             guard let self else { return }
             let sample = await self.sampler.sample()
@@ -87,6 +90,7 @@ final class SystemStatsService {
     /// strip/menu-bar metric while that window is open.
     func setDashboardVisible(_ isVisible: Bool) {
         isDashboardVisible = isVisible
+        guard !isSeededForScreenshots else { return }
         let minimumAge = max(0.5, interval().seconds / 2)
         let needsFreshSample = lastSampledAt.map { Date().timeIntervalSince($0) >= minimumAge } ?? true
         if isVisible && needsFreshSample {
@@ -110,6 +114,58 @@ final class SystemStatsService {
     /// unavailable instead of hiding it, so the absence is explained.
     func isAvailable(_ id: SystemMetricID) -> Bool {
         metrics.contains { $0.id == id }
+    }
+
+    func seedSampleDataForScreenshots() {
+        self.isSeededForScreenshots = true
+        self.metrics = [
+            SystemMetric(id: .cpuUsage, value: 14),
+            SystemMetric(id: .gpuUsage, value: 8),
+            SystemMetric(id: .memoryUsage, value: 68),
+            SystemMetric(id: .cpuTemperature, value: 46),
+            SystemMetric(id: .gpuTemperature, value: 42),
+            SystemMetric(id: .dieTemperature, value: 44),
+            SystemMetric(id: .diskUsedPercentage, value: 52),
+            SystemMetric(id: .diskFreeSpace, value: 245 * 1024 * 1024 * 1024),
+            SystemMetric(id: .diskReadRate, value: 1.4 * 1024 * 1024),
+            SystemMetric(id: .diskWriteRate, value: 3.8 * 1024 * 1024),
+            SystemMetric(id: .networkDownloadRate, value: 2.1 * 1024 * 1024),
+            SystemMetric(id: .networkUploadRate, value: 480 * 1024),
+            SystemMetric(id: .batteryLevel, value: 92),
+            SystemMetric(id: .batteryTimeRemaining, value: 5 * 3600 + 45 * 60)
+        ]
+        self.hasSampled = true
+        self.isOnACPower = false
+        self.lastSampledAt = Date()
+
+        var historySamples: [SystemStatsHistorySample] = []
+        let now = Date()
+        for i in (0..<30).reversed() {
+            let t = now.addingTimeInterval(-Double(i * 60))
+            let cpuVal = 10.0 + 8.0 * sin(Double(i) * 0.4)
+            let gpuVal = 5.0 + 4.0 * cos(Double(i) * 0.3)
+            let ramVal = 65.0 + 3.0 * sin(Double(i) * 0.2)
+            let cpuTempVal = 44.0 + 3.0 * sin(Double(i) * 0.3)
+            let gpuTempVal = 40.0 + 2.0 * cos(Double(i) * 0.3)
+            let dieVal = 42.0 + 3.0 * sin(Double(i) * 0.5)
+            let diskVal = 52.0
+            let battVal = 92.0 - Double(30 - i) * 0.1
+            let netDown = 1_200_000 + 900_000 * sin(Double(i) * 0.6)
+            let netUp = 350_000 + 200_000 * cos(Double(i) * 0.4)
+            historySamples.append(SystemStatsHistorySample(timestamp: t, values: [
+                .cpuUsage: cpuVal,
+                .gpuUsage: gpuVal,
+                .memoryUsage: ramVal,
+                .cpuTemperature: cpuTempVal,
+                .gpuTemperature: gpuTempVal,
+                .dieTemperature: dieVal,
+                .diskUsedPercentage: diskVal,
+                .batteryLevel: battVal,
+                .networkDownloadRate: netDown,
+                .networkUploadRate: netUp
+            ]))
+        }
+        self.history = historySamples
     }
 
     // MARK: - Loop

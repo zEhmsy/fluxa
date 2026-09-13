@@ -147,7 +147,7 @@ struct CustomizeSystemStatsSection: View {
             get: { settings.systemMetricIDs.contains(id.rawValue) },
             set: { isOn in
                 if isOn {
-                    // The popover strip has its own, roomier cap — three chips across 328pt.
+                    // The popover strip has its own, roomier cap — up to four chips in a 2x2 block.
                     guard settings.systemMetricIDs.count < AppSettings.maxSystemMetrics else { return }
                     settings.systemMetricIDs.append(id.rawValue)
                 } else {
