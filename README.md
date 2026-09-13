@@ -39,9 +39,9 @@ Built in **Swift + SwiftUI**, with Apple system frameworks and Sparkle 2 for Dir
 <p align="center"><sub>Customize groups preferences into General, Actions, System, Agents and Updates. About fits version details, updates and support into one screen; both stay inside the menu-bar panel.</sub></p>
 
 > Customize, About and Agent Usage screenshots show **2.6.2 (13)** in Cyber Dark. The current
-> release is **2.8.0**; the System and Actions tab captures below predate the disk/network
-> readings and URL Cleaner action added in 2.7.0, and the battery, peripheral battery and
-> threshold alert features added in 2.8.0.
+> release is **2.9.2 (21)**; the System and Actions tab captures below predate the disk/network
+> readings and URL Cleaner action added in 2.7.0, the battery, peripheral battery and threshold
+> alert features added in 2.8.0, and Antigravity as a third quota provider added in 2.9.0.
 
 <details>
 <summary>Explore the Actions, System, Agents and Updates tabs</summary>
@@ -91,7 +91,7 @@ Built in **Swift + SwiftUI**, with Apple system frameworks and Sparkle 2 for Dir
 
 ## ✨ Features
 
-Sixteen quick actions, every one backed by a real system API — no fake toggles.
+Seventeen quick actions, every one backed by a real system API — no fake toggles.
 
 | Action | Type | Description |
 |--------|------|-------------|
@@ -111,6 +111,8 @@ Sixteen quick actions, every one backed by a real system API — no fake toggles
 | ⚖️ **Trackpad Scale** | Window | Weighs small objects on the Force Touch trackpad's strain gauges |
 | 📊 **Agent Usage** | Strip + Window | Live Claude, Codex & Antigravity quota percentages in the menu bar, with usage charts |
 | 🔗 **Clean URL** | Button | Strips tracking parameters (`utm_*`, `fbclid`, `gclid`…) from the clipboard's URL, with host-specific rules for YouTube, Amazon and X |
+| 🎨 **Color Picker** | Button | Samples any pixel on screen and copies its sRGB hex code to the clipboard |
+| ✖️ **Quit App** | Menu | Quits a running app, escalating to force-quit only after you confirm |
 
 ### Beyond the actions
 
@@ -173,19 +175,21 @@ Two different sources, because they answer different questions.
 |-------|----------|-------------|
 | Claude | `GET api.anthropic.com/api/oauth/usage` | `~/.claude/.credentials.json`, else the `Claude Code-credentials` keychain item |
 | Codex | `GET chatgpt.com/backend-api/wham/usage` | `~/.codex/auth.json` |
-| Antigravity | `POST cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary` | the `gemini` keychain item |
+| Antigravity | `POST 127.0.0.1:<port>/exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary` | none — the helper already holds the session |
 
 **Fluxa never rewrites an agent's stored credential.** For Claude and Codex it never refreshes one either: both rotate the refresh token when it's used, so renewing one here would invalidate the token Claude Code or Codex is holding — breaking the very login being read. An expired token is reported as expired; running the agent once mints a fresh one.
 
-Antigravity is the one case where Fluxa does refresh, because its stored access token is short-lived enough to be useless otherwise. Google's refresh grant doesn't rotate the refresh token, so the exchange leaves Antigravity's login untouched and still valid. The derived access token is kept in a file of Fluxa's own; the keychain item is only ever read.
+Antigravity reads no credential at all. It keeps a language-server helper alive for the whole session and drives its own usage panel through it over loopback, so Fluxa asks that helper for the same summary: nothing is read from the keychain, no token is derived or stored, and the request never leaves this Mac. The cost is that the quota exists only while Antigravity is open — reported as *not running*, not as a broken login, because opening Antigravity is the only thing that helps.
 
-**Historical charts** come from the agents' own session logs (`~/.claude/projects/**/*.jsonl`, `~/.codex/sessions/**/*.jsonl`), which already hold exact per-turn token counts going back weeks. That's why the grid is populated the first time you open it instead of slowly filling from the day you enable it.
+**Historical charts** come from the agents' own session logs (`~/.claude/projects/**/*.jsonl`, `~/.codex/sessions/**/*.jsonl`, and Antigravity's conversation databases under `~/.gemini/antigravity/conversations/*.db`), which already hold exact per-turn token counts going back weeks. That's why the grid is populated the first time you open it instead of slowly filling from the day you enable it.
 
 Aggregation details that matter for correctness:
 
 - Days are bucketed by **local** calendar day, not UTC — bucketing by UTC moves an evening's work to the next day for anyone east of Greenwich
 - Claude turns are de-duplicated on `message.id`: resumed sessions and sidechains replay the same turn into the log
 - Codex `token_count` events whose cumulative total hasn't moved are re-emitted stale snapshots, not new work, and are skipped
+- Antigravity's databases are live and in WAL mode, so each changed database is copied — with its WAL companion — into Fluxa's own scratch directory and queried there; the originals are only ever read
+- Unlike the quota meters, the Antigravity grid does not need Antigravity to be running
 
 Scanning is cached per file in `~/Library/Application Support/Fluxa/`. Session logs are append-only, so a file whose size and modification date are unchanged is never re-read — only the sessions being written right now.
 
@@ -224,6 +228,13 @@ include the version in the filename.
 > **System Settings → Privacy & Security → Open Anyway**, if offered. Do not disable Gatekeeper
 > or override malware/damaged-app warnings. [Apple's guidance](https://support.apple.com/102445).
 > The setup wizard can only run **after** macOS allows the app to open.
+
+> **If the menu-bar icon never appears.** macOS 26 (Tahoe) lets Control Center keep an allow-list of
+> menu-bar items, and an entry written by a *different* app can end up matching Fluxa's bundle and
+> hiding it — the app runs, the icon does not show. Look for Fluxa in
+> **System Settings → Control Center** and set it to show in the menu bar again. Fluxa 2.9.2 also
+> fixes a separate launch hang: without the Bluetooth grant, enumerating paired accessories could
+> block before the status item was ever created.
 
 The first successful launch offers an optional permissions guide, also available from
 **Customize → SETUP → Permissions & First Run**. The English [first-launch guide](docs/First%20Launch.txt)
@@ -308,7 +319,7 @@ the checked-in TIFF and does not need the renderer.
 
 ### Direct updates
 
-Fluxa **2.7.0** integrates Sparkle **2.9.4**. About includes **Check for Updates…** and
+Fluxa integrates Sparkle **2.9.4**, pinned exactly. About includes **Check for Updates…** and
 Customize keeps automatic-check consent/state under its **Updates** tab. Downloads and installation require confirmation;
 the updater's windows are independent of the menu-bar popover. Updates use an
 [HTTPS feed](https://zehmsy.github.io/fluxa/updates/appcast.xml) and Ed25519-signed archives.
@@ -336,11 +347,14 @@ the system's current status when you return. Saved onboarding choices are **not*
 | Permission | Used by | When |
 |-----------|---------|------|
 | **Automation (System Events)** | Dark Mode | Allow button in setup, or first toggle; setup reads appearance without changing it |
-| **Bluetooth** | Bluetooth Audio | Allow button in setup; startup does not enumerate devices without access |
+| **Bluetooth** | Bluetooth Audio, peripheral battery | Allow button in setup; without the grant neither the device list nor accessory battery levels are read, and nothing blocks waiting for them |
 | **Accessibility** | Lock Keyboard | Enable button in setup; required to intercept keyboard events globally |
 | **Shortcuts app** | Focus Mode | One-time guided setup (see below) |
 | **Keychain** | Agent Usage (Claude) | Connect Claude in setup opts into credential access for the current signing identity; choose *Always Allow* only if you trust this copy |
 | **Network** | Agent Usage / About | Agent quota endpoints; public GitHub profile data only while About is opened |
+
+Antigravity's card in the setup guide grants nothing: its quota comes from the helper Antigravity
+itself runs, so the card only says whether that helper is answering and offers to open the app.
 
 No Full Disk Access, Screen Recording or microphone-recording permission is needed for these controls.
 Claude credentials are never rewritten or refreshed. Background reads request a noninteractive
@@ -387,10 +401,19 @@ Sources/FluxaCore/                   # Pure Swift library, no AppKit/SwiftUI —
 │   ├── SystemMetric.swift           # System metric identity, kind, value, severity
 │   ├── SystemStatsHistory.swift      # Sparse timestamped samples for charts
 │   ├── SystemStatsInterval.swift     # Local sampling intervals
+│   ├── AlertThreshold.swift         # User thresholds for metric alerts
 │   ├── AgentUsage.swift             # AgentUsageMetric: one agent quota window
 │   └── UsageRefreshInterval.swift   # Agent poll intervals derived from window size
 └── Services/
-    ├── SystemStats/                  # CPU, GPU, memory, thermal, disk and network samplers
+    ├── SystemStats/                  # CPU, GPU, memory, thermal, battery, disk and network samplers
+    ├── PeripheralBatterySampler.swift# Accessory batteries via IOKit power sources + IOBluetooth
+    ├── AlertEvaluator.swift          # Threshold crossings, with hysteresis
+    ├── AlertNotifying.swift          # Notification protocol the app side implements
+    ├── AntigravityLocalServer.swift  # Loopback helper discovery (port + CSRF token)
+    ├── AntigravityQuota.swift        # Quota summary parsing
+    ├── ProtobufScan.swift            # Minimal protobuf field walker for Antigravity history
+    ├── AgentRetryAfter.swift        # Retry-After parsing for rate-limited providers
+    ├── ColorFormatting.swift         # Hex / RGB / HSL rendering for the picker
     ├── URLCleaner.swift              # Tracking-parameter stripping rules (pure function)
     └── FluxaError.swift             # Centralized error types
 
@@ -408,9 +431,15 @@ Sources/Fluxa/
 ├── Views/
 │   ├── PopoverRootView.swift        # Root container (header, list, bottom bar)
 │   ├── FluxaTheme.swift             # Adaptive palette + shared UI components
+│   ├── FluxaVisualStyleRoot.swift   # Applies the selected visual style to the whole panel
 │   ├── ActionListView.swift         # Action list
 │   ├── ActionRowView.swift          # Row: toggle / timed toggle / button / menu
+│   ├── ControlDeck*.swift           # Cyber / Cyber Dark dashboard, actions and primitives
+│   ├── MetricChipGrid.swift         # Two-per-row chip layout shared by system and agent strips
 │   ├── CustomizeView.swift          # General, Actions, System, Agents and Updates tabs
+│   ├── CustomizeSystemStatsSection.swift, CustomizeAlertThresholdsSection.swift,
+│   │   CustomizeAgentUsageSection.swift, MetricVisibilityToggles.swift
+│   ├── PermissionsSetupView.swift   # First-run guide; one card per permission or provider
 │   ├── InfoView.swift               # About, public GitHub details + support link
 │   ├── BottomBarView.swift          # Customize + About + Quit
 │   ├── FocusOnboardingView.swift    # Focus Mode setup wizard
@@ -418,10 +447,12 @@ Sources/Fluxa/
 │   ├── TrackpadScaleWindowView.swift# Force Touch scale readout
 │   ├── SystemStatsStripView.swift    # Live hardware strip under the header
 │   ├── SystemStatsWindowView.swift   # 30-minute load, temperature, disk and network readings
+│   ├── SystemMetricCard.swift, PeripheralBatteryPanel.swift
 │   ├── AgentUsageStripView.swift    # Quota strip under the popover header
 │   ├── AgentUsageWindowView.swift   # Quota meters + contribution grids
 │   ├── ContributionGridView.swift   # GitHub-style calendar of daily tokens
 │   ├── MenuBarStripRenderer.swift   # Menu bar image: mark + system/agent readings
+│   ├── MenuBarStripLabel.swift      # The MenuBarExtra label that draws it
 │   └── AgentMarks.swift             # Vector agent logos, template-rendered
 ├── Services/
 │   ├── KeepAwakeService.swift       # IOKit power assertion + expiry timer
@@ -436,16 +467,22 @@ Sources/Fluxa/
 │   ├── AudioOutputService.swift     # CoreAudio enumeration & switching
 │   ├── MicrophoneMuteService.swift  # CoreAudio input volume control
 │   ├── BluetoothAudioService.swift  # IOBluetooth paired-device connect
+│   ├── ColorPickerService.swift, ColorPickerFeedbackWindow.swift
+│   ├── ProcessKillerService.swift   # Lists and terminates user processes
 │   ├── LidAngleMonitor.swift        # HID sensor (Apple Silicon) + IORegistry (Intel)
 │   ├── TrackpadWeightService.swift  # MultitouchSupport via dlopen, grams from pressure
 │   ├── SystemStatsService.swift      # Live readings + in-memory chart history
+│   ├── PeripheralBatteryService.swift# Accessory battery polling, gated on the Bluetooth grant
+│   ├── SystemAlertNotifier.swift    # User notifications for threshold crossings
+│   ├── PermissionsService.swift     # Status checks for the first-run guide
 │   ├── URLCleanerService.swift      # Clipboard read/write around FluxaCore's URLCleaner
 │   ├── GitHubProfileService.swift    # Public About-page data, no token required
-│   ├── AgentCredentials.swift       # Read-only Claude/Codex/Antigravity credential lookup
+│   ├── AgentCredentials.swift       # Read-only Claude/Codex credential lookup
 │   ├── AgentUsageReaders.swift      # Per-agent usage endpoints & mapping
-│   ├── AntigravityUsageReader.swift # Cloud Code quota endpoint + OAuth token cache
+│   ├── AntigravityUsageReader.swift # Loopback RPC to the helper Antigravity runs
 │   ├── AgentUsageService.swift      # Orchestration, polling, selection
-│   ├── AgentLogScanner.swift        # Daily tokens from session logs (cached)
+│   ├── AgentLogScanner.swift        # Daily tokens from session logs and databases (cached)
+│   ├── UpdateService.swift          # Sparkle host: consent, checks, state
 │   ├── GlobalShortcutService.swift  # Carbon hotkey
 │   ├── LaunchAtLoginService.swift   # SMAppService
 │   └── ShellRunner.swift            # Shared Process helper
@@ -465,7 +502,7 @@ Tests/FluxaCoreTests/                # Swift Testing, covers FluxaCore only
 - **In-panel navigation** — Customize swaps views inside the `MenuBarExtra`; dedicated tools stay separate and activate in front
 - **Adaptive design system** — one semantic palette keeps hierarchy and contrast consistent in Aqua and Dark Aqua
 - **Honest UX** — if an API doesn't exist, the app says so instead of faking a toggle
-- **Zero dependencies** — SwiftUI, AppKit, IOKit, CoreAudio, IOBluetooth, ApplicationServices. Nothing else.
+- **Apple frameworks only** — SwiftUI, AppKit, IOKit, CoreAudio, CoreBluetooth, IOBluetooth, ApplicationServices. The single third-party dependency is Sparkle, pinned exactly, and only for updates.
 
 ### API limitations & trade-offs
 
