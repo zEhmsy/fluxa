@@ -7,6 +7,67 @@
         <language>en</language>
         <!-- No update is advertised until its signed archive has been published. -->
         <item>
+            <title>2.9.2</title>
+            <pubDate>Sun, 13 Sep 2026 21:39:47 +0200</pubDate>
+            <link>https://github.com/zEhmsy/fluxa/releases/tag/v2.9.2</link>
+            <sparkle:version>21</sparkle:version>
+            <sparkle:shortVersionString>2.9.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description sparkle:format="markdown"><![CDATA[# Fluxa 2.9.2 (21)
+
+## If your menu bar icon went missing
+
+Two separate faults could take Fluxa's icon away, and only one of them is in Fluxa.
+
+**Fixed in this build.** On Macs where Fluxa had never been granted Bluetooth access, reading
+accessory batteries at launch could block forever, and the icon was never created at all. Fluxa now
+checks the permission before asking, exactly as it already did elsewhere.
+
+**Not fixable by any app, including this one.** macOS keeps a list of which apps may show a menu bar
+item. On some Macs another app's entry ends up claiming Fluxa's item, and hiding *that* app hides
+Fluxa too. Reinstalling, replacing the app and resetting Control Center all leave it untouched,
+because the list is not in Fluxa and not reachable from the Fluxa side.
+
+If your icon is missing after installing this build, that second case is the likely one. It is a
+known macOS 26 problem that affects several menu bar apps, not only Fluxa. Please open an issue and
+we will walk through the repair — it is a one-time edit to a system preference file.
+
+Build 19 claimed this bug was fixed. It was not, and those notes were wrong.
+
+## Readable agent chips
+
+Three agents side by side left each one about a third of the strip, so every provider name truncated
+to an ellipsis. They now wrap two per row, matching the System readings above them.
+
+## Settings that fit the screen
+
+The System tab of Customize grew taller than the display and ran off the bottom edge. Tabs now
+scroll within the screen.
+
+## Antigravity in the permissions guide
+
+Antigravity needs no permission and no login: its quota is read from the helper Antigravity itself
+runs, over loopback, and nothing leaves your Mac. Because that meant no entry in the permissions
+guide, it looked like something was missing. There is now a card that says so, and tells you what
+the numbers actually depend on — Antigravity being open.
+
+## Also in this release
+
+- Two-column System and Agent usage strips; System allows a fourth reading.
+- Antigravity activity history.
+
+## Notes
+
+- Requires macOS 14 or later, Apple silicon.
+- Signed with the same identity as 2.9.1, so permissions granted then carry over.
+- Updating from 2.9.0 or earlier: those builds were ad-hoc signed, so macOS sees this one as a
+  different app and will ask once more for Accessibility and keychain access. This is the last
+  update that re-asks.
+]]></description>
+            <enclosure url="https://github.com/zEhmsy/fluxa/releases/download/v2.9.2/Fluxa.zip" length="3554667" type="application/octet-stream" sparkle:edSignature="Cm8ImJv2M7Uo5iDKKymCV/OnLCxPAfHUzr02WbhTW8RcRDkS//rBbxqyvsTfZfFZ/EScXNuwQmpayyu3wcw9CA=="/>
+        </item>
+        <item>
             <title>2.9.1</title>
             <pubDate>Sat, 05 Sep 2026 10:52:24 +0200</pubDate>
             <link>https://github.com/zEhmsy/fluxa/releases/tag/v2.9.1</link>
