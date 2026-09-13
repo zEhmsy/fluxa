@@ -1,10 +1,44 @@
 # Fluxa Direct updates
 
-## Release 2.6.1 (10)
+## Current release — 2.9.2 (21)
 
 Fluxa Direct uses Sparkle **2.9.4**, pinned in `Package.swift` and `Package.resolved`.
 The source and app contain the real public signing key and the production
 [HTTPS appcast](https://zehmsy.github.io/fluxa/updates/appcast.xml).
+
+[Release v2.9.2](https://github.com/zEhmsy/fluxa/releases/tag/v2.9.2) uses build **21** and is the
+item the production feed advertises. Published 2026-09-13 from `main` at `ccfa1fe`, with the feed
+commit `58a0d8d` on `codex/updates-feed`. Signed with the stable **Fluxa Code Signing** certificate.
+
+Before publication the archive signature was verified twice: with the pinned
+`sign_update --account fluxa.direct --verify`, and independently with OpenSSL against only the
+`SUPublicEDKey` embedded in the app. Both published assets were downloaded back from the release and
+matched their local SHA-256 byte for byte:
+
+```
+09e1941098b0ae32c7d89d90b1088227b67ca2f7807630f3ce38c272cd53bfaa  Fluxa.zip
+f033c6fc5dd3fdf51644924915b401ed5274d4d490895dae1841a3af83f8f429  Fluxa.dmg
+```
+
+The feed edit was purely additive — 61 inserted lines, every earlier item byte-identical.
+
+**A near miss worth repeating as a rule.** The first generated appcast was seeded from a stale
+`origin/codex/updates-feed`, which predated the 2.9.1 item, and it would have silently dropped 2.9.1
+from the feed. Only the non-fast-forward push rejection caught it. **Fetch the publishing branch and
+seed the generator from the branch tip, never from a local ref, and diff the item set before
+pushing** — the generator reports "removed 0 old updates" against its own input, not against what is
+live.
+
+### What 2.9.2 contains
+
+The menu bar icon investigation (ticket 18) and its two real causes, the Customize tab scrolling fix,
+two-column agent chips, the Antigravity permissions card, and tickets 16 and 17. Full notes are
+embedded in the feed item and in the GitHub release.
+
+Build **19** was prepared but never published, and its release notes claimed the icon bug was fixed
+when it was not. Nothing advertises build 19 or 20; the feed goes 18 → 21.
+
+### Earlier: release 2.6.1 (10)
 
 [Release v2.6.1](https://github.com/zEhmsy/fluxa/releases/tag/v2.6.1) uses build **10**.
 Its `Fluxa.zip` preserves the exact bytes accepted by the owner; `Fluxa.dmg` packages the same
@@ -81,9 +115,11 @@ Only these public values belong in `Sources/Fluxa/Resources/Info.plist`:
 - `SUFeedURL`: `https://zehmsy.github.io/fluxa/updates/appcast.xml`.
 - `SUPublicEDKey`: `CkRk7WevzhjWm8DTQDDI4eqXc2Tvx+aGvmWFPCSfEe0=`.
 
-Keep increasing `CFBundleVersion`: 9 was the local bootstrap and 10 is release 2.6.1.
-Use a build greater than 10 for the next changed release or candidate. Do not reuse the already
-published `v2.5.0` release or mutate its assets. Rebuild after any plist edit; both the executable
+Keep increasing `CFBundleVersion`: 9 was the local bootstrap, 10 is release 2.6.1, and **21** is the
+current release 2.9.2. Use a build greater than 21 for the next changed release or candidate. Builds
+19 and 20 were prepared and never published, so the numbers are spent either way — a prepared build
+number is never reused, whether or not it shipped. Do not reuse any already published release or
+mutate its assets. Rebuild after any plist edit; both the executable
 and the bundle contain that plist. Default builds and packagers require both real trust fields.
 `--development` permits only an unconfigured local build with both fields absent, never a release.
 
@@ -191,6 +227,22 @@ The installed accepted build 10 has the normal ad-hoc release signature. Any old
 identifier-signed rollback app must never be distributed. Keep earlier apps/archives available for
 recovery; do not reset TCC or remove quarantine to make an update pass.
 
-Local release artifacts are retained in ignored `.build/releases/v2.6.1/`, including the exact
-accepted ZIP, new DMG, appcast preparation, hashes and release notes. Earlier bootstrap and acceptance
-artifacts remain in their original directories; the private signing key is not in any release folder.
+Local release artifacts are retained in ignored `.build/releases/`, one directory per release —
+`2.9.2-21` is the current one, alongside the earlier `v2.6.1/` — each holding the exact published ZIP
+and DMG, the appcast before and after, hashes and release notes. The private signing key is not in
+any release folder.
+
+### 2.9.2 (21) — acceptance status
+
+**Not owner-accepted as an upgrade.** The artifacts were verified statically, as recorded above, and
+the build was installed and run from `/Applications` on the owner's Mac, where the menu bar item was
+confirmed present through the Accessibility API. No Sparkle upgrade from an older build was
+exercised for this release, and none of items 2 through 4 of the checklist above were performed.
+
+Two behaviours in this release deserve owner attention at the next opportunity:
+
+- Updating from **2.9.0 or earlier** crosses the ad-hoc → certificate identity change and re-asks for
+  Accessibility and keychain access once. 2.9.1 and 2.9.2 both cross it for anyone who skipped 2.9.1.
+- A user whose icon is missing because of the Control Center allow-list (ticket 18, defect B) cannot
+  be helped by this or any other build. The release notes say so and invite an issue. There is no
+  in-app detection for it, which is worth considering as its own ticket.
