@@ -1,42 +1,36 @@
 # Fluxa Direct updates
 
-## Current release — 2.9.2 (21)
+## Current release — 2.9.3 (22)
 
 Fluxa Direct uses Sparkle **2.9.4**, pinned in `Package.swift` and `Package.resolved`.
 The source and app contain the real public signing key and the production
 [HTTPS appcast](https://zehmsy.github.io/fluxa/updates/appcast.xml).
 
-[Release v2.9.2](https://github.com/zEhmsy/fluxa/releases/tag/v2.9.2) uses build **21** and is the
-item the production feed advertises. Published 2026-09-13 from `main` at `ccfa1fe`, with the feed
-commit `58a0d8d` on `codex/updates-feed`. Signed with the stable **Fluxa Code Signing** certificate.
+[Release v2.9.3](https://github.com/zEhmsy/fluxa/releases/tag/v2.9.3) uses build **22** and is the
+item the production feed advertises. Published 2026-09-15 from `main` at `f2456d4`, with the feed
+commit `67fad37` on `codex/updates-feed`. Signed with the stable **Fluxa Code Signing** certificate.
 
-Before publication the archive signature was verified twice: with the pinned
-`sign_update --account fluxa.direct --verify`, and independently with OpenSSL against only the
-`SUPublicEDKey` embedded in the app. Both published assets were downloaded back from the release and
+Before publication the archive signature was verified with the pinned
+`sign_update --account fluxa.direct --verify` command. Both published assets were downloaded back from the release and
 matched their local SHA-256 byte for byte:
 
 ```
-09e1941098b0ae32c7d89d90b1088227b67ca2f7807630f3ce38c272cd53bfaa  Fluxa.zip
-f033c6fc5dd3fdf51644924915b401ed5274d4d490895dae1841a3af83f8f429  Fluxa.dmg
+0cc0158fdaac6ba696232ceea9c2d88bd61e085291804740f4b5bbd9807842ac  Fluxa.zip
+951f8b546b7895a7bca91c282ccc76acae9e49875b14df8b70fe6c5150771fcf  Fluxa.dmg
 ```
 
-The feed edit was purely additive — 61 inserted lines, every earlier item byte-identical.
+The feed edit was purely additive — 31 inserted lines, every earlier item byte-identical.
 
-**A near miss worth repeating as a rule.** The first generated appcast was seeded from a stale
-`origin/codex/updates-feed`, which predated the 2.9.1 item, and it would have silently dropped 2.9.1
-from the feed. Only the non-fast-forward push rejection caught it. **Fetch the publishing branch and
-seed the generator from the branch tip, never from a local ref, and diff the item set before
-pushing** — the generator reports "removed 0 old updates" against its own input, not against what is
-live.
+### What 2.9.3 contains
 
-### What 2.9.2 contains
+Claude Keychain access persistence via `/usr/bin/security` (ticket 19), inverted battery severity bands, enlarged menu bar glyphs up to 17pt, and independent system symbol sizing. Full notes are embedded in the feed item and in the GitHub release.
 
-The menu bar icon investigation (ticket 18) and its two real causes, the Customize tab scrolling fix,
-two-column agent chips, the Antigravity permissions card, and tickets 16 and 17. Full notes are
-embedded in the feed item and in the GitHub release.
+### Earlier: release 2.9.2 (21)
+
+[Release v2.9.2](https://github.com/zEhmsy/fluxa/releases/tag/v2.9.2) uses build **21**. Published 2026-09-13 from `main` at `ccfa1fe`, feed commit `58a0d8d`. Contained the menu bar icon fix (ticket 18), Customize tab scrolling, two-column agent chips, Antigravity permissions card, and tickets 16/17.
 
 Build **19** was prepared but never published, and its release notes claimed the icon bug was fixed
-when it was not. Nothing advertises build 19 or 20; the feed goes 18 → 21.
+when it was not. Nothing advertises build 19 or 20; the feed goes 18 → 21 → 22.
 
 ### Earlier: release 2.6.1 (10)
 
@@ -115,8 +109,8 @@ Only these public values belong in `Sources/Fluxa/Resources/Info.plist`:
 - `SUFeedURL`: `https://zehmsy.github.io/fluxa/updates/appcast.xml`.
 - `SUPublicEDKey`: `CkRk7WevzhjWm8DTQDDI4eqXc2Tvx+aGvmWFPCSfEe0=`.
 
-Keep increasing `CFBundleVersion`: 9 was the local bootstrap, 10 is release 2.6.1, and **21** is the
-current release 2.9.2. Use a build greater than 21 for the next changed release or candidate. Builds
+Keep increasing `CFBundleVersion`: 9 was the local bootstrap, 10 is release 2.6.1, 21 is release
+2.9.2, and **22** is the current release 2.9.3. Use a build greater than 22 for the next changed release or candidate. Builds
 19 and 20 were prepared and never published, so the numbers are spent either way — a prepared build
 number is never reused, whether or not it shipped. Do not reuse any already published release or
 mutate its assets. Rebuild after any plist edit; both the executable
@@ -228,7 +222,7 @@ identifier-signed rollback app must never be distributed. Keep earlier apps/arch
 recovery; do not reset TCC or remove quarantine to make an update pass.
 
 Local release artifacts are retained in ignored `.build/releases/`, one directory per release —
-`2.9.2-21` is the current one, alongside the earlier `v2.6.1/` — each holding the exact published ZIP
+`2.9.3-22` is the current one, alongside `2.9.2-21` and the earlier `v2.6.1/` — each holding the exact published ZIP
 and DMG, the appcast before and after, hashes and release notes. The private signing key is not in
 any release folder.
 
