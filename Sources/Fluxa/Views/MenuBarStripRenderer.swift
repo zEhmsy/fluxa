@@ -41,8 +41,8 @@ enum MenuBarStripRenderer {
     /// Gap between two readings.
     private static let segmentGap: CGFloat = 7
     /// Leading-glyph size. Deliberately well above the 11pt text so each reading is recognisable by
-    /// its glyph at a glance; 15 is the largest that still leaves a margin inside the 18pt box.
-    private static let agentMarkSize: CGFloat = 15
+    /// its glyph at a glance: 17 fills the 18pt box down to a half-point margin top and bottom.
+    private static let agentMarkSize: CGFloat = 17
     /// Gap between a segment's glyph and its value.
     private static let agentMarkGap: CGFloat = 3
 
