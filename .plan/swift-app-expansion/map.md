@@ -166,6 +166,17 @@ _(append one line per resolved ticket: number, gist, link to the ticket file)_
   against a control that isolated it.
   → `issues/18-menubar-item-cannot-return.md`, `specs/18-menubar-item-cannot-return.md`
 
+- **19** — Spec written. The Claude Keychain grant never sticks, and the reason is not Fluxa's
+  signature: Claude Code updates the same item on every token refresh, which discards the ACL entry
+  "Always Allow" wrote, and the item carries the `apple-tool:` partition, which a self-signed app
+  with no Team ID can never be added to. The stable signing certificate fixed the designated
+  requirement churn and could not touch either cause. The fix is to read through `/usr/bin/security`
+  — the Apple-signed tool that wrote the item and is the only entry in its ACL — measured returning
+  exit 0 with no dialog. The consequence worth stating out loud: the dialog was never a boundary for
+  this item, since any process running as this user can read it with one command, so the in-app
+  opt-in becomes the consent point rather than a convenience in front of a system gate.
+  → `issues/19-claude-keychain-prompt-recurs.md`, `specs/19-claude-keychain-prompt-recurs.md`
+
 ## Fog
 
 Open questions, in rough priority order. Each becomes a ticket when it's sharp enough.
