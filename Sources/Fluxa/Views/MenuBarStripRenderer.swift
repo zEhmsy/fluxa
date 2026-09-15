@@ -40,9 +40,14 @@ enum MenuBarStripRenderer {
     nonisolated(unsafe) private static let font = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .medium)
     /// Gap between two readings.
     private static let segmentGap: CGFloat = 7
-    /// Leading-glyph size. Deliberately well above the 11pt text so each reading is recognisable by
-    /// its glyph at a glance: 17 fills the 18pt box down to a half-point margin top and bottom.
+    /// Agent mark size. Deliberately well above the 11pt text so each vendor is recognisable at a
+    /// glance: 17 fills the 18pt box down to a half-point margin top and bottom. The marks are
+    /// square, so height is all they cost.
     private static let agentMarkSize: CGFloat = 17
+    /// SF Symbol size, held below the agent marks on purpose. Symbols like `battery.100` and
+    /// `memorychip` are far wider than tall, so matching the marks' height would spend the strip's
+    /// width on a glyph rather than on the number beside it.
+    private static let systemSymbolSize: CGFloat = 13
     /// Gap between a segment's glyph and its value.
     private static let agentMarkGap: CGFloat = 3
 
@@ -63,11 +68,12 @@ enum MenuBarStripRenderer {
 
         let drawn = segments.map { segment in
             (mark: leadingImage(for: segment.leading),
+             box: glyphHeight(for: segment.leading),
              text: attributedText(for: segment))
         }
         // Glyph widths are measured rather than assumed square: the agent marks are, but SF Symbols
         // like `memorychip` are wider than tall, and forcing them into a square box would squash them.
-        let glyphWidths = drawn.map { entry in entry.mark.map(glyphWidth) ?? 0 }
+        let glyphWidths = drawn.map { entry in entry.mark.map { glyphWidth($0, box: entry.box) } ?? 0 }
         let segmentWidths = zip(drawn, glyphWidths).map { entry, glyph in
             (glyph == 0 ? 0 : glyph + agentMarkGap) + entry.text.size().width
         }
@@ -81,9 +87,9 @@ enum MenuBarStripRenderer {
                     let glyphSize = glyphWidths[index]
                     glyph.draw(in: NSRect(
                         x: x,
-                        y: (height - agentMarkSize) / 2,
+                        y: (height - entry.box) / 2,
                         width: glyphSize,
-                        height: agentMarkSize
+                        height: entry.box
                     ))
                     x += glyphSize + agentMarkGap
                 }
@@ -109,10 +115,18 @@ enum MenuBarStripRenderer {
                 return nil
             }
             let configured = image.withSymbolConfiguration(
-                NSImage.SymbolConfiguration(pointSize: agentMarkSize, weight: .medium)
+                NSImage.SymbolConfiguration(pointSize: systemSymbolSize, weight: .medium)
             ) ?? image
             configured.isTemplate = true
             return configured
+        }
+    }
+
+    /// Height the leading glyph is drawn at, which differs by kind — see `systemSymbolSize`.
+    private static func glyphHeight(for leading: Segment.Leading) -> CGFloat {
+        switch leading {
+        case .agentMark:  return agentMarkSize
+        case .symbol:     return systemSymbolSize
         }
     }
 
@@ -140,11 +154,11 @@ enum MenuBarStripRenderer {
         return image
     }
 
-    /// Width the glyph occupies once scaled to the strip's glyph height, preserving its aspect.
-    private static func glyphWidth(_ image: NSImage) -> CGFloat {
+    /// Width the glyph occupies once scaled to `box`, preserving its aspect.
+    private static func glyphWidth(_ image: NSImage, box: CGFloat) -> CGFloat {
         let size = image.size
-        guard size.height > 0 else { return agentMarkSize }
-        return size.width * (agentMarkSize / size.height)
+        guard size.height > 0 else { return box }
+        return size.width * (box / size.height)
     }
 
     // MARK: - Segment building
