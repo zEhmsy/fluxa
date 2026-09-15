@@ -39,7 +39,7 @@ Built in **Swift + SwiftUI**, with Apple system frameworks and Sparkle 2 for Dir
 <p align="center"><sub>Customize groups preferences into General, Actions, System, Agents and Updates. About fits version details, updates and support into one screen; both stay inside the menu-bar panel.</sub></p>
 
 > Customize, About and Agent Usage screenshots show **2.6.2 (13)** in Cyber Dark. The current
-> release is **2.9.2 (21)**; the System and Actions tab captures below predate the disk/network
+> release is **2.9.3 (22)**; the System and Actions tab captures below predate the disk/network
 > readings and URL Cleaner action added in 2.7.0, the battery, peripheral battery and threshold
 > alert features added in 2.8.0, and Antigravity as a third quota provider added in 2.9.0.
 
