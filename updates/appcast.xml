@@ -7,6 +7,37 @@
         <language>en</language>
         <!-- No update is advertised until its signed archive has been published. -->
         <item>
+            <title>2.9.3</title>
+            <pubDate>Tue, 15 Sep 2026 16:58:47 +0200</pubDate>
+            <link>https://github.com/zEhmsy/fluxa/releases/tag/v2.9.3</link>
+            <sparkle:version>22</sparkle:version>
+            <sparkle:shortVersionString>2.9.3</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description sparkle:format="markdown"><![CDATA[# Fluxa 2.9.3 (22)
+
+## Claude Keychain access that stays granted
+
+Choosing **Always Allow** in the macOS Keychain dialog for Claude Code credentials previously failed to persist: Claude Code updates the same item on every token refresh, discarding the ACL entry, and self-signed apps have no Team ID to anchor a lasting grant.
+
+Fluxa now reads the credential through `/usr/bin/security`, the Apple-signed tool in the item's own ACL. The read is silent, requires no system dialogs after the initial in-app opt-in, and survives token refreshes. A strict 5-second watchdog timer ensures background refreshes never block.
+
+## Battery severity bands
+
+Battery percentage is now colored properly: warning under 20% and critical under 10%, matching standard macOS behavior (previously 100% was incorrectly classified as critical).
+
+## Menu bar glyph sizes
+
+Leading symbols in the menu bar are enlarged up to 17pt for improved readability, while wider system symbols like `battery.100` remain at 13pt to preserve space for metric numbers.
+
+## Notes
+
+- Requires macOS 14 or later, Apple silicon.
+- Signed with the stable **Fluxa Code Signing** certificate; permissions carry over seamlessly from 2.9.1 and 2.9.2.
+]]></description>
+            <enclosure url="https://github.com/zEhmsy/fluxa/releases/download/v2.9.3/Fluxa.zip" length="3562823" type="application/octet-stream" sparkle:edSignature="a4ThnDTNAg/P9VOJNCGwGwg6Rvy5Hnmb6T1eOg8K3fcYScMgKGB6K8RF728OldkTAGbwsow+CvB8xj3pcfWiAQ=="/>
+        </item>
+        <item>
             <title>2.9.2</title>
             <pubDate>Sun, 13 Sep 2026 21:39:47 +0200</pubDate>
             <link>https://github.com/zEhmsy/fluxa/releases/tag/v2.9.2</link>
