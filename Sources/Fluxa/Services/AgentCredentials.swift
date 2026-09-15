@@ -1,7 +1,6 @@
 import Foundation
 import FluxaCore
 import Security
-import LocalAuthentication
 
 // MARK: - ClaudeCredentials
 
@@ -24,6 +23,13 @@ struct ClaudeCredentials {
     /// False for inference-only tokens, which would get a 401 from the usage endpoint.
     var canReadUsage: Bool {
         scopes.isEmpty || scopes.contains("user:profile")
+    }
+
+    init(from blob: ClaudeCredentialBlob) {
+        self.accessToken = blob.accessToken
+        self.expiresAt = blob.expiresAt
+        self.subscriptionType = blob.subscriptionType
+        self.scopes = blob.scopes
     }
 }
 
@@ -60,58 +66,88 @@ enum AgentCredentialStore {
             case .approvalNeeded(let agent):
                 "\(agent): enable credential access in Customize → Permissions & First Run."
             case .notAllowed(let agent):
-                "\(agent) credential access was not allowed. Retry from Permissions & First Run; "
-                    + "choose Always Allow only if you trust this copy of Fluxa."
+                "\(agent) credential access was not allowed. Retry from Permissions & First Run."
             case .unreadable(let agent):
                 "\(agent): stored credentials are unreadable. Sign in again."
             }
         }
     }
 
-    /// Reads one generic-password item.
-    ///
-    /// Returns nil when there is simply no such item, and throws when macOS refused the read — a
-    /// refusal also clears the recorded approval, so the next attempt goes back through the setup
-    /// button instead of prompting from a timer.
-    private static func readGenericPassword(
-        service: String,
-        account: String?,
-        requestAccess: Bool,
-        agent: String,
-        approvalKey: String
-    ) throws -> Data? {
-        let context = LAContext()
-        context.interactionNotAllowed = !requestAccess
+    private final class TimeoutSentinel: @unchecked Sendable {
+        private let lock = NSLock()
+        private var timedOut = false
 
-        var query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-            kSecReturnData as String: true,
-            kSecUseAuthenticationContext as String: context,
-        ]
-        if let account { query[kSecAttrAccount as String] = account }
-
-        var item: CFTypeRef?
-        let status = SecItemCopyMatching(query as CFDictionary, &item)
-        if status == errSecItemNotFound { return nil }
-        guard status == errSecSuccess else {
-            // Only an actual refusal revokes the recorded approval. `errSecInteractionNotAllowed` is
-            // the expected answer whenever a noninteractive read would have needed a prompt — a
-            // locked screen, a locked login keychain — and treating that as a denial would make an
-            // idle Mac quietly discard consent the user has to grant again by hand.
-            if Self.deniedStatuses.contains(status) {
-                UserDefaults.standard.removeObject(forKey: approvalKey)
-            }
-            throw AccessError.notAllowed(agent: agent)
+        var didTimeout: Bool {
+            lock.lock()
+            defer { lock.unlock() }
+            return timedOut
         }
-        return item as? Data
+
+        func markTimeout() {
+            lock.lock()
+            defer { lock.unlock() }
+            timedOut = true
+        }
     }
 
-    /// Statuses that mean the user, or the ACL, said no — as opposed to "not right now".
-    private static let deniedStatuses: Set<OSStatus> = [
-        errSecUserCanceled, errSecAuthFailed, errSecInteractionRequired,
-    ]
+    /// Executes `/usr/bin/security` with isolated environment and bounded 5-second execution.
+    ///
+    /// Per Spec 19 (D2, D3, D4):
+    /// - Absolute path `/usr/bin/security`, never a PATH lookup.
+    /// - Environment: passes only HOME (`NSHomeDirectory()`), does not inherit DYLD_* or PATH.
+    /// - stderr goes to FileHandle.nullDevice: it is diagnostic text the user cannot act on.
+    /// - stdout is read to end before waitUntilExit() to prevent pipe buffer deadlock.
+    /// - 5-second watchdog timer: terminates, sleeps 0.1s, kills with SIGKILL if still alive.
+    /// - Reaps the process in every path, including the timeout path.
+    @Sendable
+    private static func runSecurityCommand(arguments: [String]) throws -> (status: Int32, standardOutput: Data) {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
+        process.arguments = arguments
+        process.environment = ["HOME": NSHomeDirectory()]
+
+        let stdoutPipe = Pipe()
+        process.standardOutput = stdoutPipe
+        process.standardError = FileHandle.nullDevice
+
+        let sentinel = TimeoutSentinel()
+        let watchdog = DispatchWorkItem { [weak process] in
+            guard let process else { return }
+            if process.isRunning {
+                sentinel.markTimeout()
+                process.terminate()
+                Thread.sleep(forTimeInterval: 0.1)
+                if process.isRunning {
+                    kill(process.processIdentifier, SIGKILL)
+                }
+            }
+        }
+
+        do {
+            try process.run()
+            DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 5.0, execute: watchdog)
+            let output = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+            process.waitUntilExit()
+            watchdog.cancel()
+
+            if sentinel.didTimeout {
+                throw SecurityToolKeychain.Error.timeout
+            }
+
+            return (status: process.terminationStatus, standardOutput: output)
+        } catch {
+            watchdog.cancel()
+            if process.isRunning {
+                process.terminate()
+                Thread.sleep(forTimeInterval: 0.1)
+                if process.isRunning {
+                    kill(process.processIdentifier, SIGKILL)
+                }
+                process.waitUntilExit()
+            }
+            throw error
+        }
+    }
 
     /// Whether this build already has the user's consent to read `approvalKey`'s item.
     ///
@@ -127,12 +163,13 @@ enum AgentCredentialStore {
         UserDefaults.standard.set(requirement, forKey: approvalKey)
     }
 
-    // This is permission to ATTEMPT a read, never proof that macOS granted access. Associate the
-    // opt-in with the actual signing requirement so a new ad-hoc build cannot prompt from a timer.
+    // The Keychain ACL for this item lists /usr/bin/security, so any process running as this user
+    // can read it with one command. The in-app opt-in is now the consent point, not a convenience
+    // in front of a system gate.
     //
-    // It is anti-accident, not anti-tamper: the value lives in UserDefaults, so anything already
-    // running as this user could write the current requirement into it. The Keychain ACL, which
-    // that cannot forge, remains the boundary that actually protects the credential.
+    // Associating the opt-in with the current code-signing requirement ensures a new ad-hoc build
+    // cannot prompt or read credentials from the background refresh loop without explicit user
+    // action in Permissions & First Run.
     private static let approvalKey = "fluxa.claudeCredentialApprovedRequirement"
     private static let readLock = NSLock()
 
@@ -147,65 +184,65 @@ enum AgentCredentialStore {
 
     /// Only the setup button may initiate first access for a code identity. Ordinary refreshes
     /// request a noninteractive context, and do not retry a rejected read in a prompt loop.
-    /// The legacy login Keychain still owns its ACL/unlock dialogs; this is not a permanent grant.
     static func loadClaude(requestAccess: Bool = false) throws -> ClaudeCredentials? {
         readLock.lock()
         defer { readLock.unlock() }
-        let json: [String: Any]?
-        if let file = readClaudeFile() {
-            json = file
-        } else {
-            if !requestAccess {
-                guard hasApproval(approvalKey) else {
-                    throw AccessError.approvalNeeded(agent: "Claude")
-                }
-            }
-            json = try readClaudeKeychain(requestAccess: requestAccess)
-            if requestAccess, json != nil {
-                recordApproval(approvalKey)
+
+        if let fileBlob = readClaudeFile() {
+            return ClaudeCredentials(from: fileBlob)
+        }
+
+        if !requestAccess {
+            guard hasApproval(approvalKey) else {
+                throw AccessError.approvalNeeded(agent: "Claude")
             }
         }
-        guard let json,
-              let oauth = json["claudeAiOauth"] as? [String: Any],
-              let token = (oauth["accessToken"] as? String)?
-                  .trimmingCharacters(in: .whitespacesAndNewlines),
-              !token.isEmpty
-        else { return nil }
 
-        return ClaudeCredentials(
-            accessToken: token,
-            // `expiresAt` is epoch milliseconds.
-            expiresAt: (oauth["expiresAt"] as? Double).map { Date(timeIntervalSince1970: $0 / 1000) },
-            subscriptionType: oauth["subscriptionType"] as? String,
-            scopes: oauth["scopes"] as? [String] ?? []
-        )
+        guard let blob = try readClaudeKeychain() else {
+            return nil
+        }
+
+        if requestAccess {
+            recordApproval(approvalKey)
+        }
+
+        return ClaudeCredentials(from: blob)
     }
 
-    private static func readClaudeFile() -> [String: Any]? {
+    private static func readClaudeFile() -> ClaudeCredentialBlob? {
         let path = NSString(string: claudeCredentialFile).expandingTildeInPath
         guard let data = FileManager.default.contents(atPath: path) else { return nil }
-        return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+        return try? ClaudeCredentialBlob(data: data)
     }
 
-    /// Reads the generic-password item, first for the current user's account and then by service
-    /// alone — Claude Code has used both shapes.
-    private static func readClaudeKeychain(requestAccess: Bool) throws -> [String: Any]? {
-        for account in [NSUserName(), nil] {
-            // A refusal throws straight out of the loop rather than trying the next account shape:
-            // falling back after a denial/cancel can duplicate the dialog.
-            guard let data = try readGenericPassword(
+    /// Reads Claude Code credentials from the login keychain using SecurityToolKeychain.
+    ///
+    /// On success: returns parsed ClaudeCredentialBlob.
+    /// On exit 44 (not found): returns nil, leaving recorded approval intact.
+    /// On failure or timeout: revokes recorded approval and throws AccessError.notAllowed.
+    /// On parse error: throws AccessError.unreadable.
+    private static func readClaudeKeychain() throws -> ClaudeCredentialBlob? {
+        let keychain = SecurityToolKeychain(runner: runSecurityCommand)
+        let data: Data?
+        do {
+            data = try keychain.readClaudeCredential(
                 service: claudeKeychainService,
-                account: account,
-                requestAccess: requestAccess,
-                agent: "Claude",
-                approvalKey: approvalKey
-            ) else { continue }
-
-            guard let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
-            else { continue }
-            return json
+                account: NSUserName()
+            )
+        } catch {
+            UserDefaults.standard.removeObject(forKey: approvalKey)
+            throw AccessError.notAllowed(agent: "Claude")
         }
-        return nil
+
+        guard let data else {
+            return nil
+        }
+
+        do {
+            return try ClaudeCredentialBlob(data: data)
+        } catch {
+            throw AccessError.unreadable(agent: "Claude")
+        }
     }
 
     private static func currentSigningRequirement() -> String? {

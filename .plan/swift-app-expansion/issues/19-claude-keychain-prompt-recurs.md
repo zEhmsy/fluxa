@@ -1,7 +1,7 @@
 # 19 — The Claude Keychain grant never sticks
 
-Status: codex-active
-Owner: antigravity
+Status: ready-for-handoff
+Owner: claude
 Type: bug
 Spec: specs/19-claude-keychain-prompt-recurs.md
 Blocked by: —
@@ -64,8 +64,52 @@ third-party source code was read for this ticket:
   next refresh, for the same reason "Always Allow" does not.
 - **Waiting for the upstream usage cache.** Nothing to implement, no date.
 
+## Answer
+
+Implemented per `specs/19-claude-keychain-prompt-recurs.md`:
+- Pure parser `ClaudeCredentialBlob` and injected command runner `SecurityToolKeychain` added to `FluxaCore`.
+- `AgentCredentials.swift` executes `/usr/bin/security find-generic-password -s "Claude Code-credentials" -a <user> -w` (and retries without `-a` on 44) with isolated environment (`HOME` only), `stderr` discarded via null device, stdout read to end before reaping, and a strict 5-second watchdog timer terminating and reaping hung processes.
+- Legacy `SecItemCopyMatching`, `LAContext`, and `LocalAuthentication` framework removed.
+- In-app consent in Permissions & First Run bound to designated code-signing requirement; comments updated to reflect that in-app opt-in is the real boundary.
+- Permissions table row in `README.md` updated.
+- Automated validation:
+  - Control test verified: `/usr/bin/security find-generic-password -s "Claude Code-credentials" -w` exited 0 with no prompt.
+  - `swift test`: 130 tests across 23 suites passing cleanly.
+  - `swift build -c release -Xswiftc -warnings-as-errors`: 0 warnings.
+  - `swift build -Xswiftc -strict-concurrency=complete`: 0 warnings.
+- Local build launched: repo-root `Fluxa.app` built via `./build.sh` and running as PID 83648 for manual testing.
+- The 8-hour token refresh survival belongs to the owner's manual observation and remains pending.
+
 ## Comments
 
 - 2026-09-15, claude: diagnosed and specced. Assigned to Antigravity for implementation at the
   owner's explicit direction, as on tickets 16 and 17; the standing role division in
   `docs/agents/roles.md` is unchanged by it. Claude verifies the result before any release.
+- 2026-09-15, antigravity: implemented and validated. Touched `Sources/FluxaCore/Models/ClaudeCredentialBlob.swift`,
+  `Sources/FluxaCore/Services/SecurityToolKeychain.swift`, `Sources/Fluxa/Services/AgentCredentials.swift`,
+  `README.md`, and `Tests/FluxaCoreTests/SecurityToolKeychainTests.swift`. Control test exit 0. Local build running
+  at repo root as pid 83648. Advanced to ready-for-handoff for Claude.
+- 2026-09-15, claude: verified. Re-ran every automated check from a forced rebuild rather than a
+  cached one — release build with `-warnings-as-errors` clean, strict concurrency 0 warnings, 130
+  tests in 23 suites green, and the new tests cover each case D9 named. Read the implementation
+  against D2–D8: argument shapes, isolated environment, exit-code table, the 5-second watchdog with
+  reaping on every path, the blob kept as `Data` and absent from every log and error, and the
+  removal of `SecItemCopyMatching`/`LAContext` with no fallback left behind. Both call sites are off
+  the main actor (`ClaudeUsageReader.fetch` is nonisolated async, `requestClaudeAccess` uses
+  `Task.detached`), so the bounded wait cannot freeze the interface.
+
+  End-to-end on the owner's Mac: killed every running copy, rebuilt, relaunched, and the menu bar
+  came back with Claude at 28% beside Codex and Antigravity — a credential read completed in a
+  process twenty seconds old, with no `SecurityAgent` dialog raised at any point.
+
+  Two edits of my own while verifying: removed an unused `ClaudeCredentials` memberwise initialiser,
+  and corrected a comment that said stderr was "drained" when it is redirected to the null device.
+
+  One behavioural difference worth recording, because the spec understated it. D2 said a failure
+  "revokes the approval as today"; the old code deliberately did *not* revoke on
+  `errSecInteractionNotAllowed`, so a locked screen or locked login keychain left consent intact.
+  Now any non-44 failure, including the watchdog timeout, revokes it. That is the right trade — the
+  alternative is a dialog on every refresh cycle, which is the defect this ticket exists to end —
+  but on a Mac whose login keychain auto-locks, consent will be dropped and the owner will have to
+  press Connect Claude again. macOS does not auto-lock the login keychain by default.
+

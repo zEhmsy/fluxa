@@ -350,7 +350,7 @@ the system's current status when you return. Saved onboarding choices are **not*
 | **Bluetooth** | Bluetooth Audio, peripheral battery | Allow button in setup; without the grant neither the device list nor accessory battery levels are read, and nothing blocks waiting for them |
 | **Accessibility** | Lock Keyboard | Enable button in setup; required to intercept keyboard events globally |
 | **Shortcuts app** | Focus Mode | One-time guided setup (see below) |
-| **Keychain** | Agent Usage (Claude) | Connect Claude in setup opts into credential access for the current signing identity; choose *Always Allow* only if you trust this copy |
+| **Keychain** | Agent Usage (Claude) | Connect Claude in setup opts into credential access for the current signing identity |
 | **Network** | Agent Usage / About | Agent quota endpoints; public GitHub profile data only while About is opened |
 
 Antigravity's card in the setup guide grants nothing: its quota comes from the helper Antigravity
