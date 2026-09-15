@@ -211,6 +211,17 @@ package struct SystemMetric: Identifiable, Hashable, Sendable {
 
     /// Load and heat need different bands: 90% CPU is normal under a build, 90 °C is not.
     package var severity: Severity {
+        // Charge is the one percentage whose bad end is the bottom: a full battery is not a
+        // warning, and 10% is. The bands are macOS's own — it offers Low Power Mode at 20% and
+        // turns its battery glyph red at 10% — so Fluxa's colour changes when the system's does.
+        if id == .batteryLevel {
+            switch value {
+            case ..<10:  return .critical
+            case ..<20:  return .warning
+            default:     return .normal
+            }
+        }
+
         switch id.kind {
         case .percentage:
             switch value {

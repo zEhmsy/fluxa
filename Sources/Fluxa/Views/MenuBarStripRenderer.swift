@@ -40,8 +40,9 @@ enum MenuBarStripRenderer {
     nonisolated(unsafe) private static let font = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .medium)
     /// Gap between two readings.
     private static let segmentGap: CGFloat = 7
-    /// Leading-glyph size — a touch smaller than the Fluxa mark so the readings stay the loudest thing.
-    private static let agentMarkSize: CGFloat = 11
+    /// Leading-glyph size. Kept just above the 11pt text so each reading is recognisable by its
+    /// glyph at a glance, and still inside the 18pt menu bar box with room to centre.
+    private static let agentMarkSize: CGFloat = 13
     /// Gap between a segment's glyph and its value.
     private static let agentMarkGap: CGFloat = 3
 

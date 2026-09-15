@@ -61,15 +61,27 @@ struct BatterySamplerTests {
         #expect(normal.severity == .normal)
         #expect(normal.tooltip == "Battery: 50%")
 
-        let high = SystemMetric(id: .batteryLevel, value: 85.0)
-        #expect(high.displayText == "85%")
-        #expect(high.fraction == 0.85)
-        #expect(high.severity == .warning)
+        // Charge runs the other way round from load: a full battery is never a warning, an
+        // almost-empty one always is. The bands are macOS's own — Low Power Mode at 20%, red
+        // glyph at 10%.
+        let full = SystemMetric(id: .batteryLevel, value: 100.0)
+        #expect(full.displayText == "100%")
+        #expect(full.fraction == 1.0)
+        #expect(full.severity == .normal)
 
-        let critical = SystemMetric(id: .batteryLevel, value: 95.0)
-        #expect(critical.displayText == "95%")
-        #expect(critical.fraction == 0.95)
+        let low = SystemMetric(id: .batteryLevel, value: 15.0)
+        #expect(low.displayText == "15%")
+        #expect(low.fraction == 0.15)
+        #expect(low.severity == .warning)
+
+        let critical = SystemMetric(id: .batteryLevel, value: 5.0)
+        #expect(critical.displayText == "5%")
+        #expect(critical.fraction == 0.05)
         #expect(critical.severity == .critical)
+
+        // Band edges belong to the calmer side.
+        #expect(SystemMetric(id: .batteryLevel, value: 10.0).severity == .warning)
+        #expect(SystemMetric(id: .batteryLevel, value: 20.0).severity == .normal)
     }
 
     @Test("SystemStatsSampler incorporates battery readings into sample")
