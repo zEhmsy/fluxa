@@ -25,6 +25,9 @@ CLAUDE.md
 # Planning & internal docs
 ROADMAP.md
 HANDOFF.md
+AGENTS.md
+AGENT.md
+.plan/
 
 # Release artifacts (built locally and attached to GitHub releases, never versioned)
 *.tar.gz
