@@ -16,7 +16,7 @@ struct TrackpadScaleWindowView: View {
     @State private var unit: WeightUnit = .grams
 
     private var scale: TrackpadWeightService { viewModel.trackpadWeight }
-    private var isCyber: Bool { visualStyle != .classic }
+    private var isCyber: Bool { visualStyle.isCyber }
     private var palette: ControlDeckPalette { .resolve(visualStyle) }
 
     var body: some View {

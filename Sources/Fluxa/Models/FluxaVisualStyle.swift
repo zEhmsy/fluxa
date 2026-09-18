@@ -10,6 +10,8 @@ import SwiftUI
 /// their fixed light or dark palette.
 enum FluxaVisualStyle: String, CaseIterable, Identifiable, Codable {
     case classic
+    case classicLight
+    case classicDark
     case cyber
     case cyberDark
 
@@ -17,10 +19,22 @@ enum FluxaVisualStyle: String, CaseIterable, Identifiable, Codable {
 
     var title: String {
         switch self {
-        case .classic:   return "Classic"
-        case .cyber:     return "Cyber"
-        case .cyberDark: return "Cyber Dark"
+        case .classic:      return "Auto"
+        case .classicLight: return "Classic"
+        case .classicDark:  return "Classic Dark"
+        case .cyber:        return "Cyber"
+        case .cyberDark:    return "Cyber Dark"
         }
+    }
+
+    /// Whether this style uses the Control Deck layout rather than Classic layout.
+    var isCyber: Bool {
+        self == .cyber || self == .cyberDark
+    }
+
+    /// Whether this style uses the Classic popover layout.
+    var isClassic: Bool {
+        !isCyber
     }
 }
 

@@ -349,7 +349,7 @@ struct FluxaButtonStyle: ButtonStyle {
     @Environment(\.fluxaVisualStyle) private var visualStyle
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private var isCyber: Bool { visualStyle != .classic }
+    private var isCyber: Bool { visualStyle.isCyber }
     private var palette: ControlDeckPalette { .resolve(visualStyle) }
 
     func makeBody(configuration: Configuration) -> some View {

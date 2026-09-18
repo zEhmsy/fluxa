@@ -36,7 +36,7 @@ struct ControlDeckPalette {
     let critical: Color
 
     static func resolve(_ style: FluxaVisualStyle) -> ControlDeckPalette {
-        style == .cyberDark ? .dark : .light
+        (style == .cyberDark || style == .classicDark) ? .dark : .light
     }
 
     static let dark = ControlDeckPalette(
@@ -73,12 +73,12 @@ struct ControlDeckPalette {
         hover: rgb(236, 241, 248),
         pressed: rgb(224, 232, 243),
         primaryText: rgb(22, 24, 27),
-        secondaryText: rgb(97, 102, 110),
-        tertiaryText: rgb(124, 130, 139),
-        border: rgb(216, 220, 227),
-        meterTrack: rgb(231, 234, 239),
-        brandBlue: rgb(47, 128, 237),
-        brandViolet: rgb(108, 92, 231),
+        secondaryText: rgb(78, 83, 92),
+        tertiaryText: rgb(100, 106, 116),
+        border: rgb(208, 213, 222),
+        meterTrack: rgb(218, 222, 230),
+        brandBlue: rgb(10, 91, 201),
+        brandViolet: rgb(88, 70, 195),
         cpu: rgb(0, 105, 143),
         gpu: rgb(112, 56, 176),
         memory: rgb(167, 70, 0),

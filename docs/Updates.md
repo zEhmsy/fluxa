@@ -1,29 +1,37 @@
 # Fluxa Direct updates
 
-## Current release — 2.9.3 (22)
+## Current release — 2.10.0 (23)
 
 Fluxa Direct uses Sparkle **2.9.4**, pinned in `Package.swift` and `Package.resolved`.
 The source and app contain the real public signing key and the production
 [HTTPS appcast](https://zehmsy.github.io/fluxa/updates/appcast.xml).
 
-[Release v2.9.3](https://github.com/zEhmsy/fluxa/releases/tag/v2.9.3) uses build **22** and is the
-item the production feed advertises. Published 2026-09-15 from `main` at `f2456d4`, with the feed
-commit `67fad37` on `codex/updates-feed`. Signed with the stable **Fluxa Code Signing** certificate.
+[Release v2.10.0](https://github.com/zEhmsy/fluxa/releases/tag/v2.10.0) uses build **23** and is the
+item the production feed advertises. Published 2026-09-18 from `main`, with the feed
+on `codex/updates-feed`. Signed with the stable **Fluxa Code Signing** certificate.
 
 Before publication the archive signature was verified with the pinned
-`sign_update --account fluxa.direct --verify` command. Both published assets were downloaded back from the release and
-matched their local SHA-256 byte for byte:
+`sign_update --account fluxa.direct --verify` command. Hashes:
+
+```
+760b7276268e60ffa222cb283a43f2abb0c029e7940f8ee336fb800571a9e28a  Fluxa.zip
+501fb874ffee3bc8cc105d85e41f91549c62c198e615fd35be4947a8329d6c74  Fluxa.dmg
+```
+
+### What 2.10.0 contains
+
+5-State Visual Appearance Architecture (`Auto`, `Classic`, `Classic Dark`, `Cyber`, `Cyber Dark`), full Classic Light Mode with WCAG 2.1 AA compliance and Aqua bridging, interactive macOS System Settings-style visual preview tile selector in Customize > General, and sleek overlay scrollbars in long customization views. Full notes are embedded in the feed item and in the GitHub release.
+
+### Earlier: release 2.9.3 (22)
+
+[Release v2.9.3](https://github.com/zEhmsy/fluxa/releases/tag/v2.9.3) uses build **22**. Published 2026-09-15 from `main` at `f2456d4`, with the feed commit `67fad37` on `codex/updates-feed`. Signed with the stable **Fluxa Code Signing** certificate.
 
 ```
 0cc0158fdaac6ba696232ceea9c2d88bd61e085291804740f4b5bbd9807842ac  Fluxa.zip
 951f8b546b7895a7bca91c282ccc76acae9e49875b14df8b70fe6c5150771fcf  Fluxa.dmg
 ```
 
-The feed edit was purely additive — 31 inserted lines, every earlier item byte-identical.
-
-### What 2.9.3 contains
-
-Claude Keychain access persistence via `/usr/bin/security` (ticket 19), inverted battery severity bands, enlarged menu bar glyphs up to 17pt, and independent system symbol sizing. Full notes are embedded in the feed item and in the GitHub release.
+Claude Keychain access persistence via `/usr/bin/security` (ticket 19), inverted battery severity bands, enlarged menu bar glyphs up to 17pt, and independent system symbol sizing.
 
 ### Earlier: release 2.9.2 (21)
 

@@ -12,7 +12,7 @@ struct FocusOnboardingView: View {
     @Environment(\.dismissWindow) private var dismissWindow
     @Environment(\.fluxaVisualStyle) private var visualStyle
 
-    private var isCyber: Bool { visualStyle != .classic }
+    private var isCyber: Bool { visualStyle.isCyber }
     private var palette: ControlDeckPalette { .resolve(visualStyle) }
 
     var body: some View {

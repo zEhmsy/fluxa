@@ -253,12 +253,11 @@ struct ControlDeckDashboardView: View {
             )
 
             if visibleActions.count > 8 {
-                ScrollView {
+                SleekScrollView(indicatorTint: palette.claude) {
                     LazyVStack(spacing: 0) {
                         actionRows
                     }
                 }
-                .scrollIndicators(.visible)
                 .frame(height: 8 * 40)
             } else if visibleActions.isEmpty {
                 emptyActions

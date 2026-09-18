@@ -27,7 +27,15 @@ enum ScreenshotHarness {
         print("[ScreenshotHarness] Starting screenshot generation to: \(outputDir)")
 
         // Configure AppSettings
-        settings.visualStyle = .cyberDark
+        if CommandLine.arguments.contains("--classic-light") {
+            settings.visualStyle = .classicLight
+        } else if CommandLine.arguments.contains("--classic-dark") {
+            settings.visualStyle = .classicDark
+        } else if CommandLine.arguments.contains("--cyber-light") {
+            settings.visualStyle = .cyber
+        } else {
+            settings.visualStyle = .cyberDark
+        }
         settings.hiddenActionIDs = []
         settings.actionOrder = [
             .keepAwake,
@@ -158,16 +166,11 @@ enum ScreenshotHarness {
                 title: "Fluxa",
                 buildView: { vm, set in
                     AnyView(
-                        ControlDeckDashboardView(
-                            style: .cyberDark,
-                            onCustomize: {},
-                            onAbout: {},
-                            closePopover: nil
-                        )
-                        .environment(vm)
-                        .environment(set)
-                        .fluxaVisualStyle(from: set)
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        PopoverRootView()
+                            .environment(vm)
+                            .environment(set)
+                            .fluxaVisualStyle(from: set)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     )
                 }
             ),
@@ -239,6 +242,12 @@ enum ScreenshotHarness {
             window.isOpaque = false
             window.backgroundColor = .clear
             window.hasShadow = false
+        }
+
+        switch settings.visualStyle {
+        case .classic: window.appearance = nil
+        case .classicLight, .cyber: window.appearance = NSAppearance(named: .aqua)
+        case .classicDark, .cyberDark: window.appearance = NSAppearance(named: .darkAqua)
         }
 
         hostingView.layoutSubtreeIfNeeded()

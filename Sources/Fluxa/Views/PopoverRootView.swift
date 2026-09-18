@@ -47,7 +47,11 @@ struct PopoverRootView: View {
             }
         }
         .frame(width: panelWidth)
-        .background(FluxaTheme.panelBackground)
+        .background(
+            settings.visualStyle.isClassic
+                ? FluxaTheme.panelBackground
+                : ControlDeckPalette.resolve(settings.visualStyle).deck
+        )
         .clipped()
         .onAppear {
             viewModel.refreshStates()
@@ -106,7 +110,7 @@ struct PopoverRootView: View {
     @ViewBuilder
     private var dashboard: some View {
         switch settings.visualStyle {
-        case .classic:
+        case .classic, .classicLight, .classicDark:
             classicDashboard
         case .cyber, .cyberDark:
             ControlDeckDashboardView(

@@ -11,16 +11,17 @@ struct ActionListView: View {
     /// Passed through to each row so momentary actions can close the popover.
     var closePopover: (() -> Void)?
 
+    private var rowHeight: CGFloat {
+        settings.showSubtitles ? 46 : 44
+    }
+
     var body: some View {
         let actions = settings.visibleActions
 
-        // No ScrollView: inside the MenuBarExtra window it reports zero ideal
-        // height and the window (which sizes to the ideal size) collapses the
-        // whole list. The popover holds at most 9 rows, so scrolling is not needed.
         VStack(alignment: .leading, spacing: 7) {
             FluxaSectionLabel(title: "Quick actions", trailing: "\(actions.count)")
 
-            VStack(spacing: 1) {
+            Group {
                 if actions.isEmpty {
                     HStack(spacing: 8) {
                         Image(systemName: "slider.horizontal.3")
@@ -31,9 +32,20 @@ struct ActionListView: View {
                         Spacer()
                     }
                     .padding(12)
+                } else if actions.count > 8 {
+                    SleekScrollView {
+                        LazyVStack(spacing: 1) {
+                            ForEach(actions) { action in
+                                ActionRowView(action: action, closePopover: closePopover)
+                            }
+                        }
+                    }
+                    .frame(height: 8 * rowHeight + 7)
                 } else {
-                    ForEach(actions) { action in
-                        ActionRowView(action: action, closePopover: closePopover)
+                    VStack(spacing: 1) {
+                        ForEach(actions) { action in
+                            ActionRowView(action: action, closePopover: closePopover)
+                        }
                     }
                 }
             }

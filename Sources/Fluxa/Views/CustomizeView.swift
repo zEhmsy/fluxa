@@ -60,8 +60,9 @@ struct CustomizeView: View {
                 // list and the alert thresholds, which together outgrow a laptop screen. The tab
                 // scrolls inside whatever height the screen can hold rather than running off the
                 // bottom, and shorter tabs keep sizing themselves as before.
-                ScrollView(.vertical) {
+                SleekScrollView {
                     tabContent
+                        .id(selectedTab)
                         .frame(maxWidth: .infinity, alignment: .top)
                         .background(
                             GeometryReader { proxy in
@@ -89,7 +90,7 @@ struct CustomizeView: View {
     /// different display than the one it opened on last time.
     private static var maximumTabHeight: CGFloat {
         let visibleHeight = NSScreen.main?.visibleFrame.height ?? 800
-        return max(300, visibleHeight - 200)
+        return min(480, max(300, visibleHeight - 200))
     }
 
     @ViewBuilder
@@ -119,19 +120,11 @@ struct CustomizeView: View {
                         Text("Appearance")
                             .font(.system(size: 13))
 
-                        Picker("Appearance", selection: Binding(
+                        FluxaAppearanceTileSelector(selection: Binding(
                             get: { settings.visualStyle },
                             set: { settings.visualStyle = $0 }
-                        )) {
-                            ForEach(FluxaVisualStyle.allCases) { style in
-                                Text(style.title).tag(style)
-                            }
-                        }
-                        .labelsHidden()
-                        .pickerStyle(.segmented)
-                        .controlSize(.small)
-                        .accessibilityLabel("Fluxa appearance")
-                        .help("Classic follows macOS. Cyber and Cyber Dark use the Control Deck design.")
+                        ))
+                        .help("Auto follows macOS. Classic and Cyber offer light and dark layouts.")
                     }
 
                     Toggle("Show Subtitles", isOn: Binding(
@@ -330,7 +323,7 @@ private struct CustomizeRowView: View {
 
     @Environment(\.fluxaVisualStyle) private var visualStyle
 
-    private var isCyber: Bool { visualStyle != .classic }
+    private var isCyber: Bool { visualStyle.isCyber }
     private var palette: ControlDeckPalette { .resolve(visualStyle) }
 
     private var isHidden: Bool {

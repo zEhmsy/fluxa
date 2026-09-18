@@ -10,7 +10,7 @@ struct SystemMetricCard: View {
 
     @Environment(\.fluxaVisualStyle) private var visualStyle
 
-    private var isCyber: Bool { visualStyle != .classic }
+    private var isCyber: Bool { visualStyle.isCyber }
     private var palette: ControlDeckPalette { .resolve(visualStyle) }
 
     var body: some View {
@@ -21,7 +21,7 @@ struct SystemMetricCard: View {
                     .foregroundStyle(color)
                 Text(metric.id.shortLabel)
                     .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(isCyber ? palette.secondaryText : Color.secondary)
                     .lineLimit(1)
                 Spacer(minLength: 0)
             }

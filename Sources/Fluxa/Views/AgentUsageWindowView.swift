@@ -17,7 +17,7 @@ struct AgentUsageWindowView: View {
     @Environment(\.fluxaVisualStyle) private var visualStyle
 
     private var usage: AgentUsageService { viewModel.agentUsage }
-    private var isCyber: Bool { visualStyle != .classic }
+    private var isCyber: Bool { visualStyle.isCyber }
     private var palette: ControlDeckPalette { .resolve(visualStyle) }
 
     var body: some View {

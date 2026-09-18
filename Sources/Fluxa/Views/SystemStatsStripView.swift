@@ -97,7 +97,7 @@ struct SystemStatsStripView: View {
         GeometryReader { proxy in
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(Color.primary.opacity(0.09))
+                    .fill(FluxaTheme.meterTrack)
                 Capsule()
                     .fill(color(for: metric.severity).gradient)
                     .frame(width: max(1, proxy.size.width * metric.fraction))

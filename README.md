@@ -50,10 +50,9 @@ Built in **Swift + SwiftUI**, with Apple system frameworks and Sparkle 2 for Dir
 
 <p align="center"><sub>Customize groups preferences into General, Actions, System, Agents and Updates. About fits version details, updates and support into one screen; both stay inside the menu-bar panel.</sub></p>
 
-> Customize, About and Agent Usage screenshots show **2.6.2 (13)** in Cyber Dark. The current
-> release is **2.9.3 (22)**; the System and Actions tab captures below predate the disk/network
-> readings and URL Cleaner action added in 2.7.0, the battery, peripheral battery and threshold
-> alert features added in 2.8.0, and Antigravity as a third quota provider added in 2.9.0.
+> Customize, About and Agent Usage screenshots show Cyber Dark. The current
+> release is **2.10.0 (23)**, introducing the 5-state appearance system with full Classic Light Mode,
+> an interactive macOS System Settings-style visual tile selector, and sleek overlay scrollbars.
 
 <details>
 <summary>Explore the Actions, System, Agents and Updates tabs</summary>
@@ -130,7 +129,8 @@ Seventeen quick actions, every one backed by a real system API — no fake toggl
 
 - **Customizable layout** — five settings tabs keep appearance, actions, hardware readings, agent quotas and updates separate; reorder, show or hide actions in the Actions tab
 - **Focus-safe navigation** — Customize transitions in place while hardware tools reliably come to the foreground
-- **Three visual styles** — Classic keeps the adaptive native interface; Cyber and Cyber Dark apply the Control Deck design across the popover and every tool window
+- **Five visual appearances** — Auto follows macOS dynamically; Classic and Classic Dark provide the native Aqua interface; Cyber and Cyber Dark apply the Control Deck design with cut corners across the popover and every tool window. Selected via an interactive macOS System Settings-style visual preview tile selector
+- **Sleek overlay scrollbars** — Long panels and customization tabs feature ultra-thin, subtle interactive scrollbars that blend seamlessly into the surface
 - **Per-action color design** — tinted icon tiles that fill when a toggle is active
 - **Persistent preferences** — order, visibility, and states survive relaunches
 - **Menu bar native** — no Dock icon; pinned readings use the whole status item, while the Fluxa mark appears only when no metric is selected

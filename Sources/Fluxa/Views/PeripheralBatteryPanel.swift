@@ -9,8 +9,11 @@ struct PeripheralBatteryPanel: View {
 
     @Environment(\.fluxaVisualStyle) private var visualStyle
 
+    private var isCyber: Bool { visualStyle.isCyber }
+    private var palette: ControlDeckPalette { .resolve(visualStyle) }
+
     private var accent: Color {
-        visualStyle == .classic ? FluxaTheme.green : ControlDeckPalette.resolve(visualStyle).battery
+        visualStyle.isClassic ? FluxaTheme.green : palette.battery
     }
 
     var body: some View {
@@ -25,13 +28,13 @@ struct PeripheralBatteryPanel: View {
                     Spacer()
                     Text("Connected accessories")
                         .font(.system(size: 9, weight: .medium))
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(isCyber ? palette.tertiaryText : Color.secondary)
                 }
 
                 if devices.isEmpty {
                     Text("No connected accessories reporting battery.")
                         .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(isCyber ? palette.secondaryText : Color.secondary)
                         .frame(minHeight: 20)
                 } else {
                     VStack(spacing: 6) {

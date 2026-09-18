@@ -12,7 +12,7 @@ struct LidAngleWindowView: View {
     @State private var displayAngle: Double = 90
 
     private var monitor: LidAngleMonitor { viewModel.lidAngleMonitor }
-    private var isCyber: Bool { visualStyle != .classic }
+    private var isCyber: Bool { visualStyle.isCyber }
 
     var body: some View {
         VStack(spacing: 14) {
@@ -141,7 +141,7 @@ struct MacBookProfileView: View {
     @Environment(\.fluxaVisualStyle) private var visualStyle
 
     // Design constants
-    private var isCyber: Bool { visualStyle != .classic }
+    private var isCyber: Bool { visualStyle.isCyber }
     private var palette: ControlDeckPalette { .resolve(visualStyle) }
     private var baseColor: Color { isCyber ? palette.secondaryText : Color.secondary }
     private var screenColor: Color { isCyber ? palette.primaryText : Color.primary }

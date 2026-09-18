@@ -24,7 +24,7 @@ struct InfoView: View {
     }()
 
     private var github: GitHubProfileService { viewModel.githubProfile }
-    private var isCyber: Bool { visualStyle != .classic }
+    private var isCyber: Bool { visualStyle.isCyber }
     private var palette: ControlDeckPalette { .resolve(visualStyle) }
 
     var body: some View {
@@ -97,10 +97,10 @@ struct InfoView: View {
                         .font(.system(size: 17, weight: .semibold))
                     Text(versionText)
                         .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(isCyber ? palette.secondaryText : Color.secondary)
                     Text("System controls, live hardware stats, and agent usage — one click away.")
                         .font(.system(size: 10))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(isCyber ? palette.secondaryText : Color.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
@@ -128,7 +128,7 @@ struct InfoView: View {
 
                 Text(viewModel.updates.statusDescription)
                     .font(.system(size: 10))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(isCyber ? palette.secondaryText : Color.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -147,7 +147,7 @@ struct InfoView: View {
                             .font(.system(size: 13, weight: .semibold))
                         Text("@\(github.profile?.login ?? "zEhmsy")")
                             .font(.system(size: 10, weight: .medium))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(isCyber ? palette.secondaryText : Color.secondary)
                     }
 
                     Spacer()
@@ -171,7 +171,7 @@ struct InfoView: View {
 
                 Text(developerDescription)
                     .font(.system(size: 10))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(isCyber ? palette.secondaryText : Color.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
                 if let errorMessage = github.errorMessage {
@@ -279,14 +279,14 @@ struct InfoView: View {
             HStack(spacing: 3) {
                 Image(systemName: systemImage)
                     .font(.system(size: 8, weight: .semibold))
-                    .foregroundStyle(FluxaTheme.accent)
+                    .foregroundStyle(isCyber ? palette.brandBlue : FluxaTheme.accent)
                 Text(value)
                     .font(.system(size: 10, weight: .semibold))
                     .monospacedDigit()
             }
             Text(label)
                 .font(.system(size: 8, weight: .medium))
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(isCyber ? palette.tertiaryText : Color.secondary)
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)
@@ -294,21 +294,25 @@ struct InfoView: View {
     }
 
     private func githubLink(_ title: String, systemImage: String, destination: URL) -> some View {
-        Link(destination: destination) {
-            HStack(spacing: 5) {
+        let linkTint = isCyber ? palette.brandBlue : FluxaTheme.accent
+        return Link(destination: destination) {
+            HStack(spacing: 3) {
                 Image(systemName: systemImage)
+                    .font(.system(size: 8, weight: .semibold))
                 Text(title)
+                    .font(.system(size: 8.5, weight: .semibold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
                 Spacer(minLength: 0)
                 Image(systemName: "arrow.up.right")
-                    .font(.system(size: 8, weight: .bold))
+                    .font(.system(size: 7.5, weight: .bold))
             }
-            .font(.system(size: 9, weight: .semibold))
-            .foregroundStyle(FluxaTheme.accent)
-            .padding(.horizontal, 8)
-            .frame(maxWidth: .infinity, minHeight: 27)
+            .foregroundStyle(linkTint)
+            .padding(.horizontal, 5)
+            .frame(maxWidth: .infinity, minHeight: 26)
             .fluxaModuleChrome(
-                fill: FluxaTheme.accent.opacity(0.10),
-                border: FluxaTheme.accent.opacity(isCyber ? 0.32 : 0.20),
+                fill: linkTint.opacity(0.10),
+                border: linkTint.opacity(isCyber ? 0.32 : 0.20),
                 cornerRadius: 7,
                 cut: 6
             )
@@ -339,7 +343,7 @@ struct InfoView: View {
                         .font(.system(size: 13, weight: .semibold))
                     Text("A coffee helps keep it free, focused, and actively maintained.")
                         .font(.system(size: 10))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(isCyber ? palette.secondaryText : Color.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -407,7 +411,7 @@ struct InfoView: View {
     private var privacyNote: some View {
         Label("No ads · No analytics · No system profiling", systemImage: "hand.raised.fill")
             .font(.system(size: 9, weight: .medium))
-            .foregroundStyle(.tertiary)
+            .foregroundStyle(isCyber ? palette.secondaryText : Color.secondary)
             .padding(.bottom, 3)
             .accessibilityElement(children: .combine)
     }

@@ -13,7 +13,7 @@ struct PermissionsSetupView: View {
 
     private var permissions: PermissionsService { viewModel.permissions }
     private var palette: ControlDeckPalette { .resolve(visualStyle) }
-    private var accent: Color { visualStyle == .classic ? FluxaTheme.accent : palette.brandBlue }
+    private var accent: Color { visualStyle.isClassic ? FluxaTheme.accent : palette.brandBlue }
     private var isInstalled: Bool { Bundle.main.bundleURL.path.hasPrefix("/Applications/") }
 
     var body: some View {

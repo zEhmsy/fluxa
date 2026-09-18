@@ -41,6 +41,11 @@ enum FluxaTheme {
         dark: color(61, 63, 70)
     )
 
+    static let meterTrack = adaptive(
+        light: color(218, 222, 230),
+        dark: color(50, 52, 58)
+    )
+
     static let hoverFill = adaptive(
         light: color(236, 241, 248),
         dark: color(50, 53, 60)
@@ -95,7 +100,7 @@ struct FluxaPanelDivider: View {
     @Environment(\.fluxaVisualStyle) private var visualStyle
 
     private var color: Color {
-        visualStyle == .classic ? FluxaTheme.border : ControlDeckPalette.resolve(visualStyle).border
+        visualStyle.isClassic ? FluxaTheme.border : ControlDeckPalette.resolve(visualStyle).border
     }
 
     var body: some View {
@@ -113,7 +118,7 @@ struct FluxaSectionLabel: View {
 
     @Environment(\.fluxaVisualStyle) private var visualStyle
 
-    private var isCyber: Bool { visualStyle != .classic }
+    private var isCyber: Bool { visualStyle.isCyber }
     private var palette: ControlDeckPalette { .resolve(visualStyle) }
 
     var body: some View {
@@ -139,7 +144,7 @@ struct FluxaPrimaryButtonStyle: ButtonStyle {
     @Environment(\.fluxaVisualStyle) private var visualStyle
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private var isCyber: Bool { visualStyle != .classic }
+    private var isCyber: Bool { visualStyle.isCyber }
     private var palette: ControlDeckPalette { .resolve(visualStyle) }
 
     func makeBody(configuration: Configuration) -> some View {
@@ -182,15 +187,35 @@ private struct FluxaPanelSurfaceModifier: ViewModifier {
 
     @ViewBuilder
     func body(content: Content) -> some View {
-        if visualStyle == .classic {
-            content
+        if visualStyle.isClassic {
+            let scheme: ColorScheme? = switch visualStyle {
+            case .classicLight: .light
+            case .classicDark:  .dark
+            default:            nil
+            }
+            let surface = content
                 .background(classicBackground)
+                .preferredColorScheme(scheme)
+                .background {
+                    FluxaAppearanceBridge(style: visualStyle)
+                        .frame(width: 0, height: 0)
+                }
+            if let scheme {
+                surface.environment(\.colorScheme, scheme)
+            } else {
+                surface
+            }
         } else {
             let palette = ControlDeckPalette.resolve(visualStyle)
             content
                 .foregroundStyle(palette.primaryText)
                 .background(palette.deck)
+                .environment(\.colorScheme, palette.isDark ? .dark : .light)
                 .preferredColorScheme(palette.isDark ? .dark : .light)
+                .background {
+                    FluxaAppearanceBridge(style: visualStyle)
+                        .frame(width: 0, height: 0)
+                }
         }
     }
 }
@@ -205,7 +230,7 @@ private struct FluxaListRowSurfaceModifier: ViewModifier {
     @Environment(\.fluxaVisualStyle) private var visualStyle
 
     func body(content: Content) -> some View {
-        let isCyber = visualStyle != .classic
+        let isCyber = visualStyle.isCyber
         let palette = ControlDeckPalette.resolve(visualStyle)
         content
             .listRowBackground(isCyber ? palette.module : FluxaTheme.surface)
@@ -230,7 +255,7 @@ private struct FluxaModuleChromeModifier: ViewModifier {
     @Environment(\.fluxaVisualStyle) private var visualStyle
 
     func body(content: Content) -> some View {
-        let isCyber = visualStyle != .classic
+        let isCyber = visualStyle.isCyber
         content
             .background {
                 if isCyber {
@@ -291,7 +316,7 @@ struct FluxaPageHeader<Trailing: View>: View {
         self.trailing = trailing()
     }
 
-    private var isCyber: Bool { visualStyle != .classic }
+    private var isCyber: Bool { visualStyle.isCyber }
     private var palette: ControlDeckPalette { .resolve(visualStyle) }
 
     var body: some View {
@@ -387,7 +412,7 @@ struct FluxaToolHeader: View {
 
     @Environment(\.fluxaVisualStyle) private var visualStyle
 
-    private var isCyber: Bool { visualStyle != .classic }
+    private var isCyber: Bool { visualStyle.isCyber }
     private var palette: ControlDeckPalette { .resolve(visualStyle) }
 
     var body: some View {
@@ -433,7 +458,7 @@ struct FluxaToolCard<Content: View>: View {
 
     @Environment(\.fluxaVisualStyle) private var visualStyle
 
-    private var isCyber: Bool { visualStyle != .classic }
+    private var isCyber: Bool { visualStyle.isCyber }
     private var palette: ControlDeckPalette { .resolve(visualStyle) }
 
     init(@ViewBuilder content: () -> Content) {
@@ -468,7 +493,7 @@ struct FluxaStatusBadge: View {
 
     @Environment(\.fluxaVisualStyle) private var visualStyle
 
-    private var isCyber: Bool { visualStyle != .classic }
+    private var isCyber: Bool { visualStyle.isCyber }
 
     var body: some View {
         HStack(spacing: 6) {
