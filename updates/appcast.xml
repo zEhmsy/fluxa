@@ -7,6 +7,44 @@
         <language>en</language>
         <!-- No update is advertised until its signed archive has been published. -->
         <item>
+            <title>2.10.0</title>
+            <pubDate>Fri, 18 Sep 2026 16:40:06 +0200</pubDate>
+            <link>https://github.com/zEhmsy/fluxa/releases/tag/v2.10.0</link>
+            <sparkle:version>23</sparkle:version>
+            <sparkle:shortVersionString>2.10.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description sparkle:format="markdown"><![CDATA[# Fluxa 2.10.0 (23)
+
+## 5-State Visual Appearance Architecture
+
+Fluxa now supports five distinct visual appearances:
+- **Auto**: Follows macOS system appearance dynamically.
+- **Classic**: Native Aqua interface forced into Light Mode.
+- **Classic Dark**: Native Aqua interface forced into Dark Mode.
+- **Cyber**: Futuristic Control Deck interface forced into Light Mode.
+- **Cyber Dark**: Futuristic Control Deck interface forced into Dark Mode.
+
+## Classic Light Mode & WCAG 2.1 AA Compliance
+
+Full support for Light Mode in the Classic theme, including automatic window and view appearance bridging, high-contrast brand badges, and adaptive meter tracks with at least 3:1 contrast ratios.
+
+## Interactive Appearance Tile Selector
+
+The General settings tab now features a macOS System Settings-style visual preview selector with theme-accurate silhouettes (rounded corners for Classic, cut corners for Cyber) and live state badges.
+
+## Sleek Overlay Scrollbars
+
+Long customization sections (such as System Stats) now incorporate custom ultra-thin interactive overlay scrollbars for an unobtrusive experience.
+
+## Notes
+
+- Requires macOS 14 or later, Apple silicon.
+- Signed with the stable **Fluxa Code Signing** certificate; permissions carry over seamlessly from 2.9.1+.
+]]></description>
+            <enclosure url="https://github.com/zEhmsy/fluxa/releases/download/v2.10.0/Fluxa.zip" length="3617134" type="application/octet-stream" sparkle:edSignature="nb4vCQcL2ILhX0ZB370INYX+tRg55WqcdTG3k+9MQWO6uNfwlzONNy8Bp/kQwUi4/B4Yw5tltUia2AV2tqN9Cg=="/>
+        </item>
+        <item>
             <title>2.9.3</title>
             <pubDate>Tue, 15 Sep 2026 16:58:47 +0200</pubDate>
             <link>https://github.com/zEhmsy/fluxa/releases/tag/v2.9.3</link>
