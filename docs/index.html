@@ -122,6 +122,9 @@ tailwind.config = {
               transition:background .35s ease, color .35s ease; white-space:nowrap; }
   .tab-pill.is-on { background:linear-gradient(120deg,#2F80ED,#6C5CE7); color:#fff; }
 
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
   @media (prefers-reduced-motion: reduce) {
     .layer,.step { transition:none } html { scroll-behavior:auto }
     .rain, .rain::before { animation:none }
@@ -152,19 +155,24 @@ tailwind.config = {
     <span class="px-3 py-1 rounded-full bg-ink/75 backdrop-blur-sm border border-white/15">Sparkle 2</span>
   </div>
 
-  <div class="mt-10 flex flex-col sm:flex-row gap-3">
+  <div class="mt-10 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 w-full sm:w-auto max-w-xs sm:max-w-none mx-auto">
     <!-- /releases/latest/download resolves to the newest release's asset, so this
          stays correct without editing the page on every release. -->
     <a href="https://github.com/zEhmsy/fluxa/releases/latest/download/Fluxa.dmg"
-       class="px-7 py-3 rounded-xl font-medium bg-gradient-to-r from-blue to-violet hover:brightness-110 transition shadow-lg shadow-violet/25">
+       class="flex items-center justify-center px-7 py-3 rounded-xl font-medium bg-gradient-to-r from-blue to-violet hover:brightness-110 transition shadow-lg shadow-violet/25 text-white text-base">
       ⬇ Download the DMG
     </a>
     <a href="https://github.com/zEhmsy/fluxa"
-       class="group flex justify-center items-center gap-2 after:duration-500 hover:border-neutral-900 duration-500 hover:duration-500 underline underline-offset-2 hover:underline-offset-4 origin-left hover:decoration-2 hover:text-neutral-300 relative bg-neutral-900 px-8 py-3 border border-white/10 text-left text-gray-50 text-base font-bold rounded-xl overflow-hidden after:absolute after:z-10 after:w-12 after:h-12 after:content-[''] after:bg-sky-900 after:-left-8 after:top-8 after:rounded-full after:blur-lg hover:after:animate-pulse">
-      <svg class="w-6 h-6 fill-neutral-50 relative z-20" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+       class="group flex justify-center items-center gap-2 after:duration-500 hover:border-neutral-900 duration-500 hover:duration-500 underline underline-offset-2 hover:underline-offset-4 origin-left hover:decoration-2 hover:text-neutral-300 relative bg-neutral-900 px-7 py-3 border border-white/10 text-gray-50 text-base font-medium rounded-xl overflow-hidden after:absolute after:z-10 after:w-12 after:h-12 after:content-[''] after:bg-sky-900 after:-left-8 after:top-8 after:rounded-full after:blur-lg hover:after:animate-pulse">
+      <svg class="w-5 h-5 fill-neutral-50 relative z-20" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <path d="M50,1.23A50,50,0,0,0,34.2,98.68c2.5.46,3.41-1.09,3.41-2.41s0-4.33-.07-8.5c-13.91,3-16.84-6.71-16.84-6.71-2.28-5.77-5.55-7.31-5.55-7.31-4.54-3.1.34-3,.34-3,5,.35,7.66,5.15,7.66,5.15C27.61,83.5,34.85,81.3,37.7,80a10.72,10.72,0,0,1,3.17-6.69C29.77,72.07,18.1,67.78,18.1,48.62A19.34,19.34,0,0,1,23.25,35.2c-.52-1.26-2.23-6.34.49-13.23,0,0,4.19-1.34,13.75,5.13a47.18,47.18,0,0,1,25,0C72.07,20.63,76.26,22,76.26,22c2.72,6.89,1,12,.49,13.23a19.28,19.28,0,0,1,5.14,13.42c0,19.21-11.69,23.44-22.83,24.67,1.8,1.55,3.4,4.6,3.4,9.26,0,6.69-.06,12.08-.06,13.72,0,1.34.9,2.89,3.44,2.4A50,50,0,0,0,50,1.23Z"></path>
       </svg>
       <span class="relative z-20">Source</span>
+    </a>
+    <a href="#demo"
+       class="flex items-center justify-center gap-2 px-7 py-3 rounded-xl font-medium bg-white/[.06] hover:bg-white/[.12] border border-white/10 hover:border-white/20 transition text-white text-base shadow-sm backdrop-blur-sm">
+      <svg class="w-4 h-4 text-blue fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      <span>Watch Demo (20s)</span>
     </a>
   </div>
 
@@ -176,6 +184,117 @@ tailwind.config = {
 
   <div class="hero-scroll text-xs text-white/50 tracking-widest uppercase animate-pulse">Scroll</div>
 </header>
+
+<!-- ══ VIDEO SHOWCASE ══ -->
+<section id="demo" class="relative max-w-5xl mx-auto px-4 sm:px-8 pt-12 pb-20 sm:pt-16 sm:pb-28 text-center scroll-mt-6">
+  <!-- Ambient glow backdrop -->
+  <div class="absolute inset-0 top-6 max-w-4xl mx-auto h-[420px] sm:h-[480px] bg-gradient-to-r from-blue/20 via-violet/25 to-blue/15 blur-[90px] sm:blur-[120px] pointer-events-none -z-10"></div>
+
+  <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[.06] border border-white/10 text-[11px] sm:text-[12px] text-white/75 mb-3.5 backdrop-blur-md">
+    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+    <span>Live Demo &middot; 20 Seconds</span>
+  </div>
+
+  <h2 class="text-2xl sm:text-5xl font-semibold tracking-tight text-white">See Fluxa in motion</h2>
+  <p class="mt-2 sm:mt-3 max-w-xl mx-auto text-xs sm:text-base text-white/60 leading-relaxed">
+    Seventeen quick actions, real hardware sensors, and live AI quota meters in action.
+  </p>
+
+  <!-- macOS Window Frame -->
+  <div class="mt-6 sm:mt-10 relative mx-auto rounded-xl sm:rounded-[20px] border border-edge bg-panel shadow-[0_25px_60px_-15px_rgba(0,0,0,.85)] sm:shadow-[0_35px_80px_-20px_rgba(0,0,0,.85)] overflow-hidden group">
+    <!-- Window Bar -->
+    <div class="flex items-center justify-between px-3 sm:px-4 h-8 sm:h-10 border-b border-edge bg-white/[.03] select-none">
+      <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
+        <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#ff5f57]"></span>
+        <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#febc2e]"></span>
+        <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#28c840]"></span>
+        <span class="ml-2 text-[10px] sm:text-[11px] text-white/50 font-mono truncate max-w-[140px] xs:max-w-[200px] sm:max-w-none">Fluxa-Launch-Trailer.mp4</span>
+      </div>
+      <div class="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-[11px] font-mono text-white/40">
+        <span class="hidden sm:inline">1080p 30fps</span>
+        <span class="px-2 py-0.5 rounded bg-white/5 border border-edge text-blue">Cyber Dark</span>
+      </div>
+    </div>
+
+    <!-- Video Element Container -->
+    <div class="relative bg-black">
+      <video id="fluxa-demo-video"
+             class="w-full aspect-video block object-cover cursor-pointer"
+             src="videos/fluxa-promo.mp4"
+             preload="auto"
+             playsinline
+             webkit-playsinline
+             loop
+             muted
+             poster="images/fluxa-system-dashboard.png">
+      </video>
+
+      <!-- Center Big Play Button (shows when paused) -->
+      <button id="video-center-play"
+              type="button"
+              aria-label="Play video"
+              class="absolute inset-0 m-auto w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-ink/75 hover:bg-ink/95 border border-white/20 hover:border-white/40 backdrop-blur-md flex items-center justify-center transition-all transform hover:scale-105 active:scale-95 shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 [&.is-visible]:opacity-100 [&.is-visible]:pointer-events-auto">
+        <svg class="w-6 h-6 sm:w-8 sm:h-8 text-white fill-current translate-x-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+
+      <!-- Bottom Controls Bar Overlay -->
+      <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent px-3 py-2.5 sm:px-6 sm:py-4 flex flex-col gap-1.5 sm:gap-2 transition-opacity duration-300 opacity-95 sm:opacity-90 sm:hover:opacity-100">
+        <!-- Progress Bar Scrubber with Touch Area -->
+        <div id="video-scrubber" class="relative w-full py-2 -my-1 cursor-pointer group/scrub">
+          <div class="relative w-full h-1.5 sm:group-hover/scrub:h-2 bg-white/20 rounded-full overflow-hidden transition-all">
+            <div id="video-progress" class="absolute top-0 left-0 bottom-0 bg-gradient-to-r from-blue to-violet w-0 rounded-full transition-[width] duration-75"></div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between mt-0.5 text-xs text-white/80">
+          <div class="flex items-center gap-2 sm:gap-3">
+            <button id="video-play-btn" type="button" class="p-1.5 rounded-lg hover:bg-white/10 active:bg-white/20 transition text-white" title="Play / Pause">
+              <svg id="play-icon" class="w-4 h-4 fill-current hidden" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              <svg id="pause-icon" class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            </button>
+            <button id="video-sound-btn" type="button" class="flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 sm:px-3 rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/25 border border-white/10 transition text-white/90 text-[11px] font-medium" title="Toggle audio">
+              <span id="sound-icon">🔇</span>
+              <span id="sound-label" class="hidden xs:inline sm:inline">Unmute audio</span>
+              <span class="xs:hidden sm:hidden">Unmute</span>
+            </button>
+            <span id="video-time" class="font-mono text-[10px] sm:text-[11px] text-white/50 tabular-nums">0:00 / 0:21</span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button id="video-fullscreen-btn" type="button" class="p-1.5 rounded-lg hover:bg-white/10 active:bg-white/20 transition text-white" title="Fullscreen">
+              <svg class="w-4 h-4 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Timestamps / Moments: swipeable carousel on mobile, centered grid on desktop -->
+  <div class="mt-4 sm:mt-6">
+    <div class="flex items-center justify-start sm:justify-center gap-2 text-xs overflow-x-auto no-scrollbar py-1 px-1 -mx-2 px-2 sm:mx-0 sm:px-0">
+      <span class="text-white/40 text-[10px] sm:text-[11px] uppercase tracking-wider shrink-0 mr-0.5">Moments:</span>
+      <button type="button" data-seek="0" class="chapter-btn shrink-0 px-2.5 py-1.5 sm:px-3 rounded-lg bg-panel hover:bg-white/10 border border-edge hover:border-white/20 transition text-white/75 hover:text-white flex items-center gap-1.5 active:scale-95">
+        <span class="text-blue font-mono text-[11px]">0:00</span>
+        <span>Menu Bar &amp; Keep Awake</span>
+      </button>
+      <button type="button" data-seek="8" class="chapter-btn shrink-0 px-2.5 py-1.5 sm:px-3 rounded-lg bg-panel hover:bg-white/10 border border-edge hover:border-white/20 transition text-white/75 hover:text-white flex items-center gap-1.5 active:scale-95">
+        <span class="text-violet font-mono text-[11px]">0:08</span>
+        <span>Agent Quotas</span>
+      </button>
+      <button type="button" data-seek="12" class="chapter-btn shrink-0 px-2.5 py-1.5 sm:px-3 rounded-lg bg-panel hover:bg-white/10 border border-edge hover:border-white/20 transition text-white/75 hover:text-white flex items-center gap-1.5 active:scale-95">
+        <span class="text-emerald-400 font-mono text-[11px]">0:12</span>
+        <span>System Dashboard</span>
+      </button>
+      <button type="button" data-seek="17" class="chapter-btn shrink-0 px-2.5 py-1.5 sm:px-3 rounded-lg bg-panel hover:bg-white/10 border border-edge hover:border-white/20 transition text-white/75 hover:text-white flex items-center gap-1.5 active:scale-95">
+        <span class="text-amber-400 font-mono text-[11px]">0:17</span>
+        <span>Cyber Dark Deck</span>
+      </button>
+    </div>
+  </div>
+</section>
 
 <!-- ══ SCROLLYTELLING ══ -->
 <main id="scrolly" class="relative max-w-7xl mx-auto px-5 sm:px-8 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,520px)] lg:gap-14">
@@ -647,6 +766,149 @@ cp -r Fluxa.app /Applications/</code></pre>
     .onStepEnter(response => activate(response.element));
 
   window.addEventListener('resize', () => scroller.resize());
+
+  // ── Video Showcase Controller ──
+  const video = document.getElementById('fluxa-demo-video');
+  if (video) {
+    const playBtn = document.getElementById('video-play-btn');
+    const playIcon = document.getElementById('play-icon');
+    const pauseIcon = document.getElementById('pause-icon');
+    const centerPlay = document.getElementById('video-center-play');
+    const soundBtn = document.getElementById('video-sound-btn');
+    const soundIcon = document.getElementById('sound-icon');
+    const soundLabel = document.getElementById('sound-label');
+    const scrubber = document.getElementById('video-scrubber');
+    const progress = document.getElementById('video-progress');
+    const timeText = document.getElementById('video-time');
+    const fullscreenBtn = document.getElementById('video-fullscreen-btn');
+    const chapterBtns = document.querySelectorAll('.chapter-btn');
+
+    function updatePlayState() {
+      const isPaused = video.paused;
+      playIcon.classList.toggle('hidden', !isPaused);
+      pauseIcon.classList.toggle('hidden', isPaused);
+      centerPlay.classList.toggle('is-visible', isPaused);
+    }
+
+    function togglePlay() {
+      if (video.paused) {
+        video.play().catch(() => {});
+      } else {
+        video.pause();
+      }
+      updatePlayState();
+    }
+
+    function toggleMute() {
+      video.muted = !video.muted;
+      if (video.muted) {
+        soundIcon.textContent = '🔇';
+        soundLabel.textContent = 'Unmute audio';
+        soundBtn.classList.remove('bg-blue/20', 'border-blue/40');
+      } else {
+        soundIcon.textContent = '🔊';
+        soundLabel.textContent = 'Mute audio';
+        soundBtn.classList.add('bg-blue/20', 'border-blue/40');
+        if (video.paused) video.play().catch(() => {});
+      }
+    }
+
+    function formatTime(sec) {
+      const s = Math.floor(sec || 0);
+      const m = Math.floor(s / 60);
+      const rem = s % 60;
+      return m + ':' + (rem < 10 ? '0' : '') + rem;
+    }
+
+    video.addEventListener('play', updatePlayState);
+    video.addEventListener('pause', updatePlayState);
+    video.addEventListener('click', togglePlay);
+    playBtn.addEventListener('click', togglePlay);
+    centerPlay.addEventListener('click', togglePlay);
+    soundBtn.addEventListener('click', toggleMute);
+
+    video.addEventListener('timeupdate', () => {
+      const pct = (video.currentTime / (video.duration || 21.2)) * 100;
+      progress.style.width = pct + '%';
+      timeText.textContent = formatTime(video.currentTime) + ' / ' + formatTime(video.duration || 21.2);
+    });
+
+    function seekToEvent(e) {
+      const rect = scrubber.getBoundingClientRect();
+      const clientX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : (e.changedTouches ? e.changedTouches[0].clientX : e.clientX);
+      const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      video.currentTime = pos * (video.duration || 21.2);
+    }
+
+    let isSeeking = false;
+    scrubber.addEventListener('mousedown', (e) => {
+      isSeeking = true;
+      seekToEvent(e);
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (isSeeking) seekToEvent(e);
+    });
+    window.addEventListener('mouseup', () => {
+      if (isSeeking) {
+        isSeeking = false;
+        if (video.paused) video.play().catch(() => {});
+      }
+    });
+
+    scrubber.addEventListener('touchstart', (e) => {
+      isSeeking = true;
+      seekToEvent(e);
+    }, { passive: true });
+    window.addEventListener('touchmove', (e) => {
+      if (isSeeking) seekToEvent(e);
+    }, { passive: true });
+    window.addEventListener('touchend', () => {
+      if (isSeeking) {
+        isSeeking = false;
+        if (video.paused) video.play().catch(() => {});
+      }
+    });
+
+    chapterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const seek = parseFloat(btn.dataset.seek || '0');
+        video.currentTime = seek;
+        if (video.paused) video.play().catch(() => {});
+        chapterBtns.forEach(b => b.classList.remove('border-blue/60', 'bg-blue/10'));
+        btn.classList.add('border-blue/60', 'bg-blue/10');
+      });
+    });
+
+    if (fullscreenBtn) {
+      fullscreenBtn.addEventListener('click', () => {
+        if (video.webkitEnterFullscreen) {
+          video.webkitEnterFullscreen();
+        } else if (!document.fullscreenElement) {
+          if (video.parentElement.requestFullscreen) {
+            video.parentElement.requestFullscreen().catch(() => {});
+          } else if (video.requestFullscreen) {
+            video.requestFullscreen().catch(() => {});
+          }
+        } else {
+          document.exitFullscreen().catch(() => {});
+        }
+      });
+    }
+
+    // Autoplay when scrolled into view (muted), pause when leaving
+    if ('IntersectionObserver' in window) {
+      const videoIo = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            video.play().catch(() => {});
+          } else {
+            video.pause();
+          }
+        });
+      }, { threshold: 0.35 });
+      videoIo.observe(video);
+    }
+  }
 })();
 </script>
 </body>

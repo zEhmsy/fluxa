@@ -26,6 +26,18 @@ Built in **Swift + SwiftUI**, with Apple system frameworks and Sparkle 2 for Dir
 
 ---
 
+## 🎬 Fluxa in Action
+
+<p align="center">
+  <img src="docs/images/fluxa-demo.gif" alt="Fluxa in Action" width="760">
+</p>
+
+<p align="center">
+  <sub>Seventeen quick actions · Rolling 30-min hardware monitoring · Live Claude, Codex & Antigravity quotas in the menu bar.</sub>
+</p>
+
+---
+
 ## 🖼 Interface
 
 <p align="center">

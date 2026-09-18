@@ -9,8 +9,9 @@ DerivedData/
 .DS_Store
 ._*
 
-# Icon generation artifacts
+# Icon/brag generation artifacts
 *.iconset/
+brag-output
 
 # IDE
 .vscode/
