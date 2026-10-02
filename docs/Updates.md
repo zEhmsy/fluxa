@@ -1,26 +1,37 @@
 # Fluxa Direct updates
 
-## Current release — 2.10.0 (23)
+## Current release — 2.10.1 (24)
 
 Fluxa Direct uses Sparkle **2.9.4**, pinned in `Package.swift` and `Package.resolved`.
 The source and app contain the real public signing key and the production
 [HTTPS appcast](https://zehmsy.github.io/fluxa/updates/appcast.xml).
 
-[Release v2.10.0](https://github.com/zEhmsy/fluxa/releases/tag/v2.10.0) uses build **23** and is the
-item the production feed advertises. Published 2026-09-18 from `main`, with the feed
+[Release v2.10.1](https://github.com/zEhmsy/fluxa/releases/tag/v2.10.1) uses build **24** and is the
+item the production feed advertises. Published 2026-10-02 from `main`, with the feed
 on `codex/updates-feed`. Signed with the stable **Fluxa Code Signing** certificate.
 
 Before publication the archive signature was verified with the pinned
 `sign_update --account fluxa.direct --verify` command. Hashes:
 
 ```
+c0957d440eb83651def57a3217dad2baa62d7b30c97705a3965d20cc5a586ca9  Fluxa.zip
+4d90bbabe237a2ec53fabb7aac3ee53d75cc348efd99f8822f0af017b5a79d3c  Fluxa.dmg
+```
+
+### What 2.10.1 contains
+
+The menu bar strip collapses to the Fluxa logo when the notch would hide it, with a short note in the popover while collapsed, and the Keep Awake power assertion now uses an ASCII name. Full notes are embedded in the feed item and in the GitHub release.
+
+### Earlier: release 2.10.0 (23)
+
+[Release v2.10.0](https://github.com/zEhmsy/fluxa/releases/tag/v2.10.0) uses build **23**. Published 2026-09-18 from `main` at `e797bf5`, with the feed commit `880ac4f` on `codex/updates-feed`. Signed with the stable **Fluxa Code Signing** certificate.
+
+```
 760b7276268e60ffa222cb283a43f2abb0c029e7940f8ee336fb800571a9e28a  Fluxa.zip
 501fb874ffee3bc8cc105d85e41f91549c62c198e615fd35be4947a8329d6c74  Fluxa.dmg
 ```
 
-### What 2.10.0 contains
-
-5-State Visual Appearance Architecture (`Auto`, `Classic`, `Classic Dark`, `Cyber`, `Cyber Dark`), full Classic Light Mode with WCAG 2.1 AA compliance and Aqua bridging, interactive macOS System Settings-style visual preview tile selector in Customize > General, and sleek overlay scrollbars in long customization views. Full notes are embedded in the feed item and in the GitHub release.
+5-State Visual Appearance Architecture (`Auto`, `Classic`, `Classic Dark`, `Cyber`, `Cyber Dark`), full Classic Light Mode with WCAG 2.1 AA compliance and Aqua bridging, interactive macOS System Settings-style visual preview tile selector in Customize > General, and sleek overlay scrollbars in long customization views.
 
 ### Earlier: release 2.9.3 (22)
 
@@ -118,7 +129,7 @@ Only these public values belong in `Sources/Fluxa/Resources/Info.plist`:
 - `SUPublicEDKey`: `CkRk7WevzhjWm8DTQDDI4eqXc2Tvx+aGvmWFPCSfEe0=`.
 
 Keep increasing `CFBundleVersion`: 9 was the local bootstrap, 10 is release 2.6.1, 21 is release
-2.9.2, and **22** is the current release 2.9.3. Use a build greater than 22 for the next changed release or candidate. Builds
+2.9.2, 22 is release 2.9.3, 23 is release 2.10.0, and **24** is the current release 2.10.1. Use a build greater than 24 for the next changed release or candidate. Builds
 19 and 20 were prepared and never published, so the numbers are spent either way — a prepared build
 number is never reused, whether or not it shipped. Do not reuse any already published release or
 mutate its assets. Rebuild after any plist edit; both the executable
