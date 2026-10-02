@@ -158,9 +158,9 @@ tailwind.config = {
   <div class="mt-10 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 w-full sm:w-auto max-w-xs sm:max-w-none mx-auto">
     <!-- /releases/latest/download resolves to the newest release's asset, so this
          stays correct without editing the page on every release. -->
-    <a href="https://github.com/zEhmsy/fluxa/releases/latest/download/Fluxa.dmg"
+    <a href="https://github.com/zEhmsy/fluxa/releases/latest/download/Fluxa.dmg" data-dmg
        class="flex items-center justify-center px-7 py-3 rounded-xl font-medium bg-gradient-to-r from-blue to-violet hover:brightness-110 transition shadow-lg shadow-violet/25 text-white text-base">
-      ⬇ Download the DMG
+      <span data-dmg-label>⬇ Download the DMG</span>
     </a>
     <a href="https://github.com/zEhmsy/fluxa"
        class="group flex justify-center items-center gap-2 after:duration-500 hover:border-neutral-900 duration-500 hover:duration-500 underline underline-offset-2 hover:underline-offset-4 origin-left hover:decoration-2 hover:text-neutral-300 relative bg-neutral-900 px-7 py-3 border border-white/10 text-gray-50 text-base font-medium rounded-xl overflow-hidden after:absolute after:z-10 after:w-12 after:h-12 after:content-[''] after:bg-sky-900 after:-left-8 after:top-8 after:rounded-full after:blur-lg hover:after:animate-pulse">
@@ -693,9 +693,9 @@ cp -r Fluxa.app /Applications/</code></pre>
       and use <span class="text-white/60">System Settings → Privacy &amp; Security → Open Anyway</span>, if offered.
       Don't disable Gatekeeper. Once approved, subsequent updates install in place seamlessly. Requires macOS 14 (Sonoma) or later.
     </p>
-    <a href="https://github.com/zEhmsy/fluxa/releases/latest/download/Fluxa.dmg"
+    <a href="https://github.com/zEhmsy/fluxa/releases/latest/download/Fluxa.dmg" data-dmg
        class="inline-block mt-9 px-8 py-3.5 rounded-xl font-medium bg-gradient-to-r from-blue to-violet hover:brightness-110 transition shadow-lg shadow-violet/25">
-      ⬇ Download Fluxa.dmg
+      <span data-dmg-label>⬇ Download Fluxa.dmg</span>
     </a>
     <p class="mt-4 text-xs text-white/50">
       Already running Fluxa? <span class="text-white/70">About → Check for Updates…</span> installs it in place.
@@ -717,6 +717,40 @@ cp -r Fluxa.app /Applications/</code></pre>
     <a class="hover:text-white transition" href="https://www.buymeacoffee.com/gturturro">☕ Buy me a coffee</a>
   </div>
 </footer>
+
+<!-- ══ NOT-A-MAC SHEET ══ -->
+<!-- Shown instead of the DMG download on phones, tablets and non-Mac desktops:
+     the file is useless there, so offer to hand the page over to a Mac. -->
+<dialog id="mac-only" class="m-auto w-[calc(100%-2rem)] max-w-sm p-0 rounded-2xl bg-panel text-[#e7e9f0] border border-white/10 shadow-2xl shadow-black/60 backdrop:bg-black/70 backdrop:backdrop-blur-sm">
+  <div class="p-6 text-center">
+    <img src="images/fluxa-logo.svg" alt="" width="48" height="48" class="mx-auto rounded-xl">
+    <h2 class="mt-4 text-lg font-semibold text-white">Fluxa runs on your Mac</h2>
+    <p class="mt-2 text-sm text-white/60 leading-relaxed">
+      It's a menu bar app for macOS 14+ on Apple silicon, so it can't be installed on this device.
+      Send yourself the link and download it from your Mac.
+    </p>
+    <div class="mt-6 flex flex-col gap-2.5">
+      <button type="button" data-mac-share
+              class="hidden px-5 py-3 rounded-xl font-medium bg-gradient-to-r from-blue to-violet hover:brightness-110 transition text-white">
+        Send link to my Mac
+      </button>
+      <a data-mac-mail href="#"
+         class="px-5 py-3 rounded-xl font-medium bg-gradient-to-r from-blue to-violet hover:brightness-110 transition text-white">
+        Email me the link
+      </a>
+      <button type="button" data-mac-copy
+              class="px-5 py-3 rounded-xl font-medium bg-white/[.06] hover:bg-white/[.12] border border-white/10 transition text-white">
+        Copy link
+      </button>
+    </div>
+    <div class="mt-5 flex items-center justify-center gap-4 text-xs text-white/45">
+      <a data-mac-anyway href="https://github.com/zEhmsy/fluxa/releases/latest/download/Fluxa.dmg"
+         class="underline decoration-white/25 hover:text-white transition">Download the DMG anyway</a>
+      <span aria-hidden="true">·</span>
+      <button type="button" data-mac-close class="hover:text-white transition">Close</button>
+    </div>
+  </div>
+</dialog>
 
 <script src="https://unpkg.com/scrollama"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -909,6 +943,65 @@ cp -r Fluxa.app /Applications/</code></pre>
       videoIo.observe(video);
     }
   }
+})();
+</script>
+<script>
+// DMG links: Macs download directly; everything else gets the hand-off sheet.
+(function () {
+  const ua = navigator.userAgent;
+  // iPadOS reports a Mac user agent, so touch support tells the two apart.
+  const isMac = /Macintosh/.test(ua) && !(navigator.maxTouchPoints > 1);
+  const sheet = document.getElementById('mac-only');
+  if (isMac || !sheet || typeof sheet.showModal !== 'function') return;
+
+  const pageUrl = location.origin + location.pathname;
+  const isMobile = /Android|iPhone|iPad|iPod|Mobile/.test(ua) || navigator.maxTouchPoints > 1;
+
+  document.querySelectorAll('[data-dmg-label]').forEach(el => {
+    el.textContent = isMobile ? '\uD83D\uDCF2 Get it on your Mac' : '\u2B07 Get Fluxa for Mac';
+  });
+  document.querySelectorAll('a[data-dmg]').forEach(a => {
+    a.addEventListener('click', e => { e.preventDefault(); sheet.showModal(); });
+  });
+
+  const share = sheet.querySelector('[data-mac-share]');
+  const mail = sheet.querySelector('[data-mac-mail]');
+  const copy = sheet.querySelector('[data-mac-copy]');
+  const mailBody = [
+    'Hi, it’s your phone 👋',
+    '',
+    'You just tried to install a Mac app on me. Bold move, but I don’t have a menu bar.',
+    '',
+    'Open this on your Mac instead:',
+    pageUrl,
+    '',
+    'One minute and one drag into Applications, and you get seventeen system controls, live hardware stats and your AI quotas right in the menu bar.',
+    '',
+    'Don’t leave this one in your inbox forever,',
+    'Your phone'
+  ].join('\n');
+  mail.href = 'mailto:?subject=' + encodeURIComponent('A note from your phone: get Fluxa on your Mac') +
+              '&body=' + encodeURIComponent(mailBody);
+
+  // The share sheet covers AirDrop, Messages and Mail, so it replaces the email button.
+  if (navigator.share) {
+    share.classList.remove('hidden');
+    mail.classList.add('hidden');
+    share.addEventListener('click', () => {
+      navigator.share({ title: 'Fluxa for Mac', text: 'Found this on my phone, but it lives in the Mac menu bar:', url: pageUrl }).catch(() => {});
+    });
+  }
+
+  copy.addEventListener('click', () => {
+    const done = () => { copy.textContent = 'Link copied \u2713'; setTimeout(() => { copy.textContent = 'Copy link'; }, 2000); };
+    if (navigator.clipboard) navigator.clipboard.writeText(pageUrl).then(done, () => prompt('Copy this link:', pageUrl));
+    else prompt('Copy this link:', pageUrl);
+  });
+
+  sheet.querySelector('[data-mac-close]').addEventListener('click', () => sheet.close());
+  sheet.querySelector('[data-mac-anyway]').addEventListener('click', () => sheet.close());
+  // Tapping the backdrop closes the sheet.
+  sheet.addEventListener('click', e => { if (e.target === sheet) sheet.close(); });
 })();
 </script>
 </body>
