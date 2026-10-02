@@ -6,12 +6,34 @@ struct MenuBarStripLabel: View {
     let settings: AppSettings
     let viewModel: PopoverViewModel
 
+    // Write-only from here: the monitor reports into `collapsed` and the view model flag, and
+    // nothing in the scene body reads either (ticket 18).
+    @State private var monitor = MenuBarNotchMonitor()
+    @State private var collapsed = false
+
     var body: some View {
-        if let image = MenuBarStripRenderer.image(segments: menuBarSegments) {
-            Image(nsImage: image)
-        } else {
-            Image(systemName: "bolt.circle.fill")
+        let full = MenuBarStripRenderer.image(segments: menuBarSegments)
+        Group {
+            if !collapsed, let full {
+                Image(nsImage: full)
+            } else if let icon = MenuBarStripRenderer.image(segments: []) {
+                Image(nsImage: icon)
+            } else {
+                Image(systemName: "bolt.circle.fill")
+            }
         }
+        .onAppear {
+            monitor.onChange = { isCollapsed in
+                collapsed = isCollapsed
+                viewModel.menuBarCollapsedByNotch = isCollapsed
+            }
+            monitor.update(fullWidth: Double(full?.size.width ?? 0))
+            monitor.start()
+        }
+        .onChange(of: full?.size.width) { _, width in
+            monitor.update(fullWidth: Double(width ?? 0))
+        }
+        .onDisappear { monitor.stop() }
     }
 
     private var menuBarSegments: [MenuBarStripRenderer.Segment] {

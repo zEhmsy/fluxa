@@ -150,6 +150,14 @@ struct PopoverRootView: View {
                 errorBanner(message: error)
             }
 
+            if viewModel.menuBarCollapsedByNotch {
+                Label("Menu bar strip collapsed: not enough room beside the notch.", systemImage: "info.circle")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 12)
+            }
+
             // MARK: Action List
             ActionListView(closePopover: closePopover)
                 .environment(viewModel)

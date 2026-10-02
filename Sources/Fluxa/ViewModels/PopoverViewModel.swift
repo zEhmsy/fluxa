@@ -64,6 +64,10 @@ final class PopoverViewModel {
 
     var isShowingPermissionsSetup = false
 
+    /// True while the menu bar strip is collapsed to the logo because the notch hides it.
+    /// Written by `MenuBarStripLabel`; only the popover reads it.
+    var menuBarCollapsedByNotch = false
+
     /// Whether an async action is in progress (disables controls during transitions).
     var isBusy = false
 
