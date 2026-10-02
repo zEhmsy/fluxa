@@ -988,7 +988,8 @@ cp -r Fluxa.app /Applications/</code></pre>
     share.classList.remove('hidden');
     mail.classList.add('hidden');
     share.addEventListener('click', () => {
-      navigator.share({ title: 'Fluxa for Mac', text: 'Found this on my phone, but it lives in the Mac menu bar:', url: pageUrl }).catch(() => {});
+      // URL only: adding `text` makes iOS share a note, which drops or degrades AirDrop.
+      navigator.share({ title: 'Fluxa for Mac', url: pageUrl }).catch(() => {});
     });
   }
 
