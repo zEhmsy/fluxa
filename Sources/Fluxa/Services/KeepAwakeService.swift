@@ -53,7 +53,7 @@ final class KeepAwakeService {
             let result = IOPMAssertionCreateWithName(
                 kIOPMAssertionTypeNoDisplaySleep as CFString,
                 IOPMAssertionLevel(kIOPMAssertionLevelOn),
-                "Fluxa Keep Awake — user requested" as CFString,
+                "Fluxa Keep Awake - user requested" as CFString,
                 &assertionID
             )
 
