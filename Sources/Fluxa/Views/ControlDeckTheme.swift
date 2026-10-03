@@ -162,6 +162,7 @@ struct ControlDeckPalette {
         case .micMute:        return isDark ? Self.rgb(255, 126, 192) : Self.rgb(171, 49, 115)
         case .lidAngle:       return isDark ? Self.rgb(89, 211, 133) : Self.rgb(20, 120, 68)
         case .trackpadScale:  return warning
+        case .screenDraw:     return isDark ? Self.rgb(168, 145, 255) : Self.rgb(85, 65, 175)
         }
     }
 

@@ -53,6 +53,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         shortcut.toggleAction = { [weak vm] in
             Task { @MainActor in vm?.toggleMenuBarWindow() }
         }
+        shortcut.screenDrawAction = { [weak vm] in
+            Task { @MainActor in vm?.screenDraw.toggleActive() }
+        }
         shortcutRegistered = true
     }
 }

@@ -22,6 +22,7 @@ enum ActionID: String, CaseIterable, Codable, Identifiable {
     case micMute      // CoreAudio input volume control (mute/unmute default input device)
     case lidAngle     // IORegistry lid angle monitor (MacBook only)
     case trackpadScale // Force Touch trackpad used as a scale for small objects
+    case screenDraw   // On-screen annotation and presentation drawing tools
 
     var id: String { rawValue }
 }
@@ -223,6 +224,15 @@ enum ActionCatalog {
             icon: "scalemass",
             activeIcon: nil,
             tint: FluxaTheme.amber,
+            controlStyle: .momentaryButton(label: "Open")
+        ),
+        QuickAction(
+            id: .screenDraw,
+            title: "Screen Draw",
+            subtitle: "On-screen annotation & presentation tools",
+            icon: "pencil.and.outline",
+            activeIcon: "pencil.tip.crop.circle.badge.plus",
+            tint: FluxaTheme.indigo,
             controlStyle: .momentaryButton(label: "Open")
         ),
     ]

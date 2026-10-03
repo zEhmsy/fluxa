@@ -10,6 +10,7 @@ struct PopoverRootView: View {
         case dashboard
         case customize
         case info
+        case screenDraw
     }
 
     /// Cached once rather than decoded every time SwiftUI recomputes the header.
@@ -43,6 +44,11 @@ struct PopoverRootView: View {
             case .info:
                 InfoView(onDone: closeInfo)
                     .environment(viewModel)
+                    .transition(.move(edge: .trailing))
+            case .screenDraw:
+                ScreenDrawPanelView(onDone: closeScreenDraw)
+                    .environment(viewModel)
+                    .environment(settings)
                     .transition(.move(edge: .trailing))
             }
         }
@@ -95,6 +101,12 @@ struct PopoverRootView: View {
                 viewModel.isShowingSystemStats = false
             }
         }
+        .onChange(of: viewModel.isShowingScreenDraw) { _, showing in
+            if showing {
+                showScreenDraw()
+                viewModel.isShowingScreenDraw = false
+            }
+        }
     }
 
     private var panelWidth: CGFloat {
@@ -102,6 +114,7 @@ struct PopoverRootView: View {
         case .dashboard: FluxaTheme.panelWidth
         case .customize: CustomizeView.panelWidth
         case .info: InfoView.panelWidth
+        case .screenDraw: ScreenDrawPanelView.panelWidth
         }
     }
 
@@ -164,7 +177,7 @@ struct PopoverRootView: View {
                 .environment(settings)
 
             // MARK: Bottom Bar
-            BottomBarView(onCustomize: showCustomize, onAbout: showInfo)
+            BottomBarView(onCustomize: showCustomize, onAbout: showInfo, onScreenDraw: showScreenDraw)
         }
         .frame(width: FluxaTheme.panelWidth)
         .background(FluxaTheme.panelBackground)
@@ -202,6 +215,20 @@ struct PopoverRootView: View {
     }
 
     private func closeInfo() {
+        guard screen != .dashboard else { return }
+        withAnimation(.easeInOut(duration: 0.18)) {
+            screen = .dashboard
+        }
+    }
+
+    private func showScreenDraw() {
+        guard screen != .screenDraw else { return }
+        withAnimation(.easeInOut(duration: 0.18)) {
+            screen = .screenDraw
+        }
+    }
+
+    private func closeScreenDraw() {
         guard screen != .dashboard else { return }
         withAnimation(.easeInOut(duration: 0.18)) {
             screen = .dashboard

@@ -14,28 +14,36 @@ final class GlobalShortcutService {
     // MARK: - Private
 
     private var hotKeyRef: EventHotKeyRef?
+    private var screenDrawHotKeyRef: EventHotKeyRef?
     private var eventHandlerRef: EventHandlerRef?
     /// Retained pointer passed to Carbon; released in unregister().
     private var retainedSelf: UnsafeMutableRawPointer?
 
     // MARK: - Public
 
-    /// Called on hotkey press. Wire this to show/hide the popover window.
+    /// Called on hotkey press (Cmd+Shift+F). Wire this to show/hide the popover window.
     var toggleAction: (() -> Void)?
+
+    /// Called on hotkey press (Cmd+Shift+D). Wire this to toggle Screen Draw mode.
+    var screenDrawAction: (() -> Void)?
 
     // MARK: - API
 
-    /// Registers the global hotkey. Call after the app finishes launching.
+    /// Registers the global hotkeys. Call after the app finishes launching.
     func register() {
         installEventHandler()
         registerHotKey()
     }
 
-    /// Unregisters the hotkey and removes the Carbon event handler.
+    /// Unregisters the hotkeys and removes the Carbon event handler.
     func unregister() {
         if let ref = hotKeyRef {
             UnregisterEventHotKey(ref)
             hotKeyRef = nil
+        }
+        if let ref = screenDrawHotKeyRef {
+            UnregisterEventHotKey(ref)
+            screenDrawHotKeyRef = nil
         }
         if let handler = eventHandlerRef {
             RemoveEventHandler(handler)
@@ -68,7 +76,7 @@ final class GlobalShortcutService {
     }
 
     private func registerHotKey() {
-        // Cmd+Shift+F
+        // Cmd+Shift+F (Menu Bar Extra popover)
         let hotKeyID = EventHotKeyID(signature: fourCC("flxa"), id: 1)
         RegisterEventHotKey(
             UInt32(kVK_ANSI_F),
@@ -78,13 +86,28 @@ final class GlobalShortcutService {
             0,
             &hotKeyRef
         )
+
+        // Cmd+Shift+D (Screen Draw overlay)
+        let screenDrawID = EventHotKeyID(signature: fourCC("flxa"), id: 2)
+        RegisterEventHotKey(
+            UInt32(kVK_ANSI_D),
+            UInt32(cmdKey | shiftKey),
+            screenDrawID,
+            GetApplicationEventTarget(),
+            0,
+            &screenDrawHotKeyRef
+        )
     }
 
     // MARK: - Internal
 
-    fileprivate func hotKeyPressed() {
+    fileprivate func hotKeyPressed(id: UInt32) {
         DispatchQueue.main.async { [weak self] in
-            self?.toggleAction?()
+            if id == 1 {
+                self?.toggleAction?()
+            } else if id == 2 {
+                self?.screenDrawAction?()
+            }
         }
     }
 }
@@ -96,9 +119,20 @@ private func hotKeyEventCallback(
     _ event: EventRef?,
     _ userData: UnsafeMutableRawPointer?
 ) -> OSStatus {
-    guard let ptr = userData else { return OSStatus(eventNotHandledErr) }
+    guard let ptr = userData, let event else { return OSStatus(eventNotHandledErr) }
+    var hotKeyID = EventHotKeyID()
+    let status = GetEventParameter(
+        event,
+        EventParamName(kEventParamDirectObject),
+        EventParamType(typeEventHotKeyID),
+        nil,
+        MemoryLayout<EventHotKeyID>.size,
+        nil,
+        &hotKeyID
+    )
+    guard status == noErr else { return status }
     let service = Unmanaged<GlobalShortcutService>.fromOpaque(ptr).takeUnretainedValue()
-    service.hotKeyPressed()
+    service.hotKeyPressed(id: hotKeyID.id)
     return noErr
 }
 

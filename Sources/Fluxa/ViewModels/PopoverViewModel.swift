@@ -38,6 +38,7 @@ final class PopoverViewModel {
     let githubProfile = GitHubProfileService()
     let permissions = PermissionsService()
     let updates = UpdateService()
+    let screenDraw: ScreenDrawService
 
     // MARK: - Observable State
 
@@ -55,6 +56,9 @@ final class PopoverViewModel {
 
     /// Signals PopoverRootView to open the Trackpad Scale window.
     var isShowingTrackpadScale = false
+
+    /// Signals PopoverRootView to open the Screen Draw tools panel.
+    var isShowingScreenDraw = false
 
     /// Signals PopoverRootView to open the Agent Usage charts window.
     var isShowingAgentUsage = false
@@ -102,6 +106,10 @@ final class PopoverViewModel {
             return connected.map(\.name).joined(separator: ", ")
         case .micMute:
             return micMute.isAvailable ? micMute.currentInputDeviceName : "Volume control not available"
+        case .screenDraw:
+            return screenDraw.isActive
+                ? "Active (\(screenDraw.activeMode.displayName) — \(screenDraw.activeTool.displayName))"
+                : nil
         default:
             return nil
         }
@@ -115,6 +123,7 @@ final class PopoverViewModel {
 
     init(settings: AppSettings) {
         self.settings = settings
+        self.screenDraw = ScreenDrawService(settings: settings)
         refreshStates()
         audioOutput.refresh()
         audioOutput.startMonitoring()
@@ -296,6 +305,9 @@ final class PopoverViewModel {
 
             case .trackpadScale:
                 isShowingTrackpadScale = true
+
+            case .screenDraw:
+                isShowingScreenDraw = true
 
             default:
                 break

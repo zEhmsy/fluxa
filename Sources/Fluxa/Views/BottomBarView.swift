@@ -7,6 +7,7 @@ struct BottomBarView: View {
 
     let onCustomize: () -> Void
     let onAbout: () -> Void
+    var onScreenDraw: (() -> Void)? = nil
 
     var body: some View {
         HStack(spacing: 0) {
@@ -17,6 +18,14 @@ struct BottomBarView: View {
                     .labelStyle(.titleAndIcon)
             }
             .buttonStyle(BottomBarButtonStyle(tint: FluxaTheme.accent, isEmphasized: true))
+
+            if let onScreenDraw {
+                Button(action: onScreenDraw) {
+                    Label("Draw", systemImage: "pencil.and.outline")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .buttonStyle(BottomBarButtonStyle(tint: FluxaTheme.indigo, isEmphasized: false))
+            }
 
             Button(action: onAbout) {
                 Label("About", systemImage: "info.circle")
