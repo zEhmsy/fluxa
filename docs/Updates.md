@@ -1,24 +1,35 @@
 # Fluxa Direct updates
 
-## Current release — 2.10.2 (25)
+## Current release — 2.11.0 (26)
 
 Fluxa Direct uses Sparkle **2.9.4**, pinned in `Package.swift` and `Package.resolved`.
 The source and app contain the real public signing key and the production
 [HTTPS appcast](https://zehmsy.github.io/fluxa/updates/appcast.xml).
 
-[Release v2.10.2](https://github.com/zEhmsy/fluxa/releases/tag/v2.10.2) uses build **25** and is the
-item the production feed advertises. Published 2026-10-03 from `main` at `8d81fa8`, with the feed
-on `codex/updates-feed`. Signed with the stable **Fluxa Code Signing** certificate.
+[Release v2.11.0](https://github.com/zEhmsy/fluxa/releases/tag/v2.11.0) uses build **26** and is the
+item the production feed advertises. Published 2026-10-03 from `main` at `b7151a7`, with the feed
+commit `a4d23e1` on `codex/updates-feed`. Signed with the stable **Fluxa Code Signing** certificate.
 
 Before publication the archive signature was verified with the pinned
-`sign_update --account fluxa.direct --verify` command. Hashes:
+`sign_update --account fluxa.direct --verify` command, and again on the downloaded public asset. Hashes:
+
+```
+2fc2d482e5ebc2dc85477016f2829b1088c2bd529541665714d46520d96ea0cc  Fluxa.zip
+f26edc2f25fcdd8aaac699461b52fb4a56e3e17ea19ed8ee98299210d3b1bcd4  Fluxa.dmg
+```
+
+### What 2.11.0 contains
+
+Screen Draw: on-screen annotation and presenter tools (pen, highlighter, shapes, text, laser, spotlight, eraser) with a themed floating toolbar hidden from screen sharing by default, keyboard shortcuts, Shift-constrained shapes and an annotated screenshot to the clipboard. Full notes are embedded in the feed item and in the GitHub release.
+
+### Earlier: release 2.10.2 (25)
+
+[Release v2.10.2](https://github.com/zEhmsy/fluxa/releases/tag/v2.10.2) uses build **25**. Published 2026-10-03 from `main` at `8d81fa8`. Signed with the stable **Fluxa Code Signing** certificate.
 
 ```
 3f0e70b0b979f05915d4e29084ee345c8dc68dcaab2cbf765a16caed48ac848f  Fluxa.zip
 c11fd8111492cfc2c9dd6431cb453a36184399c459092dcdf7e5c9743e2bf1f0  Fluxa.dmg
 ```
-
-### What 2.10.2 contains
 
 The menu bar strip collapses to the Fluxa logo when the notch would hide it, including when it only touches the notch's right edge, with a short note in the popover in every appearance. The Keep Awake power assertion now uses an ASCII name. Full notes are embedded in the feed item and in the GitHub release.
 
@@ -133,7 +144,7 @@ Only these public values belong in `Sources/Fluxa/Resources/Info.plist`:
 - `SUPublicEDKey`: `CkRk7WevzhjWm8DTQDDI4eqXc2Tvx+aGvmWFPCSfEe0=`.
 
 Keep increasing `CFBundleVersion`: 9 was the local bootstrap, 10 is release 2.6.1, 21 is release
-2.9.2, 22 is release 2.9.3, 23 is release 2.10.0, 24 is the withdrawn 2.10.1, and **25** is the current release 2.10.2. Use a build greater than 25 for the next changed release or candidate. Builds
+2.9.2, 22 is release 2.9.3, 23 is release 2.10.0, 24 is the withdrawn 2.10.1, 25 is release 2.10.2, and **26** is the current release 2.11.0. Use a build greater than 26 for the next changed release or candidate. Builds
 19 and 20 were prepared and never published, so the numbers are spent either way — a prepared build
 number is never reused, whether or not it shipped. Do not reuse any already published release or
 mutate its assets. Rebuild after any plist edit; both the executable
