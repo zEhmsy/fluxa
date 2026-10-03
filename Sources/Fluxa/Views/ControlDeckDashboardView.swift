@@ -50,6 +50,10 @@ struct ControlDeckDashboardView: View {
                 errorRow(errorMessage)
             }
 
+            if viewModel.menuBarCollapsedByNotch {
+                notchCollapsedRow
+            }
+
             actionSection
             footer
         }
@@ -328,6 +332,33 @@ struct ControlDeckDashboardView: View {
             }
             .padding(.horizontal, 8)
             .background(palette.critical.opacity(palette.isDark ? 0.10 : 0.06))
+        }
+        .frame(minHeight: 38)
+    }
+
+    private var notchCollapsedRow: some View {
+        HStack(spacing: 0) {
+            ControlDeckRailCell(
+                palette: palette,
+                node: .hollow(palette.secondaryText),
+                segmentColor: palette.border,
+                showsBranch: true
+            )
+
+            HStack(spacing: 7) {
+                Image(systemName: "info.circle")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(palette.secondaryText)
+                    .accessibilityHidden(true)
+
+                Text("Menu bar strip collapsed: not enough room beside the notch.")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(palette.secondaryText)
+                    .lineLimit(2)
+
+                Spacer(minLength: 4)
+            }
+            .padding(.horizontal, 8)
         }
         .frame(minHeight: 38)
     }
