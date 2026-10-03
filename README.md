@@ -51,7 +51,7 @@ Built in **Swift + SwiftUI**, with Apple system frameworks and Sparkle 2 for Dir
 <p align="center"><sub>Customize groups preferences into General, Actions, System, Agents and Updates. About fits version details, updates and support into one screen; both stay inside the menu-bar panel.</sub></p>
 
 > Customize, About and Agent Usage screenshots show Cyber Dark. The current
-> release is **2.10.1 (24)**, which collapses the menu bar strip to the Fluxa logo when the notch
+> release is **2.10.2 (25)**, which collapses the menu bar strip to the Fluxa logo when the notch
 > would hide it. 2.10.0 introduced the 5-state appearance system with full Classic Light Mode,
 > an interactive macOS System Settings-style visual tile selector, and sleek overlay scrollbars.
 
