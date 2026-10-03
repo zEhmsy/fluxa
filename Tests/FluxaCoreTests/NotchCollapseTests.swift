@@ -40,7 +40,14 @@ struct NotchCollapseTests {
     @Test("A strip fully right of the notch stays expanded")
     func staysExpanded() {
         #expect(next(collapsed: false, item: .init(minX: 900, maxX: 1104)) == false)
-        #expect(next(collapsed: false, item: .init(minX: 850, maxX: 1054)) == false)
+        #expect(next(collapsed: false, item: .init(minX: 854, maxX: 1058)) == false)
+    }
+
+    @Test("A strip touching the notch's right edge collapses")
+    func collapsesAtEdge() {
+        // Observed on 2.10.1: window at 850..1052 with gapMaxX 850, and macOS hid the item.
+        #expect(next(collapsed: false, item: .init(minX: 850, maxX: 1052)) == true)
+        #expect(next(collapsed: false, item: .init(minX: 853, maxX: 1055)) == true)
     }
 
     @Test("Collapsed stays collapsed until room for the full width plus margin")

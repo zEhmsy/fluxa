@@ -18,6 +18,9 @@ public struct NotchGeometry: Equatable, Sendable {
 public enum NotchCollapse {
     /// Spare points beside the notch required before the full strip is shown again.
     public static let expandMargin: Double = 20
+    /// Points right of the notch an item must start beyond to count as visible. macOS hides an
+    /// item whose window starts exactly at the gap's right edge (2.10.1, window at 850, gap 850).
+    public static let obscureMargin: Double = 4
     /// Minimum time between two state changes.
     public static let minDwell: TimeInterval = 30
 
@@ -32,10 +35,10 @@ public enum NotchCollapse {
         }
     }
 
-    /// True when any part of the item sits at or left of the notch gap's right edge.
+    /// True when the item starts left of, at, or within `obscureMargin` of the notch gap's right edge.
     public static func isObscured(item: Frame, notch: NotchGeometry?) -> Bool {
         guard let notch else { return false }
-        return item.minX < notch.gapMaxX
+        return item.minX < notch.gapMaxX + obscureMargin
     }
 
     /// True when a right-anchored item of `fullWidth` fits right of the notch with spare margin.
