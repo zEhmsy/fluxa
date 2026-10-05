@@ -349,6 +349,8 @@ tailwind.config = {
                src="images/fluxa-customize-updates.png?v=292" alt="Customize Updates tab with automatic-check preference and manual update button">
           <img class="layer absolute inset-0 m-auto max-h-[88%] max-w-[88%] object-contain rounded-lg" data-layer="10"
                src="images/fluxa-about.png?v=292" alt="Fluxa About page with version, updates, GitHub details and support link">
+          <img class="layer absolute inset-0 m-auto max-h-[88%] max-w-[88%] object-contain rounded-lg" data-layer="11"
+               src="images/fluxa-screen-draw.png" alt="A slide annotated with Screen Draw: a highlighted title, a red circle and arrow on the tallest bar, and the floating toolbar at the bottom of the screen">
         </div>
       </div>
       <figcaption id="frame-caption" class="mt-3 text-center text-xs text-white/35 max-lg:hidden">
@@ -491,6 +493,32 @@ let pressure = record.loadUnaligned(
 )
 guard total.isFinite, pressure.isFinite,
       (0...20_000).contains(pressure) else { continue }</code></pre>
+    </section>
+
+    <!-- Screen Draw -->
+    <section class="step min-h-[70vh] flex flex-col justify-center py-16" data-step="11" data-image="11"
+             data-title="ScreenDrawHUDPanel.swift" data-metric="⌘⇧D"
+             data-caption="A real capture: the toolbar is visible here only because sharing protection was switched off.">
+      <div class="rail h-[3px] w-14 rounded-full bg-white/15 mb-6 transition-colors"></div>
+      <h2 class="text-3xl sm:text-4xl font-semibold tracking-tight">Draw on the slide you're presenting</h2>
+      <p class="mt-4 text-white/65 leading-relaxed">
+        Press ⌘⇧D and a transparent canvas covers every display. Circle a number, point an arrow at it, highlight a
+        title, then switch to the laser or the spotlight to guide the room. Hold ⇧ for straight lines and perfect
+        circles, hold ⌥ to click through to the app underneath, and press ESC when you're done.
+      </p>
+      <p class="mt-4 text-white/65 leading-relaxed">
+        The toolbar follows your Fluxa appearance and stays on your screen only. In Zoom, Meet, Teams or a
+        recording, people see your annotations and never the controls.
+      </p>
+      <div class="mt-5 flex flex-wrap gap-2 text-[11px]">
+        <span class="px-2.5 py-1 rounded-md bg-blue/15 text-blue border border-blue/25">New in 2.11</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">10 tools</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">Multi-display</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">NSWindow.sharingType</span>
+      </div>
+      <pre class="mt-6 p-4 rounded-xl bg-black/45 border border-edge overflow-hidden"><code class="language-swift">// Services/ScreenDraw/ScreenDrawHUDPanel.swift
+// Screen sharing and recordings capture the ink, not the toolbar.
+panel.sharingType = service.hideHUDFromScreenCapture ? .none : .readOnly</code></pre>
     </section>
 
     <!-- 5 — Customize sub-sequence: one step per tab -->
