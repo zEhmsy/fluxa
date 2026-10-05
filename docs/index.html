@@ -3,14 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Fluxa — Essential macOS system controls, one click away</title>
+<title>Fluxa: Essential macOS system controls, one click away</title>
 <meta name="description" content="Fluxa puts eighteen real system controls, live hardware monitoring and AI agent quotas (Claude, Codex, Antigravity) in your macOS menu bar. Swift + SwiftUI, zero runtime dependencies.">
 <link rel="icon" href="images/fluxa-logo.svg">
-<meta property="og:title" content="Fluxa — macOS system controls in your menu bar">
+<meta property="og:title" content="Fluxa: macOS system controls in your menu bar">
 <meta property="og:description" content="Eighteen quick actions, every one backed by a real system API. Built in Swift + SwiftUI.">
 <meta property="og:image" content="images/fluxa-system-dashboard.png">
 
 <script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
 <script>
 tailwind.config = {
@@ -142,7 +143,7 @@ tailwind.config = {
     Essential macOS system controls, <span class="gtext font-medium">one click away</span> in your menu bar.
   </p>
   <p class="mt-4 max-w-lg text-sm text-white/70">
-    Eighteen quick actions, every one backed by a real system API — no fake toggles.
+    Eighteen quick actions, every one backed by a real system API. No fake toggles.
     Built in Swift&nbsp;+&nbsp;SwiftUI with zero third-party runtime dependencies.
   </p>
 
@@ -177,9 +178,9 @@ tailwind.config = {
   </div>
 
   <p class="mt-5 text-xs text-white/50">
-    Apple silicon · macOS 14+ · ≈3&nbsp;MB ·
+    Apple silicon, macOS 14 or later, about 3&nbsp;MB.
     <a class="underline decoration-white/25 hover:text-white transition"
-       href="https://github.com/zEhmsy/fluxa/releases/latest">release notes and checksums</a>
+       href="https://github.com/zEhmsy/fluxa/releases/latest">Release notes and checksums</a>
   </p>
 
   <div class="hero-scroll text-xs text-white/50 tracking-widest uppercase animate-pulse">Scroll</div>
@@ -253,7 +254,7 @@ tailwind.config = {
               <svg id="pause-icon" class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
             </button>
             <button id="video-sound-btn" type="button" class="flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 sm:px-3 rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/25 border border-white/10 transition text-white/90 text-[11px] font-medium" title="Toggle audio">
-              <span id="sound-icon">🔇</span>
+              <i id="sound-icon" class="ph ph-speaker-slash" aria-hidden="true"></i>
               <span id="sound-label" class="hidden xs:inline sm:inline">Unmute audio</span>
               <span class="xs:hidden sm:hidden">Unmute</span>
             </button>
@@ -350,11 +351,11 @@ tailwind.config = {
           <img class="layer absolute inset-0 m-auto max-h-[88%] max-w-[88%] object-contain rounded-lg" data-layer="10"
                src="images/fluxa-about.png?v=292" alt="Fluxa About page with version, updates, GitHub details and support link">
           <img class="layer absolute inset-0 m-auto max-h-[88%] max-w-[88%] object-contain rounded-lg" data-layer="11"
-               src="images/fluxa-screen-draw.png" alt="A slide annotated with Screen Draw: a highlighted title, a red circle and arrow on the tallest bar, and the floating toolbar at the bottom of the screen">
+               src="images/fluxa-screen-draw.png?v=2110" alt="A slide annotated with Screen Draw: a highlighted title, a red circle and arrow on the tallest bar, and the floating toolbar at the bottom of the screen">
         </div>
       </div>
       <figcaption id="frame-caption" class="mt-3 text-center text-xs text-white/35 max-lg:hidden">
-        One fluid menu-bar surface — no separate settings window.
+        One fluid menu-bar surface, no separate settings window.
       </figcaption>
     </figure>
   </div>
@@ -369,7 +370,7 @@ tailwind.config = {
       <div class="rail h-[3px] w-14 rounded-full bg-white/15 mb-6 transition-colors"></div>
       <h2 class="text-3xl sm:text-4xl font-semibold tracking-tight">Eighteen real controls</h2>
       <p class="mt-4 text-white/65 leading-relaxed">
-        Keep Awake, Dark Mode, Screen Clean, Clean URL, Color Picker, Lock Keyboard, Audio Output, Quit App, Microphone Mute, Screen Draw — every action calls
+        Keep Awake, Dark Mode, Screen Clean, Clean URL, Color Picker, Lock Keyboard, Audio Output, Quit App, Microphone Mute, Screen Draw: every action calls
         a real system API. Keep Awake registers an IOKit power assertion; it doesn't fake a state and hope
         the display stays on.
       </p>
@@ -396,17 +397,17 @@ guard result == kIOReturnSuccess else { throw … }</code></pre>
       <div class="rail h-[3px] w-14 rounded-full bg-white/15 mb-6 transition-colors"></div>
       <h2 class="text-3xl sm:text-4xl font-semibold tracking-tight">Hardware you can watch</h2>
       <p class="mt-4 text-white/65 leading-relaxed">
-        CPU, GPU, memory, die temperature, disk space &amp; throughput, network I/O, battery health, and connected Magic peripherals — pinned to the popover, the menu bar, or both. Click the strip and the
-        readings expand into a 30-minute dashboard with separate percentage and degree axes. Threshold alerts notify you via UNUserNotificationCenter with dwell time and hysteresis for CPU, temperature, and disk space so a brief spike never spams you. A failed sensor pass leaves an honest gap — it never repeats old numbers.
+        CPU, GPU, memory, die temperature, disk space &amp; throughput, network I/O, battery health, and connected Magic peripherals, pinned to the popover, the menu bar, or both. Click the strip and the
+        readings expand into a 30-minute dashboard with separate percentage and degree axes. Threshold alerts notify you via UNUserNotificationCenter with dwell time and hysteresis for CPU, temperature, and disk space so a brief spike never spams you. A failed sensor pass leaves an honest gap. It never repeats old numbers.
       </p>
       <div class="mt-5 flex flex-wrap gap-2 text-[11px]">
         <span class="px-2.5 py-1 rounded-md bg-violet/15 text-[#a68cff] border border-violet/25">Swift Charts</span>
         <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">IOKit / SMC</span>
         <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">Disk &amp; Network</span>
         <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">Battery &amp; Alerts</span>
-        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">1–10 s sampling</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">1-10 s sampling</span>
       </div>
-      <pre class="mt-6 p-4 rounded-xl bg-black/45 border border-edge overflow-hidden"><code class="language-swift">// Services/SystemStatsService.swift — in memory only
+      <pre class="mt-6 p-4 rounded-xl bg-black/45 border border-edge overflow-hidden"><code class="language-swift">// Services/SystemStatsService.swift: in memory only
 static let historyDuration: TimeInterval = 30 * 60
 
 history.append(SystemStatsHistorySample(
@@ -427,15 +428,15 @@ if let firstRetained = history.firstIndex(where: { $0.timestamp >= cutoff }),
       <div class="rail h-[3px] w-14 rounded-full bg-white/15 mb-6 transition-colors"></div>
       <h2 class="text-3xl sm:text-4xl font-semibold tracking-tight">Your agent quota, in the menu bar</h2>
       <p class="mt-4 text-white/65 leading-relaxed">
-        Live session and weekly meters with reset countdowns for Claude, Codex, and Antigravity, plus daily token history grids. The quotas come from each agent's own CLI endpoints; for Antigravity, Fluxa queries its local language server directly over loopback via CSRF token authentication — zero credentials stored, and no request ever leaves your Mac. Token spend is scanned on-the-fly from session logs and local conversation SQLite databases via fast Protobuf parsing. All providers gracefully honor Retry-After rate limits.
+        Live session and weekly meters with reset countdowns for Claude, Codex, and Antigravity, plus daily token history grids. The quotas come from each agent's own CLI endpoints; for Antigravity, Fluxa queries its local language server directly over loopback via CSRF token authentication: zero credentials stored, and no request ever leaves your Mac. Token spend is scanned on-the-fly from session logs and local conversation SQLite databases via fast Protobuf parsing. All providers gracefully honor Retry-After rate limits.
       </p>
       <div class="mt-5 flex flex-wrap gap-2 text-[11px]">
-        <span class="px-2.5 py-1 rounded-md bg-blue/15 text-blue border border-blue/25">Claude · Codex · Antigravity</span>
+        <span class="px-2.5 py-1 rounded-md bg-blue/15 text-blue border border-blue/25">Claude, Codex, Antigravity</span>
         <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">Local loopback</span>
         <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">Protobuf &amp; SQLite</span>
         <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">Retry-After aware</span>
       </div>
-      <pre class="mt-6 p-4 rounded-xl bg-black/45 border border-edge overflow-hidden"><code class="language-swift">// Services/AgentUsageReaders.swift — 0 credentials stored
+      <pre class="mt-6 p-4 rounded-xl bg-black/45 border border-edge overflow-hidden"><code class="language-swift">// Services/AgentUsageReaders.swift: 0 credentials stored
 if let retryAfter = AgentRetryAfter.parse(response: httpResponse) {
     throw AgentUsageReadError.rateLimited(retryAfter: retryAfter)
 }
@@ -475,7 +476,7 @@ init() {
       <div class="rail h-[3px] w-14 rounded-full bg-white/15 mb-6 transition-colors"></div>
       <h2 class="text-3xl sm:text-4xl font-semibold tracking-tight">A scale hiding in your trackpad</h2>
       <p class="mt-4 text-white/65 leading-relaxed">
-        Force Touch strain gauges already report pressure in grams — but only under a capacitive touch, and
+        Force Touch strain gauges already report pressure in grams, but only under a capacitive touch, and
         <code class="text-[13px] text-white/80">NSEvent.pressure</code> only fires during a click. Fluxa
         <code class="text-[13px] text-white/80">dlopen</code>s the private MultitouchSupport framework,
         validates the frame layout at runtime, and hides the feature entirely if that layout ever changes.
@@ -498,7 +499,7 @@ guard total.isFinite, pressure.isFinite,
     <!-- Screen Draw -->
     <section class="step min-h-[70vh] flex flex-col justify-center py-16" data-step="11" data-image="11"
              data-title="ScreenDrawHUDPanel.swift" data-metric="⌘⇧D"
-             data-caption="A real capture: the toolbar is visible here only because sharing protection was switched off.">
+             data-caption="A real capture. The toolbar shows only because sharing protection was off.">
       <div class="rail h-[3px] w-14 rounded-full bg-white/15 mb-6 transition-colors"></div>
       <h2 class="text-3xl sm:text-4xl font-semibold tracking-tight">Draw on the slide you're presenting</h2>
       <p class="mt-4 text-white/65 leading-relaxed">
@@ -510,6 +511,12 @@ guard total.isFinite, pressure.isFinite,
         The toolbar follows your Fluxa appearance and stays on your screen only. In Zoom, Meet, Teams or a
         recording, people see your annotations and never the controls.
       </p>
+      <figure class="mt-6">
+        <img src="images/fluxa-screen-draw-toolbar.png" width="862" height="78" loading="lazy"
+             class="w-full max-w-[431px] h-auto [mask-image:linear-gradient(to_right,#000_88%,transparent)]"
+             alt="The Screen Draw toolbar tools: pen, highlighter, arrow, line, rectangle, ellipse, text, laser, spotlight and eraser, followed by the current ink color">
+        <figcaption class="mt-2 text-xs text-white/40">The tools and ink color at actual size, in the Cyber Dark appearance.</figcaption>
+      </figure>
       <div class="mt-5 flex flex-wrap gap-2 text-[11px]">
         <span class="px-2.5 py-1 rounded-md bg-blue/15 text-blue border border-blue/25">New in 2.11</span>
         <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">10 tools</span>
@@ -531,7 +538,7 @@ panel.sharingType = service.hideHUDFromScreenCapture ? .none : .readOnly</code><
       <p class="mt-4 text-white/65 leading-relaxed">
         Preferences are grouped into <span class="text-white/85">General</span>,
         <span class="text-white/85">Actions</span>, <span class="text-white/85">System</span>,
-        <span class="text-white/85">Agents</span> and <span class="text-white/85">Updates</span> — and all of it
+        <span class="text-white/85">Agents</span> and <span class="text-white/85">Updates</span>, and all of it
         still transitions in place inside the <code class="text-[13px] text-white/80">MenuBarExtra</code>
         instead of opening a settings window, so the popover never loses focus. General holds the three visual
         styles, subtitles, Launch at Login and the door into Permissions &amp; First Run.
@@ -539,7 +546,7 @@ panel.sharingType = service.hideHUDFromScreenCapture ? .none : .readOnly</code><
       <div class="mt-5 flex flex-wrap gap-2 text-[11px]">
         <span class="px-2.5 py-1 rounded-md bg-violet/15 text-[#a68cff] border border-violet/25">In-panel navigation</span>
         <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">SMAppService</span>
-        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">5 Visual Styles: Auto · Classic · Cyber</span>
+        <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">5 visual styles</span>
       </div>
     </section>
 
@@ -548,12 +555,12 @@ panel.sharingType = service.hideHUDFromScreenCapture ? .none : .readOnly</code><
              data-title="CustomizeView.swift" data-tab="Actions"
              data-metric="18 actions" data-caption="Drag to reorder; switch off to hide.">
       <div class="rail h-[3px] w-14 rounded-full bg-white/15 mb-6 transition-colors"></div>
-      <h3 class="text-2xl font-semibold tracking-tight">Actions — order and visibility</h3>
+      <h3 class="text-2xl font-semibold tracking-tight">Actions: order and visibility</h3>
       <p class="mt-3 text-white/65 leading-relaxed">
         Every action gets a tinted icon tile and a switch in its own colour. Drag to reorder, turn one off to
         hide it from the dashboard; the layout survives relaunches through <code class="text-[13px] text-white/80">UserDefaults</code>.
       </p>
-      <pre class="mt-5 p-4 rounded-xl bg-black/45 border border-edge overflow-hidden"><code class="language-swift">// Models/AppSettings.swift — @Observable source of truth
+      <pre class="mt-5 p-4 rounded-xl bg-black/45 border border-edge overflow-hidden"><code class="language-swift">// Models/AppSettings.swift: @Observable source of truth
 @Observable
 final class AppSettings {
     var actionOrder: [ActionID] = ActionCatalog.defaultOrder
@@ -567,9 +574,9 @@ final class AppSettings {
              data-title="CustomizeSystemStatsSection.swift" data-tab="System"
              data-metric="DIE 43° · 4 in menu bar" data-caption="Popover and menu bar are independent destinations.">
       <div class="rail h-[3px] w-14 rounded-full bg-white/15 mb-6 transition-colors"></div>
-      <h3 class="text-2xl font-semibold tracking-tight">System — pick the readings and where they go</h3>
+      <h3 class="text-2xl font-semibold tracking-tight">System: pick the readings and where they go</h3>
       <p class="mt-3 text-white/65 leading-relaxed">
-        CPU, GPU, memory, die temperature, disk space &amp; throughput, network throughput, battery health, peripheral battery, and threshold alerts each carry their current value right in the row, with dual destinations: the popover, the menu bar, or both. Up to 4 readings can be pinned simultaneously in the menu bar with enlarged 17pt glyphs and independent symbol sizing, while the popover wraps chips into an adaptive two-column grid. Sampling runs at 1, 2, 5 or 10 seconds — and the dashboard reuses that same loop rather than doubling sensor work.
+        CPU, GPU, memory, die temperature, disk space &amp; throughput, network throughput, battery health, peripheral battery, and threshold alerts each carry their current value right in the row, with dual destinations: the popover, the menu bar, or both. Up to 4 readings can be pinned simultaneously in the menu bar with enlarged 17pt glyphs and independent symbol sizing, while the popover wraps chips into an adaptive two-column grid. Sampling runs at 1, 2, 5 or 10 seconds, and the dashboard reuses that same loop rather than doubling sensor work.
       </p>
       <div class="mt-5 flex flex-wrap gap-2 text-[11px]">
         <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">Two-column popover grid</span>
@@ -583,11 +590,11 @@ final class AppSettings {
              data-title="CustomizeAgentUsageSection.swift" data-tab="Agents"
              data-metric="every 5 min" data-caption="Intervals derived from what the data can express.">
       <div class="rail h-[3px] w-14 rounded-full bg-white/15 mb-6 transition-colors"></div>
-      <h3 class="text-2xl font-semibold tracking-tight">Agents — quota windows and refresh rate</h3>
+      <h3 class="text-2xl font-semibold tracking-tight">Agents: quota windows and refresh rate</h3>
       <p class="mt-3 text-white/65 leading-relaxed">
         Each detected quota window across Claude, Codex, and Antigravity is listed with its live percentage. Claude credentials persist seamlessly via the macOS security tool without recurring authorization prompts. The refresh choices aren't round numbers:
         a 5-hour session window spends 100 points over 300 minutes, so one percentage point takes three minutes.
-        Polling faster can't return a different integer — it only spends requests. Rate limits back off gracefully with standard Retry-After headers.
+        Polling faster can't return a different integer. It only spends requests. Rate limits back off gracefully with standard Retry-After headers.
       </p>
       <pre class="mt-5 p-4 rounded-xl bg-black/45 border border-edge overflow-hidden"><code class="language-swift">// Models/UsageRefreshInterval.swift
 // "About 1.7% of a session window between reads."
@@ -600,11 +607,11 @@ case everyThreeMinutes  // min. 1% change interval</code></pre>
              data-title="Sparkle 2.9.4 · Stable signing" data-tab="Updates"
              data-metric="v2.11.0 (26)" data-caption="You choose when to download and install.">
       <div class="rail h-[3px] w-14 rounded-full bg-white/15 mb-6 transition-colors"></div>
-      <h3 class="text-2xl font-semibold tracking-tight">Updates — checked daily, installed on your word</h3>
+      <h3 class="text-2xl font-semibold tracking-tight">Updates: checked daily, installed on your word</h3>
       <p class="mt-3 text-white/65 leading-relaxed">
         Automatic checking is a consent toggle, not a default that acts on its own: it checks daily, and
         downloading and installing still require confirmation. Updates arrive over an HTTPS feed as
-        Ed25519-signed archives, and releases are signed with the stable Fluxa Code Signing certificate — preserving macOS Keychain ACLs and Accessibility TCC permissions across every update without repetitive authorization prompts.
+        Ed25519-signed archives, and releases are signed with the stable Fluxa Code Signing certificate, preserving macOS Keychain ACLs and Accessibility TCC permissions across every update without repetitive authorization prompts.
       </p>
       <div class="mt-5 flex flex-wrap gap-2 text-[11px]">
         <span class="px-2.5 py-1 rounded-md bg-blue/15 text-blue border border-blue/25">Sparkle 2.9.4</span>
@@ -619,17 +626,17 @@ case everyThreeMinutes  // min. 1% change interval</code></pre>
              data-title="InfoView.swift" data-metric="v2.11.0"
              data-caption="Public GitHub data, fetched only while About is open.">
       <div class="rail h-[3px] w-14 rounded-full bg-white/15 mb-6 transition-colors"></div>
-      <h2 class="text-3xl sm:text-4xl font-semibold tracking-tight">No ads · No analytics · No system profiling</h2>
+      <h2 class="text-3xl sm:text-4xl font-semibold tracking-tight">No ads. No analytics. No system profiling.</h2>
       <p class="mt-4 text-white/65 leading-relaxed">
         That line sits at the bottom of the About screen, and it's the whole policy. There is no Fluxa server of
-        any kind. The only network calls are the agent quota endpoints and — only while About is open —
+        any kind. The only network calls are the agent quota endpoints and (only while About is open)
         GitHub's public API for the developer card. Token counts, the scan cache and your preferences live in
         Application Support and UserDefaults, never in a release artifact.
       </p>
       <p class="mt-4 text-white/65 leading-relaxed">
         About now fits it all on one screen: version and build, the live GitHub profile card with stars, repos
         and followers, <span class="text-white/85">Check for Updates…</span> with its last-checked timestamp,
-        and the optional coffee link — no scrolling, no second window. FluxaCore separates core logic into an independently testable module with 152 automated tests across 25 suites and Swift 6 strict concurrency compliance.
+        and the optional coffee link. No scrolling, no second window. FluxaCore separates core logic into an independently testable module with 152 automated tests across 25 suites and Swift 6 strict concurrency compliance.
       </p>
       <div class="mt-5 flex flex-wrap gap-2 text-[11px]">
         <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">Local first</span>
@@ -639,7 +646,7 @@ case everyThreeMinutes  // min. 1% change interval</code></pre>
         <span class="px-2.5 py-1 rounded-md bg-white/5 border border-edge">Zero dependencies</span>
       </div>
       <p class="mt-8 text-xs text-white/40 leading-relaxed border-l-2 border-edge pl-4">
-        Screenshots show <span class="text-white/60">Cyber Dark</span> appearance — the native Control Deck look.
+        Screenshots show <span class="text-white/60">Cyber Dark</span> appearance, the native Control Deck look.
       </p>
     </section>
 
@@ -649,33 +656,33 @@ case everyThreeMinutes  // min. 1% change interval</code></pre>
 <!-- ══ FEATURE GRID ══ -->
 <section class="max-w-6xl mx-auto px-5 sm:px-8 py-28">
   <h2 class="text-3xl sm:text-4xl font-semibold tracking-tight text-center">All eighteen quick actions</h2>
-  <p class="mt-3 text-center text-white/50 text-sm">Every one backed by a real system API — no placeholder toggles.</p>
+  <p class="mt-3 text-center text-white/50 text-sm">Every one backed by a real system API. No placeholder toggles.</p>
   <div class="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-sm">
-    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">⚡</div><h3 class="mt-2 font-medium">Keep Awake</h3><p class="mt-1 text-white/50 text-[13px]">IOKit power assertion — indefinitely or 15 min / 1 h / 4 h with auto-off.</p></div>
-    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">🌗</div><h3 class="mt-2 font-medium">Dark Mode</h3><p class="mt-1 text-white/50 text-[13px]">Switches the system appearance instantly via System Events.</p></div>
-    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">🖥</div><h3 class="mt-2 font-medium">Hide Desktop Icons</h3><p class="mt-1 text-white/50 text-[13px]">Clean screenshots and presentations, one toggle away.</p></div>
-    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">👁</div><h3 class="mt-2 font-medium">Show Hidden Files</h3><p class="mt-1 text-white/50 text-[13px]">Reveals dotfiles and hidden folders in Finder.</p></div>
-    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">📥</div><h3 class="mt-2 font-medium">Auto-hide Dock</h3><p class="mt-1 text-white/50 text-[13px]">Shows the Dock only on hover.</p></div>
-    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">🌙</div><h3 class="mt-2 font-medium">Screen Saver</h3><p class="mt-1 text-white/50 text-[13px]">Launches the macOS system screen saver immediately.</p></div>
-    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">✨</div><h3 class="mt-2 font-medium">Screen Clean</h3><p class="mt-1 text-white/50 text-[13px]">Black overlay on every display; hot-plug aware, exits on click or ESC.</p></div>
-    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">🔗</div><h3 class="mt-2 font-medium">Clean URL</h3><p class="mt-1 text-white/50 text-[13px]">Strips tracking parameters (utm_*, fbclid, gclid…) with platform rules for YouTube, Amazon, and X.</p></div>
-    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">🎨</div><h3 class="mt-2 font-medium">Color Picker</h3><p class="mt-1 text-white/50 text-[13px]">Samples screen pixels via NSColorSampler and copies sRGB #RRGGBB hex with an instant HUD.</p></div>
-    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">⌨️</div><h3 class="mt-2 font-medium">Lock Keyboard</h3><p class="mt-1 text-white/50 text-[13px]">Blocks keyboard input globally; the mouse stays free to unlock.</p></div>
-    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">🎯</div><h3 class="mt-2 font-medium">Focus Mode</h3><p class="mt-1 text-white/50 text-[13px]">Do Not Disturb through two clean, user-created Shortcuts.</p></div>
-    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">🔊</div><h3 class="mt-2 font-medium">Audio Output</h3><p class="mt-1 text-white/50 text-[13px]">CoreAudio output device switcher with one click, hot-plug aware.</p></div>
-    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">🎧</div><h3 class="mt-2 font-medium">Bluetooth Audio</h3><p class="mt-1 text-white/50 text-[13px]">Connect paired AirPods and headphones without digging through menus.</p></div>
-    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">🛑</div><h3 class="mt-2 font-medium">Quit App</h3><p class="mt-1 text-white/50 text-[13px]">Process manager listing user apps sorted by CPU time, with safety confirmation.</p></div>
-    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">🎤</div><h3 class="mt-2 font-medium">Microphone Mute</h3><p class="mt-1 text-white/50 text-[13px]">Mutes the default input device via CoreAudio with live state.</p></div>
-    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">📐</div><h3 class="mt-2 font-medium">Lid Angle</h3><p class="mt-1 text-white/50 text-[13px]">Live hinge readout on Apple Silicon (HID) and Intel (IORegistry).</p></div>
-    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">⚖️</div><h3 class="mt-2 font-medium">Trackpad Scale</h3><p class="mt-1 text-white/50 text-[13px]">Weighs small objects on Force Touch trackpad strain gauges in grams.</p></div>
-    <div class="p-5 rounded-xl bg-panel border border-edge"><div class="text-lg">✏️</div><h3 class="mt-2 font-medium">Screen Draw <span class="ml-1 align-middle text-[10px] font-mono text-blue border border-blue/30 rounded px-1.5 py-0.5">NEW</span></h3><p class="mt-1 text-white/50 text-[13px]">Draw over any app while you present: pen, shapes, text, laser and spotlight on every display. The toolbar stays hidden from screen sharing. ⌘⇧D.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><i class="ph ph-coffee text-xl text-blue" aria-hidden="true"></i><h3 class="mt-2 font-medium">Keep Awake</h3><p class="mt-1 text-white/50 text-[13px]">IOKit power assertion, indefinitely or 15 min / 1 h / 4 h with auto-off.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><i class="ph ph-circle-half text-xl text-blue" aria-hidden="true"></i><h3 class="mt-2 font-medium">Dark Mode</h3><p class="mt-1 text-white/50 text-[13px]">Switches the system appearance instantly via System Events.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><i class="ph ph-desktop text-xl text-blue" aria-hidden="true"></i><h3 class="mt-2 font-medium">Hide Desktop Icons</h3><p class="mt-1 text-white/50 text-[13px]">Clean screenshots and presentations, one toggle away.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><i class="ph ph-eye text-xl text-blue" aria-hidden="true"></i><h3 class="mt-2 font-medium">Show Hidden Files</h3><p class="mt-1 text-white/50 text-[13px]">Reveals dotfiles and hidden folders in Finder.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><i class="ph ph-square-half-bottom text-xl text-blue" aria-hidden="true"></i><h3 class="mt-2 font-medium">Auto-hide Dock</h3><p class="mt-1 text-white/50 text-[13px]">Shows the Dock only on hover.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><i class="ph ph-moon-stars text-xl text-blue" aria-hidden="true"></i><h3 class="mt-2 font-medium">Screen Saver</h3><p class="mt-1 text-white/50 text-[13px]">Launches the macOS system screen saver immediately.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><i class="ph ph-sparkle text-xl text-blue" aria-hidden="true"></i><h3 class="mt-2 font-medium">Screen Clean</h3><p class="mt-1 text-white/50 text-[13px]">Black overlay on every display; hot-plug aware, exits on click or ESC.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><i class="ph ph-link text-xl text-blue" aria-hidden="true"></i><h3 class="mt-2 font-medium">Clean URL</h3><p class="mt-1 text-white/50 text-[13px]">Strips tracking parameters (utm_*, fbclid, gclid…) with platform rules for YouTube, Amazon, and X.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><i class="ph ph-eyedropper text-xl text-blue" aria-hidden="true"></i><h3 class="mt-2 font-medium">Color Picker</h3><p class="mt-1 text-white/50 text-[13px]">Samples screen pixels via NSColorSampler and copies sRGB #RRGGBB hex with an instant HUD.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><i class="ph ph-keyboard text-xl text-blue" aria-hidden="true"></i><h3 class="mt-2 font-medium">Lock Keyboard</h3><p class="mt-1 text-white/50 text-[13px]">Blocks keyboard input globally; the mouse stays free to unlock.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><i class="ph ph-target text-xl text-blue" aria-hidden="true"></i><h3 class="mt-2 font-medium">Focus Mode</h3><p class="mt-1 text-white/50 text-[13px]">Do Not Disturb through two clean, user-created Shortcuts.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><i class="ph ph-speaker-high text-xl text-blue" aria-hidden="true"></i><h3 class="mt-2 font-medium">Audio Output</h3><p class="mt-1 text-white/50 text-[13px]">CoreAudio output device switcher with one click, hot-plug aware.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><i class="ph ph-headphones text-xl text-blue" aria-hidden="true"></i><h3 class="mt-2 font-medium">Bluetooth Audio</h3><p class="mt-1 text-white/50 text-[13px]">Connect paired AirPods and headphones without digging through menus.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><i class="ph ph-x-circle text-xl text-blue" aria-hidden="true"></i><h3 class="mt-2 font-medium">Quit App</h3><p class="mt-1 text-white/50 text-[13px]">Process manager listing user apps sorted by CPU time, with safety confirmation.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><i class="ph ph-microphone-slash text-xl text-blue" aria-hidden="true"></i><h3 class="mt-2 font-medium">Microphone Mute</h3><p class="mt-1 text-white/50 text-[13px]">Mutes the default input device via CoreAudio with live state.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><i class="ph ph-laptop text-xl text-blue" aria-hidden="true"></i><h3 class="mt-2 font-medium">Lid Angle</h3><p class="mt-1 text-white/50 text-[13px]">Live hinge readout on Apple Silicon (HID) and Intel (IORegistry).</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><i class="ph ph-scales text-xl text-blue" aria-hidden="true"></i><h3 class="mt-2 font-medium">Trackpad Scale</h3><p class="mt-1 text-white/50 text-[13px]">Weighs small objects on Force Touch trackpad strain gauges in grams.</p></div>
+    <div class="p-5 rounded-xl bg-panel border border-edge"><i class="ph ph-pencil-simple-line text-xl text-blue" aria-hidden="true"></i><h3 class="mt-2 font-medium">Screen Draw <span class="ml-1 align-middle text-[10px] font-mono text-blue border border-blue/30 rounded px-1.5 py-0.5">NEW</span></h3><p class="mt-1 text-white/50 text-[13px]">Draw over any app while you present: pen, shapes, text, laser and spotlight on every display. The toolbar stays hidden from screen sharing. ⌘⇧D.</p></div>
     <div class="p-5 rounded-xl bg-gradient-to-br from-blue/10 to-violet/10 border border-blue/20 flex flex-col justify-between sm:col-span-2 lg:col-span-3">
       <div>
-        <div class="text-lg">⚡</div>
+        <i class="ph ph-sliders-horizontal text-xl text-blue" aria-hidden="true"></i>
         <h3 class="mt-2 font-medium text-white">Full Customization</h3>
         <p class="mt-1 text-white/60 text-[13px]">Drag to reorder, toggle visibility, and pick from 5 visual styles with the interactive preview selector.</p>
       </div>
-      <span class="mt-3 text-[11px] font-mono text-blue">5 tabs · in-panel</span>
+      <span class="mt-3 text-[11px] font-mono text-blue">5 tabs, in-panel</span>
     </div>
   </div>
 
@@ -685,7 +692,7 @@ case everyThreeMinutes  // min. 1% change interval</code></pre>
       <div class="w-10 h-10 rounded-xl bg-blue/15 border border-blue/25 flex items-center justify-center text-blue font-mono font-bold text-base mb-4">AI</div>
       <h3 class="text-base font-semibold text-white">Multi-Agent Quotas</h3>
       <p class="mt-2 text-white/60 text-xs leading-relaxed">
-        Live quota meters for <strong class="text-white/85">Claude, Codex, and Antigravity</strong> in the menu bar. Antigravity connects on-device via loopback to its local server with CSRF protection — zero tokens stored or transmitted. Fast Protobuf scanning computes daily token burn without lagging.
+        Live quota meters for <strong class="text-white/85">Claude, Codex, and Antigravity</strong> in the menu bar. Antigravity connects on-device via loopback to its local server with CSRF protection: zero tokens stored or transmitted. Fast Protobuf scanning computes daily token burn without lagging.
       </p>
     </div>
     <div class="p-6 rounded-2xl bg-panel/80 border border-edge">
@@ -718,7 +725,7 @@ cd fluxa
 cp -r Fluxa.app /Applications/</code></pre>
     </div>
     <p class="mt-6 text-xs text-white/55 leading-relaxed">
-      ⚠️ Fluxa is self-signed with the persistent <span class="text-white/75 font-mono">Fluxa Code Signing</span> identity, not notarized. If macOS blocks the first launch, verify the download's origin
+      <i class="ph ph-warning text-amber-400 align-[-2px]" aria-hidden="true"></i> Fluxa is self-signed with the persistent <span class="text-white/75 font-mono">Fluxa Code Signing</span> identity, not notarized. If macOS blocks the first launch, verify the download's origin
       and use <span class="text-white/60">System Settings → Privacy &amp; Security → Open Anyway</span>, if offered.
       Don't disable Gatekeeper. Once approved, subsequent updates install in place seamlessly. Requires macOS 14 (Sonoma) or later.
     </p>
@@ -743,7 +750,7 @@ cp -r Fluxa.app /Applications/</code></pre>
   <div class="flex items-center gap-6">
     <a class="hover:text-white transition" href="https://github.com/zEhmsy/fluxa">GitHub</a>
     <a class="hover:text-white transition" href="https://github.com/zEhmsy/fluxa/blob/main/LICENSE">Apache-2.0</a>
-    <a class="hover:text-white transition" href="https://www.buymeacoffee.com/gturturro">☕ Buy me a coffee</a>
+    <a class="hover:text-white transition" href="https://www.buymeacoffee.com/gturturro"><i class="ph ph-coffee align-[-2px]" aria-hidden="true"></i> Buy me a coffee</a>
   </div>
 </footer>
 
@@ -865,11 +872,11 @@ cp -r Fluxa.app /Applications/</code></pre>
     function toggleMute() {
       video.muted = !video.muted;
       if (video.muted) {
-        soundIcon.textContent = '🔇';
+        soundIcon.className = 'ph ph-speaker-slash';
         soundLabel.textContent = 'Unmute audio';
         soundBtn.classList.remove('bg-blue/20', 'border-blue/40');
       } else {
-        soundIcon.textContent = '🔊';
+        soundIcon.className = 'ph ph-speaker-high';
         soundLabel.textContent = 'Mute audio';
         soundBtn.classList.add('bg-blue/20', 'border-blue/40');
         if (video.paused) video.play().catch(() => {});
