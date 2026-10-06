@@ -39,9 +39,12 @@ final class PermissionsService: NSObject, CBCentralManagerDelegate {
     private(set) var busyPermission: String?
     private(set) var message: String?
     var showsWelcome = false
+    /// True while System Settings is open on Accessibility for a request made from setup.
+    private(set) var isAwaitingAccessibility = false
 
     @ObservationIgnored private var bluetoothManager: CBCentralManager?
     @ObservationIgnored private var refreshInProgress = false
+    @ObservationIgnored private var accessibilityWatch: Task<Void, Never>?
 
     static let windowID = "permissions-setup"
 
@@ -64,14 +67,40 @@ final class PermissionsService: NSObject, CBCentralManagerDelegate {
         automation = status
     }
 
+    /// Opens the Accessibility pane with a drag helper docked to System Settings, then watches for
+    /// the grant. `AXIsProcessTrusted` is a passive check, so watching never prompts; it stops on
+    /// the grant, on `cancelAwaitingAccessibility()`, or after five minutes.
     func requestAccessibility() {
         guard busyPermission == nil else { return }
         message = nil
         refreshImmediateStates()
         guard accessibility != .granted else { return }
-        KeyboardShieldService.requestAccessibilityIfNeeded()
-        message = "Enable Fluxa in Privacy & Security → Accessibility, then return here. "
-            + "If Fluxa is missing, use + and select the app in Applications. Keyboard Lock is not activated during setup."
+        isAwaitingAccessibility = true
+        openSettings("Privacy_Accessibility")
+        SystemSettingsHelperPresenter.shared.show(permission: "Accessibility") { [weak self] in
+            self?.cancelAwaitingAccessibility()
+        }
+        accessibilityWatch?.cancel()
+        accessibilityWatch = Task { [weak self] in
+            for _ in 0..<300 {
+                try? await Task.sleep(for: .seconds(1))
+                guard let self, !Task.isCancelled else { return }
+                self.refreshImmediateStates()
+                if self.accessibility == .granted {
+                    self.cancelAwaitingAccessibility()
+                    FluxaWindowPresenter.shared.bringToFront(id: Self.windowID)
+                    return
+                }
+            }
+            self?.cancelAwaitingAccessibility()
+        }
+    }
+
+    func cancelAwaitingAccessibility() {
+        accessibilityWatch?.cancel()
+        accessibilityWatch = nil
+        isAwaitingAccessibility = false
+        SystemSettingsHelperPresenter.shared.dismiss()
     }
 
     func requestAutomation() async {

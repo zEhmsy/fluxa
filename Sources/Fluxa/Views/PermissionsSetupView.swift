@@ -63,6 +63,7 @@ struct PermissionsSetupView: View {
         }
         .onDisappear {
             settings.hasPresentedPermissionsSetup = true
+            permissions.cancelAwaitingAccessibility()
         }
     }
 
@@ -96,14 +97,23 @@ struct PermissionsSetupView: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            PermissionSetupCard(
-                title: "Accessibility", icon: "keyboard", feature: "Lock Keyboard",
-                detail: "Blocks keyboard input until you turn the toggle off. The mouse remains usable.",
-                status: permissions.accessibility, busy: false,
-                actionTitle: "Enable…", action: permissions.requestAccessibility,
-                settingsAction: { permissions.openSettings("Privacy_Accessibility") },
-                requestsDisabled: !isInstalled || permissions.busyPermission != nil
-            )
+            Group {
+                if permissions.isAwaitingAccessibility {
+                    AwaitingSystemSettingsCard(onCancel: permissions.cancelAwaitingAccessibility)
+                        .transition(.opacity.combined(with: .scale(scale: 0.97)))
+                } else {
+                    PermissionSetupCard(
+                        title: "Accessibility", icon: "keyboard", feature: "Lock Keyboard",
+                        detail: "Blocks keyboard input until you turn the toggle off. The mouse remains usable.",
+                        status: permissions.accessibility, busy: false,
+                        actionTitle: "Enable…", action: permissions.requestAccessibility,
+                        settingsAction: { permissions.openSettings("Privacy_Accessibility") },
+                        requestsDisabled: !isInstalled || permissions.busyPermission != nil
+                    )
+                    .transition(.opacity.combined(with: .scale(scale: 0.97)))
+                }
+            }
+            .animation(.easeInOut(duration: 0.25), value: permissions.isAwaitingAccessibility)
             PermissionSetupCard(
                 title: "Automation", icon: "moon.lefthalf.filled", feature: "Dark Mode · System Events",
                 detail: "Allows Fluxa to change system appearance. Setup only reads the current setting.",
@@ -302,6 +312,29 @@ struct PermissionsSetupView: View {
         settings.hasPresentedPermissionsSetup = true
         viewModel.refreshStates()
         dismissWindow(id: PermissionsService.windowID)
+    }
+}
+
+/// Stands in for the Accessibility card while the user finishes in System Settings, where the
+/// docked helper holds the app to drag. Fills back in on its own once the grant is seen.
+private struct AwaitingSystemSettingsCard: View {
+    let onCancel: () -> Void
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Text("COMPLETE IN SYSTEM SETTINGS")
+                .font(.system(size: 11, weight: .semibold))
+                .tracking(0.8)
+                .foregroundStyle(.secondary)
+            Button("Cancel", action: onCancel)
+                .buttonStyle(.link)
+                .font(.system(size: 11))
+        }
+        .frame(maxWidth: .infinity, minHeight: 96)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(Color.secondary.opacity(0.45), style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
+        )
     }
 }
 
