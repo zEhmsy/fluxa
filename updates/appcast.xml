@@ -7,6 +7,37 @@
         <language>en</language>
         <!-- No update is advertised until its signed archive has been published. -->
         <item>
+            <title>3.0.0</title>
+            <pubDate>Tue, 06 Oct 2026 12:02:21 +0200</pubDate>
+            <link>https://github.com/zEhmsy/fluxa/releases/tag/v3.0.0</link>
+            <sparkle:version>27</sparkle:version>
+            <sparkle:shortVersionString>3.0.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description sparkle:format="markdown"><![CDATA[# Fluxa 3.0.0 (27)
+
+## A first launch that shows you around
+
+- **Fluxa lives up here:** on first launch, a card rises under the Fluxa icon in the menu bar and points straight at it, so you know where the app went. It appears on the screen you are using, even over full-screen apps, and follows the icon if the menu bar rearranges.
+- **Set Up Permissions** opens the setup guide; **Skip** gets out of the way.
+
+## Accessibility in one drag
+
+- **Enable…** on Accessibility now opens the right System Settings page with a small helper docked at the bottom of the window. Drag the **Fluxa** tile into the list, confirm with Touch ID or your password, and you are done.
+- The setup guide shows **Complete in System Settings** while you finish, notices the permission as soon as it is granted, and comes back to the front on its own.
+
+## Fixes
+
+- **Hide Desktop Icons** no longer loses its icon when it is turned on.
+
+## Notes
+
+- Requires macOS 14 or later, Apple silicon.
+- Signed with the stable **Fluxa Code Signing** certificate; permissions carry over seamlessly from 2.9.1+.
+]]></description>
+            <enclosure url="https://github.com/zEhmsy/fluxa/releases/download/v3.0.0/Fluxa.zip" length="3995278" type="application/octet-stream" sparkle:edSignature="BdqIV5GdZDRSNysHX9/TSfZso53eQibCnAQCvNtenYOWja9PjdsliWMXTrGSfgQcFx8uj5+a5RdN2OwG+K44CA=="/>
+        </item>
+        <item>
             <title>2.11.0</title>
             <pubDate>Sat, 03 Oct 2026 20:16:09 +0200</pubDate>
             <link>https://github.com/zEhmsy/fluxa/releases/tag/v2.11.0</link>
