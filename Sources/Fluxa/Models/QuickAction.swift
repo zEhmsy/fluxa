@@ -87,7 +87,7 @@ enum ActionCatalog {
             title: "Hide Desktop Icons",
             subtitle: "Toggles Finder desktop visibility",
             icon: "desktopcomputer",
-            activeIcon: "desktopcomputer.slash",
+            activeIcon: "rectangle.dashed",
             tint: FluxaTheme.teal,
             controlStyle: .toggle
         ),
