@@ -127,9 +127,11 @@ private struct FluxaLaunchLabel<Content: View>: View {
         content.task {
             guard !settings.hasPresentedPermissionsSetup else { return }
             settings.hasPresentedPermissionsSetup = true
-            viewModel.permissions.showsWelcome = true
-            openWindow(id: PermissionsService.windowID)
-            FluxaWindowPresenter.shared.bringToFront(id: PermissionsService.windowID)
+            MenuBarCalloutPresenter.shared.show {
+                viewModel.permissions.showsWelcome = true
+                openWindow(id: PermissionsService.windowID)
+                FluxaWindowPresenter.shared.bringToFront(id: PermissionsService.windowID)
+            }
         }
     }
 }
