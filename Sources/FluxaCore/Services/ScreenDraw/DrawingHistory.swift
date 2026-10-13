@@ -86,11 +86,12 @@ package final class DrawingHistory: @unchecked Sendable {
 
     /// Removes all strokes intersecting with a target point (eraser tool).
     @discardableResult
-    package func erase(at point: DrawingPoint, radius: Double) -> [DrawingStroke] {
+    package func erase(at point: DrawingPoint, radius: Double, displayID: UInt32? = nil) -> [DrawingStroke] {
         lock.lock()
         defer { lock.unlock() }
         var removed: [DrawingStroke] = []
         _strokes.removeAll { stroke in
+            if let displayID, stroke.displayID != displayID { return false }
             if stroke.contains(point: point, threshold: radius) {
                 removed.append(stroke)
                 return true

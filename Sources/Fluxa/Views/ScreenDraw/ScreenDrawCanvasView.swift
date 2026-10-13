@@ -9,6 +9,7 @@ struct ScreenDrawCanvasView: View {
 
     @Bindable var service: ScreenDrawService
     let screenFrame: CGRect
+    let displayID: UInt32
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -18,13 +19,13 @@ struct ScreenDrawCanvasView: View {
                     drawBackground(context: context, size: size)
 
                     // 2. Spotlight Mask (if spotlight tool active)
-                    if service.activeTool == .spotlight, let spotPos = service.spotlightPosition {
+                    if service.activeTool == .spotlight, service.activeDisplayID == displayID, let spotPos = service.spotlightPosition {
                         drawSpotlight(context: context, size: size, at: spotPos, radius: service.spotlightRadius)
                     }
 
                     // 3. Completed strokes from history
                     let now = timeline.date
-                    for stroke in service.history.strokes {
+                    for stroke in service.history.strokes where stroke.displayID == displayID {
                         let alpha = (service.activeMode == .disappearing)
                             ? stroke.fadeAlpha(at: now, timeout: service.disappearingTimeout)
                             : stroke.opacity
@@ -34,19 +35,19 @@ struct ScreenDrawCanvasView: View {
                     }
 
                     // 4. Live in-progress stroke preview
-                    if !service.activePoints.isEmpty && service.activeTool.isDrawingShape && service.activeTool != .text {
+                    if service.activeDisplayID == displayID, !service.activePoints.isEmpty && service.activeTool.isDrawingShape && service.activeTool != .text {
                         drawActiveStroke(context: &context)
                     }
 
                     // 5. Laser Pointer (if laser tool active)
-                    if service.activeTool == .laserPointer, let laserPos = service.laserPosition {
+                    if service.activeTool == .laserPointer, service.activeDisplayID == displayID, let laserPos = service.laserPosition {
                         drawLaser(context: &context, at: laserPos)
                     }
                 }
             }
 
             // 6. Active Text Input Session
-            if let session = service.activeTextSession {
+            if let session = service.activeTextSession, session.screen.displayID == displayID {
                 ScreenDrawInlineTextInput(service: service, screenFrame: screenFrame)
                     .offset(x: session.position.x - 8, y: session.position.y - 5)
             }

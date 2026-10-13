@@ -35,6 +35,8 @@ package struct DrawingStroke: Identifiable, Codable, Equatable, Sendable {
     package var text: String?
     package var textBoundsWidth: Double?
     package var textBoundsHeight: Double?
+    /// Display the stroke was drawn on (0 = unspecified); each overlay renders only its own.
+    package var displayID: UInt32
 
     package init(
         id: UUID = UUID(),
@@ -46,7 +48,8 @@ package struct DrawingStroke: Identifiable, Codable, Equatable, Sendable {
         createdAt: Date = Date(),
         text: String? = nil,
         textBoundsWidth: Double? = nil,
-        textBoundsHeight: Double? = nil
+        textBoundsHeight: Double? = nil,
+        displayID: UInt32 = 0
     ) {
         self.id = id
         self.tool = tool
@@ -58,6 +61,7 @@ package struct DrawingStroke: Identifiable, Codable, Equatable, Sendable {
         self.text = text
         self.textBoundsWidth = textBoundsWidth
         self.textBoundsHeight = textBoundsHeight
+        self.displayID = displayID
     }
 
     /// Whether this stroke has exceeded the disappearing ink duration.

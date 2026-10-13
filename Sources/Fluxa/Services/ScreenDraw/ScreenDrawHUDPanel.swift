@@ -34,7 +34,17 @@ final class ScreenDrawHUDPanel: NSPanel {
         let newOrigin = NSPoint(x: newX, y: frame.origin.y)
 
         isAdjustingSize = true
-        setFrame(NSRect(origin: newOrigin, size: newSize), display: true, animate: false)
+        let target = NSRect(origin: newOrigin, size: newSize)
+        if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion || !isVisible {
+            setFrame(target, display: true, animate: false)
+        } else {
+            // Figma-style: the bar shrinks/grows in place while its content cross-fades.
+            NSAnimationContext.runAnimationGroup { ctx in
+                ctx.duration = 0.28
+                ctx.timingFunction = CAMediaTimingFunction(controlPoints: 0.3, 0.0, 0.2, 1.0)
+                animator().setFrame(target, display: true)
+            }
+        }
         isAdjustingSize = false
     }
 

@@ -35,7 +35,7 @@ final class ScreenDrawOverlayPanel: NSPanel {
 
         panel.setFrame(screen.frame, display: false)
 
-        let canvasView = ScreenDrawCanvasView(service: service, screenFrame: screen.frame)
+        let canvasView = ScreenDrawCanvasView(service: service, screenFrame: screen.frame, displayID: screen.displayID)
         let hostingView = NSHostingView(rootView: canvasView)
         hostingView.frame = NSRect(origin: .zero, size: screen.frame.size)
         hostingView.autoresizingMask = [.width, .height]
@@ -65,7 +65,7 @@ final class ScreenDrawOverlayPanel: NSPanel {
     override func mouseMoved(with event: NSEvent) {
         guard let screen = targetScreen ?? NSScreen.main else { return }
         let point = locationInScreen(for: event, screen: screen)
-        service?.handleMouseMoved(to: point)
+        service?.handleMouseMoved(to: point, screen: screen)
     }
 
     override func scrollWheel(with event: NSEvent) {

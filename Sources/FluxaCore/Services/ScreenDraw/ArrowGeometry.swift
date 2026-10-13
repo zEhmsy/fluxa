@@ -46,9 +46,13 @@ package enum ArrowGeometry {
         let rightX = end.x - headLength * cos(angle + headAngle)
         let rightY = end.y - headLength * sin(angle + headAngle)
 
+        // Stop the shaft at the head's base so its round cap doesn't poke past the tip.
+        let baseInset = headLength * cos(headAngle)
+        let shaftEnd = DrawingPoint(x: end.x - baseInset * cos(angle), y: end.y - baseInset * sin(angle))
+
         return ArrowShape(
             shaftStart: start,
-            shaftEnd: end,
+            shaftEnd: shaftEnd,
             headTip: end,
             headLeft: DrawingPoint(x: leftX, y: leftY),
             headRight: DrawingPoint(x: rightX, y: rightY)

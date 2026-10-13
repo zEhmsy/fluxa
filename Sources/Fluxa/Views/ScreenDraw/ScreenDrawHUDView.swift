@@ -23,6 +23,9 @@ struct ScreenDrawHUDView: View {
 
     private static let widthPresets: [Double] = [3, 6, 12]
 
+    /// Content fades, blurs and scales slightly while the panel frame resizes.
+    private static let morph = AnyTransition.opacity.combined(with: .scale(scale: 0.92)).combined(with: .modifier(active: BlurModifier(radius: 6), identity: BlurModifier(radius: 0)))
+
     @Environment(\.fluxaVisualStyle) private var visualStyle
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorScheme) private var colorScheme
@@ -34,12 +37,13 @@ struct ScreenDrawHUDView: View {
     var body: some View {
         ZStack {
             if service.isHUDCollapsed {
-                miniBar
+                miniBar.transition(Self.morph)
             } else {
                 ZStack {
                     bar(styleExpanded: true).hidden()
                     bar(styleExpanded: isStyleExpanded)
                 }
+                .transition(Self.morph)
             }
         }
         .padding(Self.shadowMargin)
@@ -188,7 +192,7 @@ struct ScreenDrawHUDView: View {
             }
 
             ScreenDrawHUDButton(
-                systemImage: "chevron.down.circle",
+                systemImage: "chevron.left.circle",
                 help: "Collapse toolbar",
                 style: style
             ) {
@@ -576,4 +580,9 @@ private struct ScreenDrawHUDStyle {
     func controlShape(cut: CGFloat) -> AnyShape {
         isCyber ? AnyShape(FluxCutShape(cut: cut)) : AnyShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
     }
+}
+
+private struct BlurModifier: ViewModifier {
+    let radius: CGFloat
+    func body(content: Content) -> some View { content.blur(radius: radius) }
 }

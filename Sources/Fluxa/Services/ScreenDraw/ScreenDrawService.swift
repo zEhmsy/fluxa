@@ -64,6 +64,9 @@ final class ScreenDrawService {
     var spotlightPosition: CGPoint?
     var spotlightRadius: CGFloat = 130.0
 
+    /// Display owning the transient state (live stroke, laser, spotlight).
+    var activeDisplayID: UInt32 = 0
+
     func adjustSpotlightRadius(delta: CGFloat) {
         let newRadius = spotlightRadius + delta
         spotlightRadius = min(max(newRadius, 60.0), 400.0)
@@ -178,6 +181,7 @@ final class ScreenDrawService {
     // MARK: - Drawing Input Handling
 
     func handleMouseDown(at point: CGPoint, screen: NSScreen) {
+        activeDisplayID = screen.displayID
         if activeTool == .text {
             startTextSession(at: point, screen: screen)
             return
@@ -190,7 +194,7 @@ final class ScreenDrawService {
         let drawPoint = DrawingPoint(x: point.x, y: point.y)
         switch activeTool {
         case .eraser:
-            history.erase(at: drawPoint, radius: strokeWidth * 2.0)
+            history.erase(at: drawPoint, radius: strokeWidth * 2.0, displayID: screen.displayID)
         case .laserPointer:
             laserPosition = point
         case .spotlight:
@@ -206,7 +210,7 @@ final class ScreenDrawService {
         let drawPoint = DrawingPoint(x: point.x, y: point.y)
         switch activeTool {
         case .eraser:
-            history.erase(at: drawPoint, radius: strokeWidth * 2.0)
+            history.erase(at: drawPoint, radius: strokeWidth * 2.0, displayID: screen.displayID)
         case .laserPointer:
             let now = ProcessInfo.processInfo.systemUptime
             laserPosition = point
@@ -256,12 +260,14 @@ final class ScreenDrawService {
             color: selectedColor,
             lineWidth: effectiveWidth,
             opacity: opacity,
-            createdAt: Date()
+            createdAt: Date(),
+            displayID: screen.displayID
         )
         history.addStroke(stroke)
     }
 
-    func handleMouseMoved(to point: CGPoint) {
+    func handleMouseMoved(to point: CGPoint, screen: NSScreen) {
+        if activeTool == .laserPointer || activeTool == .spotlight { activeDisplayID = screen.displayID }
         if activeTool == .laserPointer {
             let now = ProcessInfo.processInfo.systemUptime
             laserPosition = point
@@ -311,7 +317,8 @@ final class ScreenDrawService {
                 createdAt: Date(),
                 text: wrapped,
                 textBoundsWidth: boundsW,
-                textBoundsHeight: boundsH
+                textBoundsHeight: boundsH,
+                displayID: session.screen.displayID
             )
             history.addStroke(stroke)
         }
@@ -591,5 +598,11 @@ final class ScreenDrawService {
     private func stopPruneTimer() {
         pruneTimer?.invalidate()
         pruneTimer = nil
+    }
+}
+
+extension NSScreen {
+    var displayID: UInt32 {
+        (deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value ?? 0
     }
 }
