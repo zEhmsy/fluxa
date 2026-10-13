@@ -7,6 +7,32 @@
         <language>en</language>
         <!-- No update is advertised until its signed archive has been published. -->
         <item>
+            <title>3.0.1</title>
+            <pubDate>Tue, 13 Oct 2026 11:39:52 +0200</pubDate>
+            <link>https://github.com/zEhmsy/fluxa/releases/tag/v3.0.1</link>
+            <sparkle:version>28</sparkle:version>
+            <sparkle:shortVersionString>3.0.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description sparkle:format="markdown"><![CDATA[# Fluxa 3.0.1 (28)
+
+## Screen Draw
+
+- **One screen at a time:** with more than one display, what you draw now stays on the screen you drew it on, instead of appearing on every display. The eraser, laser and spotlight follow the screen you are using too.
+- **Smoother toolbar collapse:** the toolbar now shrinks to its mini bar and grows back with a short animation, and the collapse button points left. With Reduce Motion on, it switches instantly as before.
+
+## Fixes
+
+- **Arrows** end exactly at their tip: the line no longer pokes out past the arrowhead.
+
+## Notes
+
+- Requires macOS 14 or later, Apple silicon.
+- Signed with the stable **Fluxa Code Signing** certificate; permissions carry over seamlessly from 2.9.1+.
+]]></description>
+            <enclosure url="https://github.com/zEhmsy/fluxa/releases/download/v3.0.1/Fluxa.zip" length="3999845" type="application/octet-stream" sparkle:edSignature="FLG2sxWRB91X59ZfLJvQ/563hMUxx6qLBfxQ42fPROkmLkI4J8nin78N/4l7aGpj+BCu2kkgkO7g2nfUn+PUDA=="/>
+        </item>
+        <item>
             <title>3.0.0</title>
             <pubDate>Tue, 06 Oct 2026 12:02:21 +0200</pubDate>
             <link>https://github.com/zEhmsy/fluxa/releases/tag/v3.0.0</link>
