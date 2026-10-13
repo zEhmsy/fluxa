@@ -1,13 +1,31 @@
 # Fluxa Direct updates
 
-## Current release — 3.0.0 (27)
+## Current release — 3.0.1 (28)
 
 Fluxa Direct uses Sparkle **2.9.4**, pinned in `Package.swift` and `Package.resolved`.
 The source and app contain the real public signing key and the production
 [HTTPS appcast](https://zehmsy.github.io/fluxa/updates/appcast.xml).
 
-[Release v3.0.0](https://github.com/zEhmsy/fluxa/releases/tag/v3.0.0) uses build **27** and is the
-item the production feed advertises. Published 2026-10-06 from `feature/onboarding-3.0` at `606fe9d`, with the feed
+[Release v3.0.1](https://github.com/zEhmsy/fluxa/releases/tag/v3.0.1) uses build **28** and is the
+item the production feed advertises. Published 2026-10-13 from `main` at `ecba652`, with the feed
+commit `69f11e3` on `codex/updates-feed`. Signed with the stable **Fluxa Code Signing** certificate.
+
+Before publication the archive signature was verified with the pinned
+`sign_update --account fluxa.direct --verify` command, and the downloaded public assets matched these hashes:
+
+```
+941ef12a08e19e91629f6fa14835a625eff664569b704c490bc690eeea832583  Fluxa.zip
+a93197cef94799bd56042bb39971465d7ac521e3b66afe82bd4e445ea1361ee6  Fluxa.dmg
+```
+
+### What 3.0.1 contains
+
+Screen Draw keeps each drawing on the display it was drawn on (eraser, laser and spotlight follow the active display), the toolbar collapses and expands with an animation behind a left-pointing chevron, and arrow shafts no longer poke past the head. Full notes are embedded in the feed item and in the GitHub release.
+
+### Earlier: release 3.0.0 (27)
+
+[Release v3.0.0](https://github.com/zEhmsy/fluxa/releases/tag/v3.0.0) uses build **27** and was the
+item the production feed advertised. Published 2026-10-06 from `feature/onboarding-3.0` at `606fe9d`, with the feed
 commit `1c7a6d0` on `codex/updates-feed`. Signed with the stable **Fluxa Code Signing** certificate.
 
 Before publication the archive signature was verified with the pinned
@@ -18,7 +36,7 @@ Before publication the archive signature was verified with the pinned
 df2058f9aeaae6bd424fcd7323a45675e8a2df9bab24733ee60616834eef852a  Fluxa.dmg
 ```
 
-### What 3.0.0 contains
+Contents:
 
 A first-run card under the menu bar icon that points new users at Fluxa, and an Accessibility setup that opens System Settings with a helper docked to the window: drag the Fluxa tile into the list, and the guide notices the grant on its own. Also fixes the missing Hide Desktop Icons symbol when the action is on. Full notes are embedded in the feed item and in the GitHub release.
 
@@ -162,7 +180,7 @@ Only these public values belong in `Sources/Fluxa/Resources/Info.plist`:
 - `SUPublicEDKey`: `CkRk7WevzhjWm8DTQDDI4eqXc2Tvx+aGvmWFPCSfEe0=`.
 
 Keep increasing `CFBundleVersion`: 9 was the local bootstrap, 10 is release 2.6.1, 21 is release
-2.9.2, 22 is release 2.9.3, 23 is release 2.10.0, 24 is the withdrawn 2.10.1, 25 is release 2.10.2, 26 is release 2.11.0, and **27** is the current release 3.0.0. Use a build greater than 27 for the next changed release or candidate. Builds
+2.9.2, 22 is release 2.9.3, 23 is release 2.10.0, 24 is the withdrawn 2.10.1, 25 is release 2.10.2, 26 is release 2.11.0, 27 is release 3.0.0, and **28** is the current release 3.0.1. Use a build greater than 28 for the next changed release or candidate. Builds
 19 and 20 were prepared and never published, so the numbers are spent either way — a prepared build
 number is never reused, whether or not it shipped. Do not reuse any already published release or
 mutate its assets. Rebuild after any plist edit; both the executable
