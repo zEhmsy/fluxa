@@ -1,6 +1,22 @@
 # Fluxa Direct updates
 
-## Current release — 3.0.1 (28)
+## Current release — 3.0.2 (29)
+
+[Release v3.0.2](https://github.com/zEhmsy/fluxa/releases/tag/v3.0.2) uses build **29** and is the
+item the production feed advertises. Published 2026-11-27 from `main` at `7c6ef80`, feed commit
+`141e837` on `codex/updates-feed`. Signed with the stable **Fluxa Code Signing** certificate; the
+archive signature was verified with `sign_update --account fluxa.direct --verify` and the downloaded
+public assets match:
+
+```
+8ec28b4f630f21c07d45565e4d48ab03861f04e80c5b8f7e3dc246514c3ad5a2  Fluxa.zip
+370c76e25e04e098e867a24e941458f3bbc878d40ce58746bcce498f01e986cf  Fluxa.dmg
+```
+
+Contains one change: Agent Usage shows Antigravity quota for the `agy` CLI by running its own
+`agy -p "/usage" --output-format json` (no token read) when the IDE helper isn't running.
+
+### Earlier: release 3.0.1 (28)
 
 Fluxa Direct uses Sparkle **2.9.4**, pinned in `Package.swift` and `Package.resolved`.
 The source and app contain the real public signing key and the production
