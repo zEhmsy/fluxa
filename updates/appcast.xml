@@ -7,6 +7,25 @@
         <language>en</language>
         <!-- No update is advertised until its signed archive has been published. -->
         <item>
+            <title>3.0.2</title>
+            <pubDate>Fri, 27 Nov 2026 21:53:53 +0100</pubDate>
+            <sparkle:version>29</sparkle:version>
+            <sparkle:shortVersionString>3.0.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description sparkle:format="markdown"><![CDATA[# Fluxa 3.0.2 (29)
+
+## Agent Usage
+
+- **Antigravity CLI:** the Antigravity quota now shows up when you use the `agy` command-line tool, not only the Antigravity app. Fluxa asks `agy` for its own usage report, so no login, token or credential is read or stored. Pools that have never been used no longer show a bogus reset time.
+
+## Notes
+
+- Requires macOS 14 or later, Apple silicon.
+]]></description>
+            <enclosure url="https://github.com/zEhmsy/fluxa/releases/download/v3.0.2/Fluxa.zip" length="4003068" type="application/octet-stream" sparkle:edSignature="nakvTphZlH3dyyAejBUQKIbu/Oz3XPUQEZJ4Be/A87fG6qJi0+enR3eHOxTofUf5AGB3HnDxasZTSYvZyqEQDg=="/>
+        </item>
+        <item>
             <title>3.0.1</title>
             <pubDate>Tue, 13 Oct 2026 11:39:52 +0200</pubDate>
             <link>https://github.com/zEhmsy/fluxa/releases/tag/v3.0.1</link>
