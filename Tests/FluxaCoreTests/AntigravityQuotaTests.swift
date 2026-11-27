@@ -390,3 +390,21 @@ struct AntigravityBenchmarkTests {
     }
 
 }
+
+@Suite("AntigravityQuota.metrics (agy CLI JSON)")
+struct AntigravityQuotaCLITests {
+    @Test func parsesSnakeCaseCLIPayloadAndDropsEpochReset() throws {
+        let json = """
+        {"status":"SUCCESS","command":{"name":"usage","data":{"groups":[
+          {"name":"Gemini","buckets":[
+            {"id":"gemini-5h","remaining_fraction":0.8,"reset_time":"2026-11-28T01:28:30Z"},
+            {"id":"gemini-weekly","remaining_fraction":0.5,"reset_time":"2026-12-04T15:28:30Z"}]},
+          {"name":"3p","buckets":[
+            {"id":"3p-5h","remaining_fraction":1,"reset_time":"1970-01-01T00:00:00Z"}]}]}}}
+        """
+        let metrics = try #require(AntigravityQuota.metrics(fromSummary: Data(json.utf8)))
+        #expect(metrics.map(\.percentUsed) == [20, 50, 0])
+        #expect(metrics[0].resetsAt != nil)
+        #expect(metrics[2].resetsAt == nil)
+    }
+}

@@ -44,6 +44,11 @@ struct AntigravityUsageReader {
 
         let candidates = await Self.discover()
         guard !candidates.isEmpty else {
+            // No IDE helper. The `agy` CLI keeps its token in memory only, but answers `/usage`
+            // itself, with no model turn, from the login it already holds.
+            if let data = await Task.detached(priority: .utility, operation: { AgyCLI.usageJSON() }).value {
+                return try Self.metrics(from: data)
+            }
             throw AgentUsageReadError.notRunning(agent: Self.agentName, hint: Self.openHint)
         }
 
@@ -219,4 +224,42 @@ private actor AntigravityEndpointCache {
     func store(_ endpoint: AntigravityEndpoint) { self.endpoint = endpoint }
 
     func invalidate() { endpoint = nil }
+}
+
+// MARK: - AgyCLI
+
+/// `agy -p "/usage" --output-format json`: the Antigravity CLI's own quota report.
+private enum AgyCLI {
+    /// A GUI app has no shell PATH, so the installer's default locations are tried in order.
+    private static let candidates = [
+        NSHomeDirectory() + "/.local/bin/agy",
+        "/opt/homebrew/bin/agy",
+        "/usr/local/bin/agy",
+    ]
+
+    static func usageJSON() -> Data? {
+        guard let path = candidates.first(where: { FileManager.default.isExecutableFile(atPath: $0) }) else {
+            return nil
+        }
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: path)
+        process.arguments = ["-p", "/usage", "--output-format", "json"]
+        // Not a project: keeps the CLI from indexing whatever folder Fluxa happens to run in.
+        process.currentDirectoryURL = FileManager.default.temporaryDirectory
+        let output = Pipe()
+        process.standardOutput = output
+        process.standardError = FileHandle.nullDevice
+        process.standardInput = FileHandle.nullDevice
+        do { try process.run() } catch { return nil }
+
+        // It answers in ~2s; a hung CLI must not stall the refresh cycle.
+        let watchdog = DispatchWorkItem { if process.isRunning { process.terminate() } }
+        DispatchQueue.global().asyncAfter(deadline: .now() + 15, execute: watchdog)
+        let data = output.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        watchdog.cancel()
+
+        guard process.terminationStatus == 0, data.count <= 1 << 20 else { return nil }
+        return data
+    }
 }

@@ -42,20 +42,26 @@ package enum AntigravityQuota {
         guard let root = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
             return nil
         }
-        // Accept the bare payload and a `{"response": …}` envelope; the extra lookup costs nothing.
-        let body = (root["response"] as? [String: Any]) ?? root
+        // Accept the bare payload, a `{"response": …}` envelope, and the `agy -p "/usage"` JSON,
+        // which nests it under `command.data`; the extra lookups cost nothing.
+        let body = (root["response"] as? [String: Any])
+            ?? ((root["command"] as? [String: Any])?["data"] as? [String: Any])
+            ?? root
         guard let groups = body["groups"] as? [[String: Any]] else { return nil }
 
         var found: [String: (fraction: Double, resetsAt: Date?)] = [:]
         for group in groups {
             for bucket in group["buckets"] as? [[String: Any]] ?? [] {
-                guard let id = bucket["bucketId"] as? String,
+                // The language server speaks camelCase, the CLI snake_case.
+                guard let id = (bucket["bucketId"] ?? bucket["id"]) as? String,
                       pools.contains(where: { $0.bucketID == id }),
                       found[id] == nil,
-                      let fraction = number(bucket["remainingFraction"]),
+                      let fraction = number(bucket["remainingFraction"] ?? bucket["remaining_fraction"]),
                       fraction.isFinite
                 else { continue }
-                found[id] = (fraction, expiry(bucket["resetTime"]))
+                // A pool never drawn from reports the epoch as its reset: no countdown to show.
+                let reset = expiry(bucket["resetTime"] ?? bucket["reset_time"])
+                found[id] = (fraction, reset.flatMap { $0.timeIntervalSince1970 > 0 ? $0 : nil })
             }
         }
 
